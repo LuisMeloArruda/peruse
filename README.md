@@ -15,6 +15,7 @@ From the project root, run targets with [GNU Make](https://www.gnu.org/software/
 | `make format-code` | Runs `fix-lint`, then `dart format .`. |
 | `make lint` | Runs `dart analyze` on the project. |
 | `make build-apk` | Runs `fresh`, `build-runner`, and `format-code`, then `flutter build apk --release`. |
+| `make preview` | Runs `flutter widget-preview start --web-server`. |
 
 Examples:
 
