@@ -14,9 +14,56 @@ class RegisterScreen extends ConsumerStatefulWidget {
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoadingDialogVisible = false;
+  late final ProviderSubscription<AsyncValue<void>> _authSub;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _authSub = ref.listenManual(authControllerProvider, (previous, next) async {
+      if (next.isLoading && !_isLoadingDialogVisible) {
+        _isLoadingDialogVisible = true;
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const Center(child: CircularProgressIndicator()),
+        );
+        return;
+      }
+
+      if (!next.isLoading && _isLoadingDialogVisible) {
+        if (Navigator.of(context, rootNavigator: true).canPop()) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+        _isLoadingDialogVisible = false;
+      }
+
+      if (next.hasError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.error.toString())),
+        );
+        return;
+      }
+
+      final finishedRegister = previous?.isLoading == true && !next.isLoading;
+      if (finishedRegister) {
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        final session = ref.read(authStateProvider).value;
+        if (session == null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Confirm email to activate account'),
+            ),
+          );
+        }
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _authSub.close();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -24,15 +71,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
-
-    ref.listen(authProvider, (previous, next) {
-      if (next is AsyncError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error.toString())),
-        );
-      }
-    });
+    final authAction = ref.watch(authControllerProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('New Account')),
@@ -80,19 +119,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
-            authState.maybeWhen(
-              loading: () => const CircularProgressIndicator(),
-              orElse: () => SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    ref.read(authProvider.notifier).register(
-                      _emailController.text.trim(),
-                      _passwordController.text.trim(),
-                    );
-                  },
-                  child: const Text('Register'),
-                ),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: authAction.isLoading
+                    ? null
+                    : () {
+                        ref.read(authControllerProvider.notifier).register(
+                              _emailController.text.trim(),
+                              _passwordController.text.trim(),
+                            );
+                      },
+                child: const Text('Register'),
               ),
             ),
           ],

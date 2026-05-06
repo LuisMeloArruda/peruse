@@ -16,9 +16,42 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoadingDialogVisible = false;
+  late final ProviderSubscription<AsyncValue<void>> _authSub;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _authSub = ref.listenManual(authControllerProvider, (previous, next) {
+      if (next.isLoading && !_isLoadingDialogVisible) {
+        _isLoadingDialogVisible = true;
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const Center(child: CircularProgressIndicator()),
+        );
+        return;
+      }
+
+      if (!next.isLoading && _isLoadingDialogVisible) {
+        if (Navigator.of(context, rootNavigator: true).canPop()) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+        _isLoadingDialogVisible = false;
+      }
+
+      if (next.hasError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.error.toString())),
+        );
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _authSub.close();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -26,15 +59,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
-
-    ref.listen(authProvider, (previous, next) {
-      if (next is AsyncError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error.toString())),
-        );
-      }
-    });
+    final authAction = ref.watch(authControllerProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Login')),
@@ -71,26 +96,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            authState.maybeWhen(
-              loading: () => const CircularProgressIndicator(),
-              orElse: () => Column(
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      ref.read(authProvider.notifier).login(
-                            _emailController.text.trim(),
-                            _passwordController.text.trim(),
-                          );
-                    },
-                    child: const Text('Sign in'),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  TextButton(
-                    onPressed: () => context.push(AppRoutes.register),
-                    child: const Text('Sign up'),
-                  ),
-                ],
-              ),
+            Column(
+              children: [
+                ElevatedButton(
+                  onPressed: authAction.isLoading
+                      ? null
+                      : () {
+                          ref.read(authControllerProvider.notifier).login(
+                                _emailController.text.trim(),
+                                _passwordController.text.trim(),
+                              );
+                        },
+                  child: const Text('Sign in'),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                TextButton(
+                  onPressed: authAction.isLoading
+                      ? null
+                      : () => context.push(AppRoutes.register),
+                  child: const Text('Sign up'),
+                ),
+              ],
             ),
           ],
         ),

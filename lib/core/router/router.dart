@@ -1,40 +1,68 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/features/auth/presentation/controller/auth_notifier.dart';
 import 'package:peruse/features/auth/presentation/login_screen.dart';
 import 'package:peruse/features/auth/presentation/register_screen.dart';
+import 'package:peruse/features/decks/presentation/add_deck_screen.dart';
+import 'package:peruse/features/decks/presentation/decks_screen.dart';
+import 'package:peruse/features/profile/presentation/profile_screen.dart';
+import 'package:peruse/core/widgets/main_shell_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'router.g.dart';
 
 @riverpod
 GoRouter router(Ref ref) {
-  final authState = ref.watch(authProvider);
+  final authState = ref.watch(authStateProvider);
 
   return GoRouter(
-    initialLocation: AppRoutes.home,
+    initialLocation: AppRoutes.decks,
     redirect: (context, state) {
       final isLoading = authState.isLoading;
       if (isLoading) return null;
 
-      final isLogedIn = authState.value != null;
+      final isLoggedIn = authState.value != null;
 
       final isAuthPage = state.matchedLocation == AppRoutes.login ||
           state.matchedLocation == AppRoutes.register;
 
-      if (!isLogedIn && !isAuthPage) return AppRoutes.login;
+      if (!isLoggedIn && !isAuthPage) return AppRoutes.login;
 
-      if (isLogedIn && isAuthPage) return AppRoutes.home;
+      if (isLoggedIn && isAuthPage) return AppRoutes.decks;
 
       return null;
     },
     routes: [
-      GoRoute(
-        path: AppRoutes.home,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Home Page')),
-        ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return MainShellScreen(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.decks,
+                builder: (context, state) => const DecksScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.addDeck,
+                builder: (context, state) => const AddDeckScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.profile,
+                builder: (context, state) => const ProfileScreen(),
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.login,
