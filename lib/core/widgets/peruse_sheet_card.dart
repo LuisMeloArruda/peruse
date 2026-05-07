@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/theme.dart';
+import 'package:peruse/core/theme/theme.dart';
 
 /// White rounded surface with the soft shadow used on chart / stat cards in Figma.
 class PeruseSheetCard extends StatelessWidget {

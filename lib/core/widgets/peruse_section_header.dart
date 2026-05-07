@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/theme.dart';
+import 'package:peruse/core/theme/theme.dart';
 
 /// Section title row (e.g. “Curated Decks”) with optional trailing control.
 class PeruseSectionHeader extends StatelessWidget {

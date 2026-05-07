@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/theme.dart';
+import 'package:peruse/core/theme/theme.dart';
 
 /// Large display title + optional subtitle (Figma “Growth” hero block).
 class PeruseHeroHeading extends StatelessWidget {

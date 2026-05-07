@@ -1,4 +1,4 @@
-import '../../domain/entities/app_user.dart';
+import 'package:peruse/features/auth/domain/entities/app_user.dart';
 
 class UserModel {
   final String id;

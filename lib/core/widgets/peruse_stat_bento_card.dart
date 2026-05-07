@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/theme.dart';
+import 'package:peruse/core/theme/theme.dart';
 
 /// Bento stat tile variants from the Growth screen (muted grey, green streak, white elevated).
 enum PeruseStatBentoVariant {

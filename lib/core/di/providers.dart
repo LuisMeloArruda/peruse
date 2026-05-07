@@ -1,9 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../features/auth/data/repositories/remote/auth_repository_rmt_impl.dart';
-import '../../features/auth/domain/repositories/auth_repository.dart';
-import '../../features/auth/domain/usecases/auth/login_use_case.dart';
-import '../../features/auth/domain/usecases/auth/register_use_case.dart';
+import 'package:peruse/features/auth/data/repositories/remote/auth_repository_rmt_impl.dart';
+import 'package:peruse/features/auth/domain/repositories/auth_repository.dart';
+import 'package:peruse/features/auth/domain/usecases/auth/login_use_case.dart';
+import 'package:peruse/features/auth/domain/usecases/auth/register_use_case.dart';
 
 part 'providers.g.dart';
 

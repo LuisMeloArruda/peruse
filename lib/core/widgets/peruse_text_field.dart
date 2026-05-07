@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../theme/theme.dart';
+import 'package:peruse/core/theme/theme.dart';
 
 /// optional prefix; password fields get a visibility toggle unless [suffixIcon] is set.
 class PeruseTextField extends StatefulWidget {

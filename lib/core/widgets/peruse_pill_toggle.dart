@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/theme.dart';
+import 'package:peruse/core/theme/theme.dart';
 
 /// Two-option pill control (Figma WEEK / MONTH). For more options, use [PerusePillToggle.index].
 class PerusePillToggle extends StatelessWidget {

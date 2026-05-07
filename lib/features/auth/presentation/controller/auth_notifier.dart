@@ -43,4 +43,13 @@ class AuthController extends _$AuthController {
       await registerUseCase(email, password);
     });
   }
+
+  Future<void> loginWithGoogle() async {
+    state = const AsyncValue.loading();
+
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(authRepositoryProvider);
+      await repository.signInWithGoogle();
+    });
+  }
 }

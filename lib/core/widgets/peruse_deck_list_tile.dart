@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../theme/theme.dart';
+import 'package:peruse/core/theme/theme.dart';
 
 /// Deck row: circular progress, title, subtitle, chevron — matches “Deck Card” in Figma.
 class PeruseDeckListTile extends StatelessWidget {
