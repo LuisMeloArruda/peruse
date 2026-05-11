@@ -3,8 +3,8 @@ import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/features/auth/presentation/controller/auth_notifier.dart';
 import 'package:peruse/features/auth/presentation/login_screen.dart';
 import 'package:peruse/features/auth/presentation/register_screen.dart';
-import 'package:peruse/features/decks/presentation/add_deck_screen.dart';
 import 'package:peruse/features/decks/presentation/decks_screen.dart';
+import 'package:peruse/features/capture/presentation/capture_screen.dart';
 import 'package:peruse/features/profile/presentation/profile_screen.dart';
 import 'package:peruse/core/widgets/main_shell_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -49,8 +49,8 @@ GoRouter router(Ref ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: AppRoutes.addDeck,
-                builder: (context, state) => const AddDeckScreen(),
+                path: AppRoutes.capture,
+                builder: (context, state) => const CaptureScreen(),
               ),
             ],
           ),

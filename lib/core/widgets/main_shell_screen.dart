@@ -34,9 +34,9 @@ class MainShellScreen extends StatelessWidget {
               label: 'Decks',
             ),
             NavigationDestination(
-              icon: _AddDeckIcon(isSelected: false),
-              selectedIcon: _AddDeckIcon(isSelected: true),
-              label: 'Add Deck',
+              icon: _CaptureIcon(isSelected: false),
+              selectedIcon: _CaptureIcon(isSelected: true),
+              label: 'Capture',
             ),
             NavigationDestination(
               icon: Icon(Icons.person_outline),
@@ -50,8 +50,8 @@ class MainShellScreen extends StatelessWidget {
   }
 }
 
-class _AddDeckIcon extends StatelessWidget {
-  const _AddDeckIcon({required this.isSelected});
+class _CaptureIcon extends StatelessWidget {
+  const _CaptureIcon({required this.isSelected});
 
   final bool isSelected;
 
@@ -80,7 +80,7 @@ class _AddDeckIcon extends StatelessWidget {
               ]
             : null,
       ),
-      child: Icon(Icons.add, color: foreground),
+      child: Icon(Icons.photo_camera_outlined, color: foreground),
     );
   }
 }
