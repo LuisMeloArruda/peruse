@@ -130,6 +130,30 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     }
   }
 
+  Future<void> _handleSync(WidgetRef ref) async {
+    try {
+      await ref.read(captureControllerProvider.notifier).syncAll();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sync completed successfully'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sync failed: $error'),
+            duration: const Duration(seconds: 4),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final camerasAsync = ref.watch(availableCamerasProvider);
@@ -145,10 +169,33 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       appBar: AppBar(
         title: const Text('Capture & Learn'),
         actions: [
-          IconButton(
-            onPressed: () => ref.read(captureControllerProvider.notifier).syncAll(),
-            icon: const Icon(Icons.sync),
-            tooltip: 'Sync pending captures',
+          capturesAsync.when(
+            data: (_) => IconButton(
+              onPressed: () => _handleSync(ref),
+              icon: const Icon(Icons.sync),
+              tooltip: 'Sync pending captures',
+            ),
+            loading: () => Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
+            error: (error, _) => Tooltip(
+              message: 'Sync error: ${error.toString()}',
+              child: IconButton(
+                onPressed: () => _handleSync(ref),
+                icon: const Icon(Icons.sync_problem, color: Colors.red),
+                tooltip: 'Retry sync',
+              ),
+            ),
           ),
         ],
       ),
@@ -321,16 +368,26 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
                 'Recent captures',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
-              capturesAsync.isLoading
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : TextButton(
-                      onPressed: () => ref.read(captureControllerProvider.notifier).refresh(),
-                      child: const Text('Refresh'),
-                    ),
+              capturesAsync.when(
+                data: (_) => TextButton(
+                  onPressed: () => ref.read(captureControllerProvider.notifier).refresh(),
+                  child: const Text('Refresh'),
+                ),
+                loading: () => const SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                error: (error, _) => Tooltip(
+                  message: 'Error: ${error.toString()}',
+                  child: IconButton(
+                    onPressed: () => ref.read(captureControllerProvider.notifier).refresh(),
+                    icon: const Icon(Icons.error_outline, color: Colors.red),
+                    tooltip: 'Retry',
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -345,7 +402,28 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
               );
             },
             loading: () => const LinearProgressIndicator(),
-            error: (error, _) => Text('Could not load captures: $error'),
+            error: (error, _) => Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Failed to load captures',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.red),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    error.toString(),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -358,41 +436,86 @@ class _CaptureTile extends StatelessWidget {
 
   final Capture capture;
 
+  Color _getStatusColor(String status) {
+    return switch (status) {
+      'uploaded' => Colors.green,
+      'uploading' => Colors.blue,
+      'failed' => Colors.red,
+      _ => Colors.orange, // pending
+    };
+  }
+
+  IconData _getStatusIcon(String status) {
+    return switch (status) {
+      'uploaded' => Icons.cloud_done_outlined,
+      'uploading' => Icons.cloud_upload_outlined,
+      'failed' => Icons.error_outline,
+      _ => Icons.schedule_outlined, // pending
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final primaryLabel = capture.labels.isEmpty ? 'No label' : capture.labels.first.text;
     final confidence = capture.labels.isEmpty ? 0.0 : capture.labels.first.confidence;
+    final statusColor = _getStatusColor(capture.status);
+    final statusIcon = _getStatusIcon(capture.status);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainer,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.image_outlined),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: statusColor.withValues(alpha: 0.2),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  primaryLabel,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainer,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(14),
+                  bottomLeft: Radius.circular(14),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '${(confidence * 100).toStringAsFixed(1)}% • ${capture.status}',
-                ),
-              ],
+              ),
+              child: const Icon(Icons.image_outlined),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    primaryLabel,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${(confidence * 100).toStringAsFixed(1)}%',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Tooltip(
+                message: 'Status: ${capture.status}',
+                child: Icon(
+                  statusIcon,
+                  color: statusColor,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -25,12 +25,21 @@ class CaptureController extends _$CaptureController {
   }
 
   Future<void> syncAll() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final repository = ref.read(captureRepositoryProvider);
+    final repository = ref.read(captureRepositoryProvider);
+    final previousCaptures = state.value ?? await repository.getLocalCaptures();
+
+    state = AsyncValue.data(previousCaptures);
+
+    try {
       await repository.syncPendingCaptures();
-      return repository.getLocalCaptures();
-    });
+      final refreshed = await repository.getLocalCaptures();
+      state = AsyncValue.data(refreshed);
+    } catch (e) {
+      // Preserve already loaded local captures and bubble the sync failure
+      // so UI can still show feedback (snackbar/toast).
+      state = AsyncValue.data(previousCaptures);
+      throw Exception('Sync failed: $e');
+    }
   }
 
   Future<void> refresh() async {

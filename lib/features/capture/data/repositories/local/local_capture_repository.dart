@@ -115,7 +115,9 @@ class LocalCaptureRepository implements ICaptureRepository {
   @override
   Future<void> syncPendingCaptures() async {
     final pendingRows = await (database.select(database.localCaptures)
-          ..where((tbl) => tbl.status.equals(CaptureSyncStatus.pending.value)))
+          ..where((tbl) =>
+              tbl.status.equals(CaptureSyncStatus.pending.value) |
+              tbl.status.equals(CaptureSyncStatus.failed.value)))
         .get();
 
     for (final row in pendingRows) {
@@ -146,8 +148,13 @@ class LocalCaptureRepository implements ICaptureRepository {
         throw Exception('Local image not found: ${captureRow.localPath}');
       }
 
+      final currentUserId = client.auth.currentUser?.id;
+      if (currentUserId == null) {
+        throw Exception('User not authenticated. Please sign in again.');
+      }
+
       final extension = p.extension(captureRow.localPath);
-      final storagePath = 'captures/${client.auth.currentUser!.id}/${captureRow.id}$extension';
+      final storagePath = 'captures/$currentUserId/${captureRow.id}$extension';
       await client.storage.from('captures').upload(storagePath, localFile);
 
       final captureInsert = await client.from('captures').insert({
@@ -180,17 +187,33 @@ class LocalCaptureRepository implements ICaptureRepository {
         ),
       );
     } catch (error) {
+      final errorMessage = _toSyncErrorMessage(error);
+
       await (database.update(database.localCaptures)
             ..where((tbl) => tbl.id.equals(captureRow.id)))
           .write(
         LocalCapturesCompanion(
           status: Value(CaptureSyncStatus.failed.value),
           updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
-          errorMessage: Value(error.toString()),
+          errorMessage: Value(errorMessage),
         ),
       );
-      rethrow;
+
+      throw Exception(errorMessage);
     }
+  }
+
+  String _toSyncErrorMessage(Object error) {
+    if (error is StorageException && error.statusCode == '403') {
+      return 'Supabase Storage denied upload (403). Check policies for bucket "captures" on storage.objects.';
+    }
+
+    final message = error.toString();
+    if (message.contains('row-level security policy')) {
+      return 'Supabase denied insert due to RLS policy. Check policies for tables captures and object_labels.';
+    }
+
+    return message;
   }
 
   @override
