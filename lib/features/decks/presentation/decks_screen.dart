@@ -108,7 +108,9 @@ class _DecksLoadedView extends StatelessWidget {
                       progress: progress,
                       accentColor: progressColor,
                       icon: icon,
-                      onTap: () {},
+                      onTap: () => context.push(
+                        AppRoutes.deckDetail(deck.id),
+                      ),
                     );
                   },
                 ),

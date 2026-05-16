@@ -1,6 +1,6 @@
 # peruse
 
-Peruse is an open-source vocabulary mastery and language learning application designed to be fast, resilient, and fully functional without an internet connection. 
+Peruse is an open-source english vocabulary mastery and language learning application designed to be fast, resilient, and fully functional without an internet connection. 
 
 The application utilizes an Offline-First strategy, making the local database the single source of truth. The user interface consumes local data reactively, while cloud synchronization occurs invisibly in the background.
 

@@ -34,11 +34,6 @@ class MainShellScreen extends StatelessWidget {
               label: 'Decks',
             ),
             NavigationDestination(
-              icon: _AddDeckIcon(isSelected: false),
-              selectedIcon: _AddDeckIcon(isSelected: true),
-              label: 'Add Deck',
-            ),
-            NavigationDestination(
               icon: Icon(Icons.person_outline),
               selectedIcon: Icon(Icons.person),
               label: 'Profile',
@@ -46,41 +41,6 @@ class MainShellScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _AddDeckIcon extends StatelessWidget {
-  const _AddDeckIcon({required this.isSelected});
-
-  final bool isSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final background = isSelected ? AppColors.primary : AppColors.surfaceContainer;
-    final foreground = isSelected ? AppColors.onPrimary : AppColors.primary;
-    final border = isSelected
-        ? null
-        : Border.all(color: AppColors.primary, width: 1.5);
-
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: background,
-        shape: BoxShape.circle,
-        border: border,
-        boxShadow: isSelected
-            ? const [
-                BoxShadow(
-                  color: AppColors.primaryRing,
-                  blurRadius: 12,
-                  offset: Offset(0, 6),
-                ),
-              ]
-            : null,
-      ),
-      child: Icon(Icons.add, color: foreground),
     );
   }
 }

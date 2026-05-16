@@ -12,6 +12,11 @@ class DecksDao extends DatabaseAccessor<AppDatabase> with _$DecksDaoMixin {
     return select(decksTable).watch();
   }
 
+  Stream<LocalDeck?> watchDeckById(String deckId) {
+    return (select(decksTable)..where((t) => t.id.equals(deckId)))
+        .watchSingleOrNull();
+  }
+
   Future<List<LocalDeck>> getDecks() {
     return select(decksTable).get();
   }
