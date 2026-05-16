@@ -4,7 +4,11 @@ import 'package:peruse/features/auth/presentation/controller/auth_notifier.dart'
 import 'package:peruse/features/auth/presentation/login_screen.dart';
 import 'package:peruse/features/auth/presentation/register_screen.dart';
 import 'package:peruse/features/decks/presentation/add_deck_screen.dart';
+import 'package:peruse/features/decks/presentation/add_word_screen.dart';
+import 'package:peruse/features/decks/presentation/deck_detail_screen.dart';
 import 'package:peruse/features/decks/presentation/decks_screen.dart';
+import 'package:peruse/features/decks/presentation/study_session_screen.dart';
+import 'package:peruse/features/decks/presentation/word_detail_screen.dart';
 import 'package:peruse/features/profile/presentation/profile_screen.dart';
 import 'package:peruse/core/widgets/main_shell_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -43,14 +47,54 @@ GoRouter router(Ref ref) {
               GoRoute(
                 path: AppRoutes.decks,
                 builder: (context, state) => const DecksScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.addDeck,
-                builder: (context, state) => const AddDeckScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'add',
+                    builder: (context, state) => const AddDeckScreen(),
+                  ),
+                  GoRoute(
+                    path: ':deckId',
+                    builder: (context, state) {
+                      final deckId = state.pathParameters['deckId'];
+                      if (deckId == null || deckId.isEmpty) {
+                        return const DecksScreen();
+                      }
+                      return DeckDetailScreen(deckId: deckId);
+                    },
+                    routes: [
+                      GoRoute(
+                        path: 'study',
+                        builder: (context, state) {
+                          final deckId = state.pathParameters['deckId'];
+                          if (deckId == null || deckId.isEmpty) {
+                            return const DecksScreen();
+                          }
+                          return StudySessionScreen(deckId: deckId);
+                        },
+                      ),
+                      GoRoute(
+                        path: 'add-word',
+                        builder: (context, state) {
+                          final deckId = state.pathParameters['deckId'];
+                          if (deckId == null || deckId.isEmpty) {
+                            return const DecksScreen();
+                          }
+                          return AddWordScreen(deckId: deckId);
+                        },
+                      ),
+                      GoRoute(
+                        path: 'words/:wordId',
+                        builder: (context, state) {
+                          final wordId = state.pathParameters['wordId'];
+                          if (wordId == null || wordId.isEmpty) {
+                            return const DecksScreen();
+                          }
+                          return WordDetailScreen(wordId: wordId);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),

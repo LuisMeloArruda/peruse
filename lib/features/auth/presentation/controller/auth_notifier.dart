@@ -1,15 +1,34 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:peruse/core/di/providers.dart';
 import 'package:peruse/features/auth/domain/entities/app_user.dart';
+import 'package:peruse/features/decks/data/repositories/deck_repository_impl.dart';
 
 part 'auth_notifier.g.dart';
 
 @Riverpod(keepAlive: true)
 Stream<AppUser?> authState(Ref ref) async* {
   final repository = ref.watch(authRepositoryProvider);
+  final database = ref.watch(appDatabaseProvider);
+  final deckRepository = ref.read(deckRepositoryProvider);
 
-  yield repository.currentUser;
-  yield* repository.authStateChanges;
+  final current = repository.currentUser;
+  if (current == null) {
+    await database.clearUserData();
+  } else {
+    unawaited(deckRepository.fetchAndCacheUserData());
+  }
+  yield current;
+
+  await for (final user in repository.authStateChanges) {
+    if (user == null) {
+      await database.clearUserData();
+    } else {
+      unawaited(deckRepository.fetchAndCacheUserData());
+    }
+    yield user;
+  }
 }
 
 @riverpod

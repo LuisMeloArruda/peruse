@@ -1,5 +1,8 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:peruse/data/local/database/app_database.dart';
+import 'package:peruse/data/remote/dictionary_api/free_dictionary_api.dart';
 import 'package:peruse/features/auth/data/repositories/remote/auth_repository_rmt_impl.dart';
 import 'package:peruse/features/auth/domain/repositories/auth_repository.dart';
 import 'package:peruse/features/auth/domain/usecases/auth/login_use_case.dart';
@@ -10,6 +13,23 @@ part 'providers.g.dart';
 @Riverpod(keepAlive: true)
 SupabaseClient supabaseClient(Ref ref) {
   return Supabase.instance.client;
+}
+
+@Riverpod(keepAlive: true)
+AppDatabase appDatabase(Ref ref) {
+  final database = AppDatabase();
+  ref.onDispose(database.close);
+  return database;
+}
+
+@Riverpod(keepAlive: true)
+FreeDictionaryApi freeDictionaryApi(Ref ref) {
+  return FreeDictionaryApi();
+}
+
+@Riverpod(keepAlive: true)
+Stream<List<ConnectivityResult>> connectivityStatus(Ref ref) {
+  return Connectivity().onConnectivityChanged;
 }
 
 @Riverpod(keepAlive: true)
