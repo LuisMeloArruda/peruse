@@ -2,7 +2,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:peruse/core/di/providers.dart';
 import 'package:peruse/features/capture/domain/entities/capture.dart';
 import 'package:peruse/features/capture/domain/entities/label.dart';
-import 'package:peruse/features/capture/domain/repositories/capture_repository.dart';
 
 part 'capture_notifier.g.dart';
 
@@ -31,24 +30,50 @@ class CaptureController extends _$CaptureController {
     return capture;
   }
 
-  Future<void> syncAll() async {
+  Future<bool> syncAll({bool silent = false}) async {
     final repository = ref.read(captureRepositoryProvider);
 
     final previousCaptures =
         state.value ?? <Capture>[];
+
+    if (!ref.mounted) {
+      return false;
+    }
 
     state = AsyncData(previousCaptures);
 
     try {
       await repository.syncPendingCaptures();
 
+      if (!ref.mounted) {
+        return false;
+      }
+
       final refreshed =
           await repository.getLocalCaptures();
 
+      if (!ref.mounted) {
+        return false;
+      }
+
       state = AsyncData(refreshed);
+      return true;
     } catch (e, st) {
+      if (!ref.mounted) {
+        return false;
+      }
+
       state = AsyncData(previousCaptures);
-      state = AsyncError(e, st);
+      if (!silent) {
+        if (!ref.mounted) {
+          return false;
+        }
+
+        state = AsyncError(e, st);
+        rethrow;
+      }
+
+      return false;
     }
   }
 

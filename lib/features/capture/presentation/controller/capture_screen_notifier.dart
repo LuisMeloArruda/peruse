@@ -3,14 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart'
     as mlkit;
 
-import 'package:peruse/features/capture/domain/entities/label.dart';
 import 'package:peruse/core/di/providers.dart';
+import 'package:peruse/features/capture/domain/entities/label.dart';
 import 'package:peruse/features/capture/presentation/controller/capture_notifier.dart';
 
 final captureScreenProvider =
     NotifierProvider.autoDispose<CaptureScreenNotifier, CaptureScreenState>(
   CaptureScreenNotifier.new,
 );
+
+class CaptureReviewData {
+  const CaptureReviewData({
+    required this.localPath,
+    required this.labels,
+  });
+
+  final String localPath;
+  final List<Label> labels;
+}
 
 class CaptureScreenState {
   const CaptureScreenState({
@@ -105,7 +115,7 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
     }
   }
 
-  Future<void> captureAndAnalyze() async {
+  Future<CaptureReviewData?> captureAndAnalyze() async {
     final controller = state.cameraController;
     final imageLabeler = state.imageLabeler;
 
@@ -113,7 +123,7 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
         imageLabeler == null ||
         !controller.value.isInitialized ||
         state.takingPicture) {
-      return;
+      return null;
     }
 
     state = state.copyWith(
@@ -140,16 +150,17 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
           )
       ];
 
-      await ref
-          .read(captureControllerProvider.notifier)
-          .saveLocalCapture(xFile.path, detectedLabels);
-
       state = state.copyWith(
         lastCapturedPath: xFile.path,
         lastDetectedLabels: detectedLabels,
       );
+      return CaptureReviewData(
+        localPath: xFile.path,
+        labels: detectedLabels,
+      );
     } catch (error) {
       state = state.copyWith(cameraError: error.toString());
+      return null;
     } finally {
       state = state.copyWith(
         takingPicture: false,
