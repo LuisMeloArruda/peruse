@@ -41,7 +41,11 @@ AppDatabase appDatabase(Ref ref) {
 
 @riverpod
 Future<List<camera.CameraDescription>> availableCameras(Ref ref) async {
-  return camera.availableCameras();
+  try {
+    return await camera.availableCameras();
+  } catch (_) {
+    return const [];
+  }
 }
 
 @Riverpod(keepAlive: true)

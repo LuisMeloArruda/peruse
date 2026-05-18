@@ -170,6 +170,11 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
         .refresh();
   }
 
+  void resetCameraSetup() {
+    _disposeResources();
+    state = const CaptureScreenState();
+  }
+
   void _disposeResources() {
     state.cameraController?.dispose();
     state.imageLabeler?.close();

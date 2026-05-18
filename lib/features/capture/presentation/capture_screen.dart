@@ -20,8 +20,17 @@ class CaptureScreen extends ConsumerWidget {
     final screenNotifier = ref.read(captureScreenProvider.notifier);
 
     camerasAsync.whenData((cameras) {
-      if (screenState.cameraController == null && !screenState.initializingCamera) {
-        screenNotifier.initializeCamera(cameras);
+      if (screenState.cameraController == null &&
+          !screenState.initializingCamera &&
+          screenState.cameraError == null &&
+          cameras.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (screenState.cameraController == null &&
+              !screenState.initializingCamera &&
+              screenState.cameraError == null) {
+            screenNotifier.initializeCamera(cameras);
+          }
+        });
       }
     });
 
@@ -107,7 +116,7 @@ class CaptureScreen extends ConsumerWidget {
             children: [
               Expanded(
                 flex: 7,
-                child: _buildCameraPanel(context, camerasAsync, screenState),
+                child: _buildCameraPanel(context, ref, camerasAsync, screenState),
               ),
               const SizedBox(height: AppSpacing.md),
               Expanded(
@@ -139,13 +148,27 @@ class CaptureScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCameraPanel(BuildContext context, AsyncValue<List<CameraDescription>> camerasAsync, CaptureScreenState state) {
+  Widget _buildCameraPanel(BuildContext context, WidgetRef ref, AsyncValue<List<CameraDescription>> camerasAsync, CaptureScreenState state) {
     if (state.cameraError != null) {
       return _SurfaceCard(
         child: Center(
-          child: Text(
-            'Camera error\n\n${state.cameraError}',
-            textAlign: TextAlign.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Camera error\n\n${state.cameraError}',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  ref.invalidate(availableCamerasProvider);
+                  ref.read(captureScreenProvider.notifier).resetCameraSetup();
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry camera'),
+              ),
+            ],
           ),
         ),
       );
@@ -160,11 +183,25 @@ class CaptureScreen extends ConsumerWidget {
     if (state.cameraController == null || !state.cameraController!.value.isInitialized) {
       return _SurfaceCard(
         child: Center(
-          child: Text(
-            camerasAsync.hasError
-                ? 'Unable to load cameras: ${camerasAsync.error}'
-                : 'No camera available',
-            textAlign: TextAlign.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                camerasAsync.hasError
+                    ? 'Unable to load cameras: ${camerasAsync.error}'
+                    : 'No camera available',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  ref.invalidate(availableCamerasProvider);
+                  ref.read(captureScreenProvider.notifier).resetCameraSetup();
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry camera'),
+              ),
+            ],
           ),
         ),
       );
