@@ -10,35 +10,45 @@ part 'capture_notifier.g.dart';
 class CaptureController extends _$CaptureController {
   @override
   Future<List<Capture>> build() async {
-    final repository = ref.watch(captureRepositoryProvider);
+    final repository = ref.read(captureRepositoryProvider);
     return repository.getLocalCaptures();
   }
 
-  Future<Capture> saveLocalCapture(String localPath, List<Label> labels) async {
+  Future<Capture> saveLocalCapture(
+    String localPath,
+    List<Label> labels,
+  ) async {
     final repository = ref.read(captureRepositoryProvider);
-    final capture = await repository.saveLocalCapture(localPath, labels);
 
-    final currentCaptures = state.value ?? const <Capture>[];
-    state = AsyncValue.data([capture, ...currentCaptures]);
+    final capture =
+        await repository.saveLocalCapture(localPath, labels);
+
+    final currentCaptures =
+        state.value ?? <Capture>[];
+
+    state = AsyncData([capture, ...currentCaptures]);
 
     return capture;
   }
 
   Future<void> syncAll() async {
     final repository = ref.read(captureRepositoryProvider);
-    final previousCaptures = state.value ?? await repository.getLocalCaptures();
 
-    state = AsyncValue.data(previousCaptures);
+    final previousCaptures =
+        state.value ?? <Capture>[];
+
+    state = AsyncData(previousCaptures);
 
     try {
       await repository.syncPendingCaptures();
-      final refreshed = await repository.getLocalCaptures();
-      state = AsyncValue.data(refreshed);
-    } catch (e) {
-      // Preserve already loaded local captures and bubble the sync failure
-      // so UI can still show feedback (snackbar/toast).
-      state = AsyncValue.data(previousCaptures);
-      throw Exception('Sync failed: $e');
+
+      final refreshed =
+          await repository.getLocalCaptures();
+
+      state = AsyncData(refreshed);
+    } catch (e, st) {
+      state = AsyncData(previousCaptures);
+      state = AsyncError(e, st);
     }
   }
 

@@ -1,0 +1,177 @@
+import 'package:camera/camera.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart'
+    as mlkit;
+
+import 'package:peruse/features/capture/domain/entities/label.dart';
+import 'package:peruse/core/di/providers.dart';
+import 'package:peruse/features/capture/presentation/controller/capture_notifier.dart';
+
+final captureScreenProvider =
+    NotifierProvider.autoDispose<CaptureScreenNotifier, CaptureScreenState>(
+  CaptureScreenNotifier.new,
+);
+
+class CaptureScreenState {
+  const CaptureScreenState({
+    this.cameraController,
+    this.imageLabeler,
+    this.initializingCamera = false,
+    this.takingPicture = false,
+    this.processingImage = false,
+    this.lastCapturedPath,
+    this.lastDetectedLabels = const [],
+    this.cameraError,
+  });
+
+  final CameraController? cameraController;
+  final mlkit.ImageLabeler? imageLabeler;
+
+  final bool initializingCamera;
+  final bool takingPicture;
+  final bool processingImage;
+
+  final String? lastCapturedPath;
+  final List<Label> lastDetectedLabels;
+  final String? cameraError;
+
+  CaptureScreenState copyWith({
+    CameraController? cameraController,
+    mlkit.ImageLabeler? imageLabeler,
+    bool? initializingCamera,
+    bool? takingPicture,
+    bool? processingImage,
+    String? lastCapturedPath,
+    List<Label>? lastDetectedLabels,
+    String? cameraError,
+  }) {
+    return CaptureScreenState(
+      cameraController: cameraController ?? this.cameraController,
+      imageLabeler: imageLabeler ?? this.imageLabeler,
+      initializingCamera: initializingCamera ?? this.initializingCamera,
+      takingPicture: takingPicture ?? this.takingPicture,
+      processingImage: processingImage ?? this.processingImage,
+      lastCapturedPath: lastCapturedPath ?? this.lastCapturedPath,
+      lastDetectedLabels: lastDetectedLabels ?? this.lastDetectedLabels,
+      cameraError: cameraError ?? this.cameraError,
+    );
+  }
+}
+
+class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
+
+  @override
+  CaptureScreenState build() {
+    ref.onDispose(_disposeResources);
+    return const CaptureScreenState();
+  }
+
+  Future<void> initializeCamera(List<CameraDescription> cameras) async {
+    if (state.initializingCamera ||
+        state.cameraController != null ||
+        cameras.isEmpty) return;
+
+    state = state.copyWith(initializingCamera: true);
+
+    final cameraDescription = cameras.firstWhere(
+      (camera) => camera.lensDirection == CameraLensDirection.back,
+      orElse: () => cameras.first,
+    );
+
+    final controller = CameraController(
+      cameraDescription,
+      ResolutionPreset.high,
+      enableAudio: false,
+      imageFormatGroup: ImageFormatGroup.jpeg,
+    );
+
+    try {
+      await controller.initialize();
+
+      final labeler = mlkit.ImageLabeler(
+        options: mlkit.ImageLabelerOptions(confidenceThreshold: 0.45),
+      );
+
+      state = state.copyWith(
+        cameraController: controller,
+        imageLabeler: labeler,
+        cameraError: null,
+      );
+    } catch (error) {
+      await controller.dispose();
+      state = state.copyWith(cameraError: error.toString());
+    } finally {
+      state = state.copyWith(initializingCamera: false);
+    }
+  }
+
+  Future<void> captureAndAnalyze() async {
+    final controller = state.cameraController;
+    final imageLabeler = state.imageLabeler;
+
+    if (controller == null ||
+        imageLabeler == null ||
+        !controller.value.isInitialized ||
+        state.takingPicture) {
+      return;
+    }
+
+    state = state.copyWith(
+      takingPicture: true,
+      processingImage: true,
+      cameraError: null,
+    );
+
+    try {
+      final xFile = await controller.takePicture();
+
+      final inputImage =
+          mlkit.InputImage.fromFilePath(xFile.path);
+
+      final labels =
+          await imageLabeler.processImage(inputImage);
+
+      final detectedLabels = [
+        for (final label in labels)
+          Label(
+            text: label.label,
+            confidence: label.confidence,
+            language: 'en',
+          )
+      ];
+
+      await ref
+          .read(captureControllerProvider.notifier)
+          .saveLocalCapture(xFile.path, detectedLabels);
+
+      state = state.copyWith(
+        lastCapturedPath: xFile.path,
+        lastDetectedLabels: detectedLabels,
+      );
+    } catch (error) {
+      state = state.copyWith(cameraError: error.toString());
+    } finally {
+      state = state.copyWith(
+        takingPicture: false,
+        processingImage: false,
+      );
+    }
+  }
+
+  Future<void> syncAll() async {
+    await ref
+        .read(captureControllerProvider.notifier)
+        .syncAll();
+  }
+
+  Future<void> refreshCaptures() async {
+    await ref
+        .read(captureControllerProvider.notifier)
+        .refresh();
+  }
+
+  void _disposeResources() {
+    state.cameraController?.dispose();
+    state.imageLabeler?.close();
+  }
+}

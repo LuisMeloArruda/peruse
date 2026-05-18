@@ -3,165 +3,25 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart' as mlkit;
 import 'package:peruse/core/di/providers.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/features/capture/domain/entities/capture.dart';
-import 'package:peruse/features/capture/domain/entities/label.dart';
 import 'controller/capture_notifier.dart';
+import 'controller/capture_screen_notifier.dart';
 
-class CaptureScreen extends ConsumerStatefulWidget {
+class CaptureScreen extends ConsumerWidget {
   const CaptureScreen({super.key});
 
   @override
-  ConsumerState<CaptureScreen> createState() => _CaptureScreenState();
-}
-
-class _CaptureScreenState extends ConsumerState<CaptureScreen> {
-  CameraController? _cameraController;
-  mlkit.ImageLabeler? _imageLabeler;
-  bool _initializingCamera = false;
-  bool _takingPicture = false;
-  bool _processingImage = false;
-  String? _lastCapturedPath;
-  List<Label> _lastDetectedLabels = const [];
-  String? _cameraError;
-
-  @override
-  void dispose() {
-    _cameraController?.dispose();
-    _imageLabeler?.close();
-    super.dispose();
-  }
-
-  Future<void> _initializeCamera(List<CameraDescription> cameras) async {
-    if (_initializingCamera || _cameraController != null || cameras.isEmpty) {
-      return;
-    }
-
-    _initializingCamera = true;
-    final cameraDescription = cameras.firstWhere(
-      (camera) => camera.lensDirection == CameraLensDirection.back,
-      orElse: () => cameras.first,
-    );
-
-    final controller = CameraController(
-      cameraDescription,
-      ResolutionPreset.high,
-      enableAudio: false,
-      imageFormatGroup: ImageFormatGroup.jpeg,
-    );
-
-    try {
-      await controller.initialize();
-      _imageLabeler = mlkit.ImageLabeler(
-        options: mlkit.ImageLabelerOptions(confidenceThreshold: 0.45),
-      );
-      if (!mounted) {
-        await controller.dispose();
-        return;
-      }
-
-      setState(() {
-        _cameraController = controller;
-        _cameraError = null;
-      });
-    } catch (error) {
-      await controller.dispose();
-      if (!mounted) return;
-      setState(() {
-        _cameraError = error.toString();
-      });
-    } finally {
-      _initializingCamera = false;
-    }
-  }
-
-  Future<void> _captureAndAnalyze() async {
-    final controller = _cameraController;
-    final imageLabeler = _imageLabeler;
-
-    if (controller == null || imageLabeler == null || !controller.value.isInitialized || _takingPicture) {
-      return;
-    }
-
-    setState(() {
-      _takingPicture = true;
-      _processingImage = true;
-      _cameraError = null;
-    });
-
-    try {
-      final xFile = await controller.takePicture();
-      final inputImage = mlkit.InputImage.fromFilePath(xFile.path);
-      final labels = await imageLabeler.processImage(inputImage);
-
-      final detectedLabels = labels
-          .map(
-            (label) => Label(
-              text: label.label,
-              confidence: label.confidence,
-              language: 'en',
-            ),
-          )
-          .toList();
-
-      await ref.read(captureControllerProvider.notifier).saveLocalCapture(
-            xFile.path,
-            detectedLabels,
-          );
-
-      if (!mounted) return;
-      setState(() {
-        _lastCapturedPath = xFile.path;
-        _lastDetectedLabels = detectedLabels;
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _cameraError = error.toString();
-      });
-    } finally {
-      if (!mounted) return;
-      setState(() {
-        _takingPicture = false;
-        _processingImage = false;
-      });
-    }
-  }
-
-  Future<void> _handleSync(WidgetRef ref) async {
-    try {
-      await ref.read(captureControllerProvider.notifier).syncAll();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Sync completed successfully'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Sync failed: $error'),
-            duration: const Duration(seconds: 4),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final camerasAsync = ref.watch(availableCamerasProvider);
     final capturesAsync = ref.watch(captureControllerProvider);
+    final screenState = ref.watch(captureScreenProvider);
+    final screenNotifier = ref.read(captureScreenProvider.notifier);
 
     camerasAsync.whenData((cameras) {
-      if (_cameraController == null && !_initializingCamera) {
-        _initializeCamera(cameras);
+      if (screenState.cameraController == null && !screenState.initializingCamera) {
+        screenNotifier.initializeCamera(cameras);
       }
     });
 
@@ -171,7 +31,27 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         actions: [
           capturesAsync.when(
             data: (_) => IconButton(
-              onPressed: () => _handleSync(ref),
+              onPressed: () async {
+                try {
+                  await screenNotifier.syncAll();
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Sync completed successfully'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                } catch (error) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Sync failed: $error'),
+                      duration: const Duration(seconds: 4),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
               icon: const Icon(Icons.sync),
               tooltip: 'Sync pending captures',
             ),
@@ -191,7 +71,27 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
             error: (error, _) => Tooltip(
               message: 'Sync error: ${error.toString()}',
               child: IconButton(
-                onPressed: () => _handleSync(ref),
+                onPressed: () async {
+                  try {
+                    await screenNotifier.syncAll();
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Sync completed successfully'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  } catch (error) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Sync failed: $error'),
+                        duration: const Duration(seconds: 4),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
                 icon: const Icon(Icons.sync_problem, color: Colors.red),
                 tooltip: 'Retry sync',
               ),
@@ -207,16 +107,16 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
             children: [
               Expanded(
                 flex: 7,
-                child: _buildCameraPanel(camerasAsync),
+                child: _buildCameraPanel(context, camerasAsync, screenState),
               ),
               const SizedBox(height: AppSpacing.md),
               Expanded(
                 flex: 5,
                 child: ListView(
                   children: [
-                    _buildDetectionCard(),
+                    _buildDetectionCard(context, screenState),
                     const SizedBox(height: AppSpacing.md),
-                    _buildRecentCaptures(capturesAsync),
+                    _buildRecentCaptures(context, capturesAsync, ref),
                   ],
                 ),
               ),
@@ -225,39 +125,39 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _takingPicture ? null : _captureAndAnalyze,
-        icon: _takingPicture
+        onPressed: screenState.takingPicture ? null : screenNotifier.captureAndAnalyze,
+        icon: screenState.takingPicture
             ? const SizedBox(
                 height: 18,
                 width: 18,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : const Icon(Icons.camera_alt),
-        label: Text(_takingPicture ? 'Working' : 'Capture'),
+        label: Text(screenState.takingPicture ? 'Working' : 'Capture'),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
-  Widget _buildCameraPanel(AsyncValue<List<CameraDescription>> camerasAsync) {
-    if (_cameraError != null) {
+  Widget _buildCameraPanel(BuildContext context, AsyncValue<List<CameraDescription>> camerasAsync, CaptureScreenState state) {
+    if (state.cameraError != null) {
       return _SurfaceCard(
         child: Center(
           child: Text(
-            'Camera error\n\n$_cameraError',
+            'Camera error\n\n${state.cameraError}',
             textAlign: TextAlign.center,
           ),
         ),
       );
     }
 
-    if (camerasAsync.isLoading || _initializingCamera) {
+    if (camerasAsync.isLoading || state.initializingCamera) {
       return const _SurfaceCard(
         child: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+    if (state.cameraController == null || !state.cameraController!.value.isInitialized) {
       return _SurfaceCard(
         child: Center(
           child: Text(
@@ -275,7 +175,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          CameraPreview(_cameraController!),
+          CameraPreview(state.cameraController!),
           const _CameraOverlay(),
           Positioned(
             left: 16,
@@ -294,14 +194,14 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     );
   }
 
-  Widget _buildDetectionCard() {
-    if (_lastDetectedLabels.isEmpty) {
+  Widget _buildDetectionCard(BuildContext context, CaptureScreenState state) {
+    if (state.lastDetectedLabels.isEmpty) {
       return const _SurfaceCard(
         child: Text('No detection yet. Capture an object to start.'),
       );
     }
 
-    final primaryLabel = _lastDetectedLabels.first;
+    final primaryLabel = state.lastDetectedLabels.first;
 
     return _SurfaceCard(
       child: Column(
@@ -321,12 +221,12 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
             'Confidence ${(primaryLabel.confidence * 100).toStringAsFixed(1)}%',
             style: Theme.of(context).textTheme.titleMedium,
           ),
-          if (_lastDetectedLabels.length > 1) ...[
+          if (state.lastDetectedLabels.length > 1) ...[
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _lastDetectedLabels
+              children: state.lastDetectedLabels
                   .map(
                     (label) => Chip(
                       label: Text('${label.text} ${(label.confidence * 100).toStringAsFixed(0)}%'),
@@ -335,19 +235,19 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
                   .toList(),
             ),
           ],
-          if (_lastCapturedPath != null) ...[
+          if (state.lastCapturedPath != null) ...[
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Image.file(
-                File(_lastCapturedPath!),
+                File(state.lastCapturedPath!),
                 height: 140,
                 width: double.infinity,
                 fit: BoxFit.cover,
               ),
             ),
           ],
-          if (_processingImage) ...[
+          if (state.processingImage) ...[
             const SizedBox(height: 12),
             const LinearProgressIndicator(),
           ],
@@ -356,7 +256,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     );
   }
 
-  Widget _buildRecentCaptures(AsyncValue<List<Capture>> capturesAsync) {
+  Widget _buildRecentCaptures(BuildContext context, AsyncValue<List<Capture>> capturesAsync, WidgetRef ref) {
     return _SurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
