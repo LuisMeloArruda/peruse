@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/features/auth/presentation/controller/auth_notifier.dart';
@@ -9,9 +10,17 @@ import 'package:peruse/features/decks/presentation/deck_detail_screen.dart';
 import 'package:peruse/features/decks/presentation/decks_screen.dart';
 import 'package:peruse/features/decks/presentation/study_session_screen.dart';
 import 'package:peruse/features/decks/presentation/word_detail_screen.dart';
+import 'package:peruse/features/capture/domain/entities/capture.dart';
+import 'package:peruse/features/capture/presentation/capture_screen.dart';
+import 'package:peruse/features/capture/presentation/capture_list_screen.dart';
+import 'package:peruse/features/capture/presentation/capture_review_screen.dart';
+import 'package:peruse/features/capture/presentation/capture_result_screen.dart';
+import 'package:peruse/features/capture/presentation/capture_detail_screen.dart';
+import 'package:peruse/features/capture/presentation/controller/capture_screen_notifier.dart';
 import 'package:peruse/features/profile/presentation/profile_screen.dart';
 import 'package:peruse/core/widgets/main_shell_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 
 part 'router.g.dart';
 
@@ -101,6 +110,18 @@ GoRouter router(Ref ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
+                path: AppRoutes.capture,
+                builder: (context, state) => const CaptureScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.captureList,
+                builder: (context, state) => const CaptureListScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
                 path: AppRoutes.profile,
                 builder: (context, state) => const ProfileScreen(),
               ),
@@ -115,6 +136,51 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: AppRoutes.register,
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.captureReview,
+        builder: (context, state) {
+          final reviewData = state.extra;
+          if (reviewData is CaptureReviewData) {
+            return CaptureReviewScreen(reviewData: reviewData);
+          }
+
+          return const Scaffold(
+            body: Center(
+              child: Text('No capture review data available.'),
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.captureResult,
+        builder: (context, state) {
+          final capture = state.extra;
+          if (capture is CaptureReviewData) {
+            return CaptureResultScreen(reviewData: capture);
+          }
+
+          return const Scaffold(
+            body: Center(
+              child: Text('No capture review data available.'),
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.captureDetail,
+        builder: (context, state) {
+          final cap = state.extra;
+          if (cap is Capture) {
+            return CaptureDetailScreen(capture: cap);
+          }
+
+          return const Scaffold(
+            body: Center(
+              child: Text('No capture data available.'),
+            ),
+          );
+        },
       ),
     ],
   );
