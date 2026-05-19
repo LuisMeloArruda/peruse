@@ -35,7 +35,21 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (Migrator m) async {
+          await m.createAll();
+        },
+        onUpgrade: (Migrator m, int from, int to) async {
+          if (from < to) {
+            // Basic fallback: ensure all tables/columns exist when upgrading.
+            // For more complex migrations, add specific steps per version.
+            await m.createAll();
+          }
+        },
+      );
 }
 
 

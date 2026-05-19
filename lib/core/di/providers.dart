@@ -8,7 +8,6 @@ import 'package:peruse/features/auth/data/repositories/remote/auth_repository_rm
 import 'package:peruse/features/auth/domain/repositories/auth_repository.dart';
 import 'package:peruse/features/auth/domain/usecases/auth/login_use_case.dart';
 import 'package:peruse/features/auth/domain/usecases/auth/register_use_case.dart';
-import 'package:peruse/features/capture/data/local/app_database.dart' as capture_db;
 import 'package:peruse/features/capture/data/repositories/local/local_capture_repository.dart';
 import 'package:peruse/features/capture/domain/repositories/capture_repository.dart';
 
@@ -55,13 +54,6 @@ RegisterUseCase registerUseCase(Ref ref) {
   return RegisterUseCase(repository);
 }
 
-@Riverpod(keepAlive: true)
-capture_db.AppDatabase captureAppDatabase(Ref ref) {
-  final database = capture_db.AppDatabase();
-  ref.onDispose(database.close);
-  return database;
-}
-
 @riverpod
 Future<List<camera.CameraDescription>> availableCameras(Ref ref) async {
   try {
@@ -74,6 +66,6 @@ Future<List<camera.CameraDescription>> availableCameras(Ref ref) async {
 @Riverpod(keepAlive: true)
 ICaptureRepository captureRepository(Ref ref) {
   final client = ref.watch(supabaseClientProvider);
-  final database = ref.watch(captureAppDatabaseProvider);
+  final database = ref.watch(appDatabaseProvider);
   return LocalCaptureRepository(database, client);
 }

@@ -32,40 +32,49 @@ class CaptureScreen extends ConsumerWidget {
     });
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Capture'),
-        actions: [
-          IconButton(
-            onPressed: () => context.go(AppRoutes.captureList),
-            icon: const Icon(Icons.photo_library_outlined),
-            tooltip: 'Capture list',
-          ),
-        ],
-      ),
+      backgroundColor: Colors.black,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: _buildCameraPanel(context, ref, camerasAsync, screenState),
+        top: false,
+        bottom: false,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _buildCameraPanel(context, ref, camerasAsync, screenState),
+            const Positioned(
+              top: 20,
+              left: 0,
+              right: 0,
+              child: _CaptureStatusPill(),
+            ),
+            const Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              bottom: 0,
+              child: Center(child: _CaptureHintCard()),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 24,
+              child: _CaptureControls(
+                takingPicture: screenState.takingPicture,
+                onLibraryTap: () => context.go(AppRoutes.captureList),
+                onCaptureTap: screenState.takingPicture
+                    ? null
+                    : () async {
+                        final reviewData = await screenNotifier.captureAndAnalyze();
+                        if (!context.mounted || reviewData == null) return;
+                        context.push(AppRoutes.captureReview, extra: reviewData);
+                      },
+                onFlipTap: screenState.takingPicture
+                    ? null
+                    : () => screenNotifier.switchCamera(),
+              ),
+            ),
+          ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: screenState.takingPicture
-            ? null
-            : () async {
-                final reviewData = await screenNotifier.captureAndAnalyze();
-                if (!context.mounted || reviewData == null) return;
-                context.push(AppRoutes.captureReview, extra: reviewData);
-              },
-        icon: screenState.takingPicture
-            ? const SizedBox(
-                height: 18,
-                width: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.camera_alt),
-        label: Text(screenState.takingPicture ? 'Working' : 'Capture'),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -128,30 +137,247 @@ class CaptureScreen extends ConsumerWidget {
       );
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          CameraPreview(state.cameraController!),
-          const _CameraOverlay(),
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 16,
-            child: _SurfaceCard(
-              color: Colors.black.withValues(alpha: 0.45),
-              child: Text(
-                'Point at an object and capture it to review the photo first.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ClipRect(child: CameraPreview(state.cameraController!)),
+        const _CameraOverlay(),
+      ],
+    );
+  }
+
+}
+
+class _CaptureStatusPill extends StatelessWidget {
+  const _CaptureStatusPill();
+
+@override
+Widget build(BuildContext context) {
+  return Padding(
+    padding: EdgeInsets.zero,
+    child: Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.78),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
               ),
             ),
+            const SizedBox(width: 8),
+            Text(
+              'ANALYZING OBJECT',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: AppColors.onSurface,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+}
+
+class _CaptureHintCard extends StatelessWidget {
+  const _CaptureHintCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      child: _SurfaceCard(
+        color: Colors.black.withValues(alpha: 0.5),
+        child: Text(
+          'Center the text or object within the frame for best results.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
+        ),
+      ),
+    );
+  }
+}
+
+class _CaptureControls extends StatelessWidget {
+  const _CaptureControls({
+    required this.takingPicture,
+    required this.onLibraryTap,
+    required this.onCaptureTap,
+    required this.onFlipTap,
+  });
+
+  final bool takingPicture;
+  final VoidCallback onLibraryTap;
+  final VoidCallback? onCaptureTap;
+  final VoidCallback? onFlipTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final labelStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: Colors.white.withValues(alpha: 0.9),
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+        );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _ModeLabel(label: 'PHOTO', isActive: true, style: labelStyle),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _LibraryButton(onTap: onLibraryTap),
+              _ShutterButton(
+                takingPicture: takingPicture,
+                onTap: onCaptureTap,
+              ),
+              _FlipButton(onTap: onFlipTap),
+            ],
           ),
         ],
       ),
     );
   }
+}
 
+class _ModeLabel extends StatelessWidget {
+  const _ModeLabel({required this.label, required this.isActive, required this.style});
+
+  final String label;
+  final bool isActive;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 180),
+      opacity: isActive ? 1 : 0.55,
+      child: Text(
+        label,
+        style: style?.copyWith(color: isActive ? AppColors.primary : Colors.white.withValues(alpha: 0.9)),
+      ),
+    );
+  }
+}
+
+class _LibraryButton extends StatelessWidget {
+  const _LibraryButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+            ),
+            child: const Icon(Icons.photo_library_outlined, color: Colors.white),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text('LIBRARY', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
+      ],
+    );
+  }
+}
+
+class _FlipButton extends StatelessWidget {
+  const _FlipButton({required this.onTap});
+
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(999),
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+            ),
+            child: const Icon(Icons.flip_camera_android_outlined, color: Colors.white),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text('FLIP', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
+      ],
+    );
+  }
+}
+
+class _ShutterButton extends StatelessWidget {
+  const _ShutterButton({required this.takingPicture, required this.onTap});
+
+  final bool takingPicture;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 90,
+        height: 90,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withValues(alpha: 0.22),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2),
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white,
+          ),
+          child: takingPicture
+              ? const Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2.2),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ),
+    );
+  }
 }
 
 class _SurfaceCard extends StatelessWidget {
