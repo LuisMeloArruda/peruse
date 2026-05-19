@@ -353,7 +353,7 @@ class _SuggestionCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
-                  isSelected ? Icons.pets_rounded : Icons.category_outlined,
+                  isSelected ? Icons.check_circle_rounded : Icons.category_outlined,
                   color: isSelected ? AppColors.onPrimary : AppColors.onSurfaceVariant,
                 ),
               ),

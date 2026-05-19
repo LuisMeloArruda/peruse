@@ -63,9 +63,9 @@ class CaptureScreen extends ConsumerWidget {
                 onCaptureTap: screenState.takingPicture
                     ? null
                     : () async {
-                        final reviewData = await screenNotifier.captureAndAnalyze();
-                        if (!context.mounted || reviewData == null) return;
-                        context.push(AppRoutes.captureReview, extra: reviewData);
+                    final captureData = await screenNotifier.captureAndAnalyze();
+                    if (!context.mounted || captureData == null) return;
+                    context.push(AppRoutes.captureResult, extra: captureData);
                       },
                 onFlipTap: screenState.takingPicture
                     ? null
@@ -151,43 +151,43 @@ class CaptureScreen extends ConsumerWidget {
 class _CaptureStatusPill extends StatelessWidget {
   const _CaptureStatusPill();
 
-@override
-Widget build(BuildContext context) {
-  return Padding(
-    padding: EdgeInsets.zero,
-    child: Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.78),
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 60), // adjust this value if needed
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.78),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'ANALYZING OBJECT',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: AppColors.onSurface,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
-                  ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Text(
+                'ANALYZING OBJECT',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: AppColors.onSurface,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                    ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _CaptureHintCard extends StatelessWidget {
@@ -195,14 +195,22 @@ class _CaptureHintCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      child: _SurfaceCard(
-        color: Colors.black.withValues(alpha: 0.5),
-        child: Text(
-          'Center the text or object within the frame for best results.',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Padding(
+        
+        padding: const EdgeInsets.only(
+          left: AppSpacing.lg, 
+          right: AppSpacing.lg, 
+          bottom: 150.0, 
+        ),
+        child: _SurfaceCard(
+          color: Colors.black.withValues(alpha: 0.5),
+          child: Text(
+            'Center the text or object within the frame for best results.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
+          ),
         ),
       ),
     );
