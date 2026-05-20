@@ -1,14 +1,12 @@
-import 'dart:io';
-
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 import 'package:peruse/data/local/daos/decks_dao.dart';
+import 'package:peruse/data/local/daos/flashcards_dao.dart';
 import 'package:peruse/data/local/daos/words_dao.dart';
+import 'package:peruse/data/local/database/connection/open_connection.dart';
 import 'package:peruse/data/local/tables/deck_words_table.dart';
 import 'package:peruse/data/local/tables/decks_table.dart';
+import 'package:peruse/data/local/tables/flashcards_table.dart';
 import 'package:peruse/data/local/tables/word_details_table.dart';
 import 'package:peruse/data/local/tables/words_table.dart';
 
@@ -44,16 +42,17 @@ class LocalCaptureLabels extends Table {
     WordsTable,
     WordDetailsTable,
     DeckWordsTable,
+    FlashcardsTable,
     LocalCaptures,
     LocalCaptureLabels,
   ],
-  daos: [DecksDao, WordsDao],
+  daos: [DecksDao, WordsDao, FlashcardsDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -72,6 +71,9 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(localCaptures);
         await m.createTable(localCaptureLabels);
       }
+      if (from < 5) {
+        await m.createTable(flashcardsTable);
+      }
     },
   );
 
@@ -81,6 +83,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(wordDetailsTable).go();
       await delete(wordsTable).go();
       await delete(decksTable).go();
+      await delete(flashcardsTable).go();
       await delete(localCaptureLabels).go();
       await delete(localCaptures).go();
     });
@@ -88,9 +91,5 @@ class AppDatabase extends _$AppDatabase {
 }
 
 LazyDatabase _openConnection() {
-  return LazyDatabase(() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final dbPath = p.join(directory.path, 'peruse.sqlite');
-    return NativeDatabase(File(dbPath));
-  });
+  return openConnection();
 }

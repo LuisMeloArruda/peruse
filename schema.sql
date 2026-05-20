@@ -137,6 +137,86 @@ create policy "deck_words_delete_own" on public.deck_words for delete using (
 );
 
 
+-- FLASHCARDS
+create table if not exists public.flashcards (
+  id text primary key default gen_random_uuid()::text,
+  deck_id text not null references public.decks(id) on delete cascade,
+  word_id text references public.words(id) on delete cascade,
+  front_text text,
+  back_text text,
+  media_url text,
+  media_type text,
+  position integer default 0,
+  is_deleted boolean default false,
+  revision bigint default 0,
+  modified_by uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (deck_id, word_id)
+);
+
+alter table public.flashcards enable row level security;
+
+drop policy if exists "flashcards_select_own" on public.flashcards;
+create policy "flashcards_select_own" on public.flashcards for select using (
+  exists (
+    select 1 from public.decks
+    where decks.id = flashcards.deck_id
+    and decks.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "flashcards_insert_own" on public.flashcards;
+create policy "flashcards_insert_own" on public.flashcards for insert with check (
+  exists (
+    select 1 from public.decks
+    where decks.id = flashcards.deck_id
+    and decks.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "flashcards_update_own" on public.flashcards;
+create policy "flashcards_update_own" on public.flashcards for update using (
+  exists (
+    select 1 from public.decks
+    where decks.id = flashcards.deck_id
+    and decks.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "flashcards_delete_own" on public.flashcards;
+create policy "flashcards_delete_own" on public.flashcards for delete using (
+  exists (
+    select 1 from public.decks
+    where decks.id = flashcards.deck_id
+    and decks.user_id = auth.uid()
+  )
+);
+
+-- Indexes for incremental sync / queries
+create index if not exists idx_flashcards_deck_updated on public.flashcards (deck_id, updated_at);
+create index if not exists idx_flashcards_updated on public.flashcards (updated_at);
+create index if not exists idx_flashcards_revision on public.flashcards (revision);
+
+-- Trigger to update `updated_at` and bump `revision`
+create function public.touch_flashcards_updated_at() returns trigger as $$
+begin
+  new.updated_at = now();
+  if tg_op = 'INSERT' then
+    new.revision = coalesce(new.revision, 0) + 1;
+  elsif tg_op = 'UPDATE' then
+    new.revision = coalesce(new.revision, 0) + 1;
+  end if;
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists trg_flashcards_touch on public.flashcards;
+create trigger trg_flashcards_touch
+before insert or update on public.flashcards
+for each row execute function public.touch_flashcards_updated_at();
+
+
 -- CAPTURES
 create table if not exists public.captures (
   id uuid primary key default gen_random_uuid(),

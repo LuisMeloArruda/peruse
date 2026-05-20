@@ -10,6 +10,8 @@ import 'package:peruse/features/auth/domain/usecases/auth/login_use_case.dart';
 import 'package:peruse/features/auth/domain/usecases/auth/register_use_case.dart';
 import 'package:peruse/features/capture/data/repositories/local/local_capture_repository.dart';
 import 'package:peruse/features/capture/domain/repositories/capture_repository.dart';
+import 'package:peruse/features/flashcards/data/repositories/local/local_flashcard_repository.dart';
+import 'package:peruse/features/flashcards/domain/repositories/flashcard_repository.dart';
 
 part 'providers.g.dart';
 
@@ -67,4 +69,11 @@ ICaptureRepository captureRepository(Ref ref) {
   final client = ref.watch(supabaseClientProvider);
   final database = ref.watch(appDatabaseProvider);
   return LocalCaptureRepository(database, client);
+}
+
+@Riverpod(keepAlive: true)
+IFlashcardRepository flashcardRepository(Ref ref) {
+  final client = ref.watch(supabaseClientProvider);
+  final database = ref.watch(appDatabaseProvider);
+  return LocalFlashcardRepository(database, client);
 }
