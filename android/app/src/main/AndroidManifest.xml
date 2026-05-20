@@ -2,6 +2,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <application
         android:label="peruse"
+        android:largeHeap="true"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

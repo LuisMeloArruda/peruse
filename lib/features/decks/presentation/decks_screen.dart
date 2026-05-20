@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:peruse/core/llm/widget/model_download_widget.dart';
 
 import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
+import 'package:peruse/core/widgets/peruse_linear_progress.dart';
 import 'package:peruse/core/widgets/peruse_sheet_card.dart';
 import 'package:peruse/features/decks/domain/entities/deck.dart';
 import 'package:peruse/features/decks/presentation/controller/decks_notifier.dart';
@@ -22,15 +24,21 @@ class DecksScreen extends ConsumerWidget {
         foregroundColor: AppColors.onPrimary,
         child: const Icon(Icons.add_rounded),
       ),
+      appBar: _DecksTopBar(onProfileTap: () {}),
       body: SafeArea(
         child: decksState.when(
-          data: (decks) => _DecksLoadedView(
-            decks: decks,
-            onCreateDeck: () => context.push(AppRoutes.addDeck),
+          data: (decks) => Column(
+            children: [
+              TranslationWidget(),
+              Flexible(
+                child: _DecksLoadedView(
+                  decks: decks,
+                  onCreateDeck: () => context.push(AppRoutes.addDeck),
+                ),
+              ),
+            ],
           ),
-          loading: () => const Center(
-            child: CircularProgressIndicator(),
-          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stackTrace) {
             debugPrint('Decks load failed: $error');
             return Center(
@@ -48,10 +56,7 @@ class DecksScreen extends ConsumerWidget {
 }
 
 class _DecksLoadedView extends StatelessWidget {
-  const _DecksLoadedView({
-    required this.decks,
-    required this.onCreateDeck,
-  });
+  const _DecksLoadedView({required this.decks, required this.onCreateDeck});
 
   final List<AppDeck> decks;
   final VoidCallback onCreateDeck;
@@ -63,26 +68,11 @@ class _DecksLoadedView extends StatelessWidget {
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.lg,
-            AppSpacing.md,
-            AppSpacing.lg,
-            AppSpacing.sm,
-          ),
-          sliver: SliverToBoxAdapter(
-            child: _DecksTopBar(
-              onProfileTap: () {},
-            ),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
             AppSpacing.sm,
             AppSpacing.lg,
             AppSpacing.lg,
           ),
-          sliver: SliverToBoxAdapter(
-            child: const _DecksHeader(),
-          ),
+          sliver: SliverToBoxAdapter(child: const _DecksHeader()),
         ),
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -108,9 +98,7 @@ class _DecksLoadedView extends StatelessWidget {
                       progress: progress,
                       accentColor: progressColor,
                       icon: icon,
-                      onTap: () => context.push(
-                        AppRoutes.deckDetail(deck.id),
-                      ),
+                      onTap: () => context.push(AppRoutes.deckDetail(deck.id)),
                     );
                   },
                 ),
@@ -131,45 +119,47 @@ class _DecksLoadedView extends StatelessWidget {
   }
 }
 
-class _DecksTopBar extends StatelessWidget {
+class _DecksTopBar extends StatelessWidget implements PreferredSizeWidget {
   const _DecksTopBar({required this.onProfileTap});
-
   final VoidCallback onProfileTap;
 
   @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 50);
+
+  @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.menu_rounded),
-          color: AppColors.brandTitle,
-        ),
-        Expanded(
-          child: Text(
-            'Peruse',
-            style: context.textTheme.titleLarge?.copyWith(
-              color: AppColors.brandTitle,
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+      ).copyWith(top: AppSpacing.xl),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'Peruse',
+              style: context.textTheme.titleLarge?.copyWith(
+                color: AppColors.brandTitle,
+              ),
             ),
           ),
-        ),
-        GestureDetector(
-          onTap: onProfileTap,
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceMuted,
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-            ),
-            child: const Icon(
-              Icons.person_rounded,
-              size: 20,
-              color: AppColors.onSurfaceVariant,
+          GestureDetector(
+            onTap: onProfileTap,
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+              child: const Icon(
+                Icons.person_rounded,
+                size: 20,
+                color: AppColors.onSurfaceVariant,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -197,10 +187,7 @@ class _DecksHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
-        _SortChip(
-          label: 'Sort by recent',
-          onTap: () {},
-        ),
+        _SortChip(label: 'Sort by recent', onTap: () {}),
       ],
     );
   }
@@ -234,10 +221,7 @@ class _SortChip extends StatelessWidget {
                 color: AppColors.onSurfaceVariant,
               ),
               const SizedBox(width: AppSpacing.xs),
-              Text(
-                label.toUpperCase(),
-                style: context.textTheme.labelSmall,
-              ),
+              Text(label.toUpperCase(), style: context.textTheme.labelSmall),
             ],
           ),
         ),
@@ -301,38 +285,11 @@ class _DeckCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.xxs),
-                  Text(
-                    createdLabel,
-                    style: context.textTheme.bodyMedium,
-                  ),
+                  Text(createdLabel, style: context.textTheme.bodyMedium),
                   const SizedBox(height: AppSpacing.md),
-                  Text(
-                    'STUDY PROGRESS',
-                    style: context.textTheme.labelSmall,
-                  ),
+                  Text('STUDY PROGRESS', style: context.textTheme.labelSmall),
                   const SizedBox(height: AppSpacing.xxs),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          child: LinearProgressIndicator(
-                            value: progress,
-                            minHeight: 6,
-                            backgroundColor: AppColors.neutralOutline,
-                            color: accentColor,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text(
-                        '${(progress * 100).round()}%',
-                        style: context.textTheme.labelLarge?.copyWith(
-                          color: accentColor,
-                        ),
-                      ),
-                    ],
-                  ),
+                  PeruseLinearProgress(progress: progress, color: accentColor),
                 ],
               ),
             ),
@@ -403,9 +360,7 @@ class _WordCountPill extends StatelessWidget {
       ),
       child: Text(
         '$count words',
-        style: context.textTheme.labelSmall?.copyWith(
-          color: AppColors.primary,
-        ),
+        style: context.textTheme.labelSmall?.copyWith(color: AppColors.primary),
       ),
     );
   }
@@ -446,16 +401,10 @@ class _CreateDeckCard extends StatelessWidget {
                   color: AppColors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
-                child: const Icon(
-                  Icons.add_rounded,
-                  color: AppColors.primary,
-                ),
+                child: const Icon(Icons.add_rounded, color: AppColors.primary),
               ),
               const SizedBox(height: AppSpacing.sm),
-              Text(
-                'New Vocabulary Set',
-                style: context.textTheme.titleMedium,
-              ),
+              Text('New Vocabulary Set', style: context.textTheme.titleMedium),
               const SizedBox(height: AppSpacing.xxs),
               Text(
                 'Start your next linguistic journey',
@@ -482,10 +431,7 @@ class _EmptyDeckState extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'No decks yet',
-            style: context.textTheme.titleMedium,
-          ),
+          Text('No decks yet', style: context.textTheme.titleMedium),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Create your first vocabulary set and start building momentum.',
