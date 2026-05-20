@@ -20,7 +20,6 @@ import 'package:peruse/features/profile/presentation/profile_screen.dart';
 import 'package:peruse/core/widgets/main_shell_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-
 part 'router.g.dart';
 
 @riverpod
@@ -35,7 +34,8 @@ GoRouter router(Ref ref) {
 
       final isLoggedIn = authState.value != null;
 
-      final isAuthPage = state.matchedLocation == AppRoutes.login ||
+      final isAuthPage =
+          state.matchedLocation == AppRoutes.login ||
           state.matchedLocation == AppRoutes.register;
 
       if (!isLoggedIn && !isAuthPage) return AppRoutes.login;
@@ -145,9 +145,7 @@ GoRouter router(Ref ref) {
           }
 
           return const Scaffold(
-            body: Center(
-              child: Text('No capture data available.'),
-            ),
+            body: Center(child: Text('No capture data available.')),
           );
         },
       ),
@@ -160,9 +158,7 @@ GoRouter router(Ref ref) {
           }
 
           return const Scaffold(
-            body: Center(
-              child: Text('No capture data available.'),
-            ),
+            body: Center(child: Text('No capture data available.')),
           );
         },
       ),

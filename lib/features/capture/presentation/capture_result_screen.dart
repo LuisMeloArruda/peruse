@@ -15,7 +15,8 @@ class CaptureResultScreen extends ConsumerStatefulWidget {
   final CaptureReviewData reviewData;
 
   @override
-  ConsumerState<CaptureResultScreen> createState() => _CaptureResultScreenState();
+  ConsumerState<CaptureResultScreen> createState() =>
+      _CaptureResultScreenState();
 }
 
 class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
@@ -71,9 +72,10 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
     setState(() => _saving = true);
 
     try {
-      await ref
-          .read(captureControllerProvider.notifier)
-          .saveLocalCapture(widget.reviewData.localPath, [label]);
+      await ref.read(captureControllerProvider.notifier).saveLocalCapture(
+        widget.reviewData.localPath,
+        [label],
+      );
 
       try {
         await ref.read(captureControllerProvider.notifier).syncAll();
@@ -105,7 +107,8 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
   Widget build(BuildContext context) {
     final options = _options;
     final selected = _selectedOption;
-    final canSave = !_saving && selected != null && _textController.text.trim().isNotEmpty;
+    final canSave =
+        !_saving && selected != null && _textController.text.trim().isNotEmpty;
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -172,13 +175,14 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [                      
-                          Column( 
+                        children: [
+                          Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'DETECTED OBJECT',
-                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                style: Theme.of(context).textTheme.labelLarge
+                                    ?.copyWith(
                                       color: AppColors.onSurfaceVariant,
                                       letterSpacing: 1.2,
                                     ),
@@ -187,7 +191,7 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  Expanded( 
+                                  Expanded(
                                     child: TextField(
                                       controller: _textController,
                                       enabled: !_saving,
@@ -195,26 +199,36 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                                       decoration: InputDecoration(
                                         filled: true,
                                         fillColor: AppColors.surfaceContainer,
-                                        contentPadding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 16,
-                                        ),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 16,
+                                            ),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(18),
+                                          borderRadius: BorderRadius.circular(
+                                            18,
+                                          ),
                                           borderSide: BorderSide.none,
                                         ),
-                                        suffixIcon: const Icon(Icons.edit_outlined),
+                                        suffixIcon: const Icon(
+                                          Icons.edit_outlined,
+                                        ),
                                       ),
-                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
                                             fontWeight: FontWeight.w700,
                                           ),
                                     ),
                                   ),
-                                  
+
                                   const SizedBox(width: 12),
-                                  
+
                                   if (selected != null)
-                                    _ConfidenceBadge(confidence: selected.confidence),
+                                    _ConfidenceBadge(
+                                      confidence: selected.confidence,
+                                    ),
                                 ],
                               ),
                             ],
@@ -224,9 +238,8 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                             children: [
                               Text(
                                 'Suggestions',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
                               ),
                               const SizedBox(width: 12),
                               const _PoweredChip(label: 'ML KIT POWERED'),
@@ -243,7 +256,8 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                             Expanded(
                               child: ListView.separated(
                                 itemCount: options.length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
                                   final option = options[index];
                                   final isSelected = index == _selectedIndex;
@@ -252,7 +266,9 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                                     option: option,
                                     isSelected: isSelected,
                                     rank: index + 1,
-                                    onTap: _saving ? null : () => _selectOption(index),
+                                    onTap: _saving
+                                        ? null
+                                        : () => _selectOption(index),
                                   );
                                 },
                               ),
@@ -264,7 +280,9 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                                 child: OutlinedButton(
                                   onPressed: _saving ? null : _discard,
                                   style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(24),
                                     ),
@@ -275,9 +293,13 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                               const SizedBox(width: 14),
                               Expanded(
                                 child: FilledButton(
-                                  onPressed: canSave ? _saveSelectedLabel : null,
+                                  onPressed: canSave
+                                      ? _saveSelectedLabel
+                                      : null,
                                   style: FilledButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(24),
                                     ),
@@ -286,7 +308,9 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                                       ? const SizedBox(
                                           height: 18,
                                           width: 18,
-                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
                                         )
                                       : const Text('Save Word'),
                                 ),
@@ -300,10 +324,7 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                 ),
               ],
             ),
-            if (_saving)
-              Container(
-                color: Colors.black.withValues(alpha: 0.18),
-              ),
+            if (_saving) Container(color: Colors.black.withValues(alpha: 0.18)),
           ],
         ),
       ),
@@ -329,7 +350,9 @@ class _SuggestionCard extends StatelessWidget {
     final confidence = (option.confidence * 100).toStringAsFixed(0);
 
     return Material(
-      color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surfaceContainer,
+      color: isSelected
+          ? AppColors.primary.withValues(alpha: 0.1)
+          : AppColors.surfaceContainer,
       borderRadius: BorderRadius.circular(22),
       child: InkWell(
         onTap: onTap,
@@ -353,8 +376,12 @@ class _SuggestionCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
-                  isSelected ? Icons.check_circle_rounded : Icons.category_outlined,
-                  color: isSelected ? AppColors.onPrimary : AppColors.onSurfaceVariant,
+                  isSelected
+                      ? Icons.check_circle_rounded
+                      : Icons.category_outlined,
+                  color: isSelected
+                      ? AppColors.onPrimary
+                      : AppColors.onSurfaceVariant,
                 ),
               ),
               const SizedBox(width: 14),
@@ -365,15 +392,17 @@ class _SuggestionCard extends StatelessWidget {
                     Text(
                       option.text,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      rank == 1 ? 'Primary classification' : 'Alternative suggestion',
+                      rank == 1
+                          ? 'Primary classification'
+                          : 'Alternative suggestion',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.onSurfaceVariant,
-                          ),
+                        color: AppColors.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -385,15 +414,17 @@ class _SuggestionCard extends StatelessWidget {
                   Text(
                     '$confidence%',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: isSelected ? AppColors.primary : AppColors.onSurface,
-                        ),
+                      fontWeight: FontWeight.w800,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.onSurface,
+                    ),
                   ),
                   Text(
                     'Confidence',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                        ),
+                      color: AppColors.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -421,9 +452,9 @@ class _PoweredChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w700,
-            ),
+          color: AppColors.primary,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -450,15 +481,15 @@ class _ConfidenceBadge extends StatelessWidget {
           Text(
             '$value%',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
-                ),
+              fontWeight: FontWeight.w800,
+              color: AppColors.primary,
+            ),
           ),
           Text(
             'Selected confidence',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.onSurfaceVariant,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: AppColors.onSurfaceVariant),
           ),
         ],
       ),

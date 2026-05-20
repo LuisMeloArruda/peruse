@@ -73,10 +73,7 @@ class DeckDetailNotifier extends _$DeckDetailNotifier {
   void updateSearchQuery(String query) {
     final normalized = query.trim();
     final filtered = _filterWords(state.words, normalized);
-    state = state.copyWith(
-      searchQuery: normalized,
-      filteredWords: filtered,
-    );
+    state = state.copyWith(searchQuery: normalized, filteredWords: filtered);
   }
 
   Future<void> addWord(String wordText) async {

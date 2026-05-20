@@ -12,33 +12,30 @@ class WordsDao extends DatabaseAccessor<AppDatabase> with _$WordsDaoMixin {
 
   Stream<List<LocalWord>> watchWordsForDeck(String deckId) {
     final query = select(wordsTable).join([
-      innerJoin(
-        deckWordsTable,
-        deckWordsTable.wordId.equalsExp(wordsTable.id),
-      ),
-    ])
-      ..where(deckWordsTable.deckId.equals(deckId));
+      innerJoin(deckWordsTable, deckWordsTable.wordId.equalsExp(wordsTable.id)),
+    ])..where(deckWordsTable.deckId.equals(deckId));
 
     return query.watch().map(
-          (rows) => rows.map((row) => row.readTable(wordsTable)).toList(),
-        );
+      (rows) => rows.map((row) => row.readTable(wordsTable)).toList(),
+    );
   }
 
   Future<LocalWord?> getWordById(String wordId) {
-    return (select(wordsTable)..where((t) => t.id.equals(wordId)))
-        .getSingleOrNull();
+    return (select(
+      wordsTable,
+    )..where((t) => t.id.equals(wordId))).getSingleOrNull();
   }
 
   Future<LocalWordDetails?> getWordDetails(String wordId) {
-    return (select(wordDetailsTable)..where((t) => t.wordId.equals(wordId)))
-        .getSingleOrNull();
+    return (select(
+      wordDetailsTable,
+    )..where((t) => t.wordId.equals(wordId))).getSingleOrNull();
   }
 
   Future<void> upsertWordDetails(WordDetailsTableCompanion companion) async {
-    await into(wordDetailsTable).insert(
-      companion,
-      mode: InsertMode.insertOrReplace,
-    );
+    await into(
+      wordDetailsTable,
+    ).insert(companion, mode: InsertMode.insertOrReplace);
   }
 
   Future<List<LocalWord>> getUnsyncedWords() {
@@ -55,23 +52,15 @@ class WordsDao extends DatabaseAccessor<AppDatabase> with _$WordsDaoMixin {
     if (companions.isEmpty) return;
 
     await batch((batch) {
-      batch.insertAll(
-        wordsTable,
-        companions,
-        mode: InsertMode.insertOrReplace,
-      );
+      batch.insertAll(wordsTable, companions, mode: InsertMode.insertOrReplace);
     });
   }
 
   Future<List<LocalDeckWord>> getUnsyncedDeckWords() {
-    return (select(deckWordsTable)
-          ..where((t) => t.synced.equals(false)))
-        .get();
+    return (select(deckWordsTable)..where((t) => t.synced.equals(false))).get();
   }
 
-  Future<void> upsertDeckWords(
-    List<DeckWordsTableCompanion> companions,
-  ) async {
+  Future<void> upsertDeckWords(List<DeckWordsTableCompanion> companions) async {
     if (companions.isEmpty) return;
 
     await batch((batch) {
@@ -90,9 +79,7 @@ class WordsDao extends DatabaseAccessor<AppDatabase> with _$WordsDaoMixin {
   ) async {
     await (update(deckWordsTable)
           ..where((t) => t.deckId.equals(deckId) & t.wordId.equals(wordId)))
-        .write(
-      DeckWordsTableCompanion(synced: Value(synced)),
-    );
+        .write(DeckWordsTableCompanion(synced: Value(synced)));
   }
 
   Future<void> upsertWordDetailsList(

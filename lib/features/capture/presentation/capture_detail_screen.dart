@@ -33,9 +33,7 @@ class CaptureDetailScreen extends ConsumerWidget {
     final statusColor = _getStatusColor(capture.status);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Capture details'),
-      ),
+      appBar: AppBar(title: const Text('Capture details')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -57,7 +55,9 @@ class CaptureDetailScreen extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Text(
                     capture.status.toUpperCase(),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: statusColor),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium?.copyWith(color: statusColor),
                   ),
                   const Spacer(),
                   Text(
@@ -67,46 +67,75 @@ class CaptureDetailScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              Text(
-                'Labels',
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
+              Text('Labels', style: Theme.of(context).textTheme.labelLarge),
               const SizedBox(height: 8),
               if (capture.labels.isEmpty) const Text('No labels'),
               if (capture.labels.isNotEmpty)
                 Wrap(
                   spacing: 8,
                   children: capture.labels
-                      .map((l) => Chip(label: Text('${l.text} ${(l.confidence * 100).toStringAsFixed(0)}%')))
+                      .map(
+                        (l) => Chip(
+                          label: Text(
+                            '${l.text} ${(l.confidence * 100).toStringAsFixed(0)}%',
+                          ),
+                        ),
+                      )
                       .toList(),
                 ),
               const Spacer(),
               Row(
                 children: [
                   Expanded(
-                    child: Builder(builder: (context) {
-                      final isUploaded = capture.status == 'uploaded';
-                      return ElevatedButton.icon(
-                        onPressed: isUploaded
-                            ? null
-                            : () async {
-                                final notifier = ref.read(captureControllerProvider.notifier);
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Syncing...')));
-                                try {
-                                  final ok = await notifier.syncAll();
-                                  if (ok) {
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sync complete')));
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sync failed')));
+                    child: Builder(
+                      builder: (context) {
+                        final isUploaded = capture.status == 'uploaded';
+                        return ElevatedButton.icon(
+                          onPressed: isUploaded
+                              ? null
+                              : () async {
+                                  final notifier = ref.read(
+                                    captureControllerProvider.notifier,
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Syncing...')),
+                                  );
+                                  try {
+                                    final ok = await notifier.syncAll();
+                                    if (ok) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Sync complete'),
+                                        ),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Sync failed'),
+                                        ),
+                                      );
+                                    }
+                                  } catch (_) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Sync error'),
+                                      ),
+                                    );
                                   }
-                                } catch (_) {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sync error')));
-                                }
-                              },
-                        icon: Icon(isUploaded ? Icons.cloud_done_outlined : Icons.refresh),
-                        label: Text(isUploaded ? 'Synced' : 'Retry sync'),
-                      );
-                    }),
+                                },
+                          icon: Icon(
+                            isUploaded
+                                ? Icons.cloud_done_outlined
+                                : Icons.refresh,
+                          ),
+                          label: Text(isUploaded ? 'Synced' : 'Retry sync'),
+                        );
+                      },
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

@@ -1,11 +1,9 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:peruse/features/capture/domain/entities/capture.dart';
 import 'package:peruse/features/capture/domain/entities/label.dart';
 import 'package:peruse/features/capture/domain/repositories/capture_repository.dart';
-import '../../models/capture_model.dart';
 
 class CaptureRepositoryImpl implements ICaptureRepository {
   final SupabaseClient client;
@@ -18,7 +16,11 @@ class CaptureRepositoryImpl implements ICaptureRepository {
     final bucket = client.storage.from('captures');
 
     try {
-      await bucket.upload(path, file, fileOptions: const FileOptions(upsert: true));
+      await bucket.upload(
+        path,
+        file,
+        fileOptions: const FileOptions(upsert: true),
+      );
       return path;
     } catch (e) {
       throw Exception('Upload error: $e');
@@ -33,7 +35,11 @@ class CaptureRepositoryImpl implements ICaptureRepository {
       'public_url': null,
     };
 
-    final inserted = await client.from('captures').insert(capMap).select().maybeSingle();
+    final inserted = await client
+        .from('captures')
+        .insert(capMap)
+        .select()
+        .maybeSingle();
 
     if (inserted == null) throw Exception('Failed to insert capture');
 
@@ -88,24 +94,28 @@ class CaptureRepositoryImpl implements ICaptureRepository {
             .eq('capture_id', captureId);
 
         final labels = (labelsResponse as List)
-            .map((labelRow) => Label(
-              text: labelRow['label'] as String,
-              confidence: (labelRow['confidence'] as num).toDouble(),
-              language: labelRow['language'] as String? ?? 'en',
-              bbox: labelRow['bbox'] != null
-                  ? Map<String, double>.from(labelRow['bbox'] as Map)
-                  : null,
-            ))
+            .map(
+              (labelRow) => Label(
+                text: labelRow['label'] as String,
+                confidence: (labelRow['confidence'] as num).toDouble(),
+                language: labelRow['language'] as String? ?? 'en',
+                bbox: labelRow['bbox'] != null
+                    ? Map<String, double>.from(labelRow['bbox'] as Map)
+                    : null,
+              ),
+            )
             .toList();
 
-        captures.add(Capture(
-          id: captureId,
-          remoteId: captureId,
-          localPath: row['storage_path'] as String? ?? '',
-          createdAt: DateTime.parse(row['created_at'] as String),
-          labels: labels,
-          status: row['uploaded'] == true ? 'uploaded' : 'pending',
-        ));
+        captures.add(
+          Capture(
+            id: captureId,
+            remoteId: captureId,
+            localPath: row['storage_path'] as String? ?? '',
+            createdAt: DateTime.parse(row['created_at'] as String),
+            labels: labels,
+            status: row['uploaded'] == true ? 'uploaded' : 'pending',
+          ),
+        );
       }
 
       return captures;

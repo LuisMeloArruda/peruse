@@ -29,18 +29,17 @@ class LocalCaptureRepository implements ICaptureRepository {
   final SupabaseClient client;
   final Uuid _uuid;
 
-  LocalCaptureRepository(
-    this.database,
-    this.client, {
-    Uuid? uuid,
-  }) : _uuid = uuid ?? const Uuid();
+  LocalCaptureRepository(this.database, this.client, {Uuid? uuid})
+    : _uuid = uuid ?? const Uuid();
 
   @override
   Future<Capture> saveLocalCapture(String localPath, List<Label> labels) async {
     final id = _uuid.v4();
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    await database.into(database.localCaptures).insert(
+    await database
+        .into(database.localCaptures)
+        .insert(
           LocalCapturesCompanion.insert(
             id: id,
             localPath: localPath,
@@ -51,13 +50,17 @@ class LocalCaptureRepository implements ICaptureRepository {
         );
 
     for (final label in labels) {
-      await database.into(database.localCaptureLabels).insert(
+      await database
+          .into(database.localCaptureLabels)
+          .insert(
             LocalCaptureLabelsCompanion.insert(
               captureId: id,
               label: label.text,
               confidence: label.confidence,
               language: Value(label.language),
-              bboxJson: Value(label.bbox == null ? null : jsonEncode(label.bbox)),
+              bboxJson: Value(
+                label.bbox == null ? null : jsonEncode(label.bbox),
+              ),
             ),
           );
     }
@@ -80,9 +83,9 @@ class LocalCaptureRepository implements ICaptureRepository {
 
     final result = <Capture>[];
     for (final row in rows) {
-      final labelRows = await (database.select(database.localCaptureLabels)
-            ..where((tbl) => tbl.captureId.equals(row.id)))
-          .get();
+      final labelRows = await (database.select(
+        database.localCaptureLabels,
+      )..where((tbl) => tbl.captureId.equals(row.id))).get();
 
       result.add(
         Capture(
@@ -114,11 +117,13 @@ class LocalCaptureRepository implements ICaptureRepository {
 
   @override
   Future<void> syncPendingCaptures() async {
-    final pendingRows = await (database.select(database.localCaptures)
-          ..where((tbl) =>
-              tbl.status.equals(CaptureSyncStatus.pending.value) |
-              tbl.status.equals(CaptureSyncStatus.failed.value)))
-        .get();
+    final pendingRows =
+        await (database.select(database.localCaptures)..where(
+              (tbl) =>
+                  tbl.status.equals(CaptureSyncStatus.pending.value) |
+                  tbl.status.equals(CaptureSyncStatus.failed.value),
+            ))
+            .get();
 
     for (final row in pendingRows) {
       await _syncSingleCapture(row);
@@ -127,13 +132,13 @@ class LocalCaptureRepository implements ICaptureRepository {
 
   Future<void> _syncSingleCapture(LocalCapture captureRow) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    final labels = await (database.select(database.localCaptureLabels)
-          ..where((tbl) => tbl.captureId.equals(captureRow.id)))
-        .get();
+    final labels = await (database.select(
+      database.localCaptureLabels,
+    )..where((tbl) => tbl.captureId.equals(captureRow.id))).get();
 
-    await (database.update(database.localCaptures)
-          ..where((tbl) => tbl.id.equals(captureRow.id)))
-        .write(
+    await (database.update(
+      database.localCaptures,
+    )..where((tbl) => tbl.id.equals(captureRow.id))).write(
       LocalCapturesCompanion(
         status: Value(CaptureSyncStatus.uploading.value),
         updatedAt: Value(now),
@@ -157,12 +162,16 @@ class LocalCaptureRepository implements ICaptureRepository {
       final storagePath = 'captures/$currentUserId/${captureRow.id}$extension';
       await client.storage.from('captures').upload(storagePath, localFile);
 
-      final captureInsert = await client.from('captures').insert({
-        'user_id': client.auth.currentUser?.id,
-        'storage_path': storagePath,
-        'public_url': null,
-        'uploaded': true,
-      }).select('id').single();
+      final captureInsert = await client
+          .from('captures')
+          .insert({
+            'user_id': client.auth.currentUser?.id,
+            'storage_path': storagePath,
+            'public_url': null,
+            'uploaded': true,
+          })
+          .select('id')
+          .single();
 
       final remoteCaptureId = captureInsert['id'] as String;
 
@@ -171,14 +180,16 @@ class LocalCaptureRepository implements ICaptureRepository {
           'capture_id': remoteCaptureId,
           'label': labelRow.label,
           'confidence': labelRow.confidence,
-          'bbox': labelRow.bboxJson == null ? null : jsonDecode(labelRow.bboxJson!),
+          'bbox': labelRow.bboxJson == null
+              ? null
+              : jsonDecode(labelRow.bboxJson!),
           'language': labelRow.language,
         });
       }
 
-      await (database.update(database.localCaptures)
-            ..where((tbl) => tbl.id.equals(captureRow.id)))
-          .write(
+      await (database.update(
+        database.localCaptures,
+      )..where((tbl) => tbl.id.equals(captureRow.id))).write(
         LocalCapturesCompanion(
           remoteId: Value(remoteCaptureId),
           status: Value(CaptureSyncStatus.uploaded.value),
@@ -189,9 +200,9 @@ class LocalCaptureRepository implements ICaptureRepository {
     } catch (error) {
       final errorMessage = _toSyncErrorMessage(error);
 
-      await (database.update(database.localCaptures)
-            ..where((tbl) => tbl.id.equals(captureRow.id)))
-          .write(
+      await (database.update(
+        database.localCaptures,
+      )..where((tbl) => tbl.id.equals(captureRow.id))).write(
         LocalCapturesCompanion(
           status: Value(CaptureSyncStatus.failed.value),
           updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
@@ -219,22 +230,24 @@ class LocalCaptureRepository implements ICaptureRepository {
   @override
   Future<String> uploadImageToStorage(String localPath, String path) async {
     final file = File(localPath);
-    await client.storage.from('captures').upload(
-          path,
-          file,
-          fileOptions: const FileOptions(upsert: true),
-        );
+    await client.storage
+        .from('captures')
+        .upload(path, file, fileOptions: const FileOptions(upsert: true));
     return path;
   }
 
   @override
   Future<void> createRemoteCapture(Capture capture) async {
-    final remoteCapture = await client.from('captures').insert({
-      'user_id': client.auth.currentUser?.id,
-      'storage_path': capture.remoteId,
-      'public_url': null,
-      'uploaded': true,
-    }).select('id').single();
+    final remoteCapture = await client
+        .from('captures')
+        .insert({
+          'user_id': client.auth.currentUser?.id,
+          'storage_path': capture.remoteId,
+          'public_url': null,
+          'uploaded': true,
+        })
+        .select('id')
+        .single();
 
     final remoteCaptureId = remoteCapture['id'] as String;
 

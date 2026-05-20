@@ -90,7 +90,10 @@ class _PeruseCatalogBodyState extends State<_PeruseCatalogBody> {
           const SizedBox(height: AppSpacing.md),
           PeruseStatBentoCard(
             variant: PeruseStatBentoVariant.primary,
-            leading: Icon(Icons.local_fire_department, color: AppColors.onPrimarySoft),
+            leading: Icon(
+              Icons.local_fire_department,
+              color: AppColors.onPrimarySoft,
+            ),
             value: '24 Days',
             label: 'Daily streak',
           ),

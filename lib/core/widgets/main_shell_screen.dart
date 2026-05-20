@@ -57,7 +57,9 @@ class _CaptureIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background = isSelected ? AppColors.primary : AppColors.surfaceContainer;
+    final background = isSelected
+        ? AppColors.primary
+        : AppColors.surfaceContainer;
     final foreground = isSelected ? AppColors.onPrimary : AppColors.primary;
     final border = isSelected
         ? null

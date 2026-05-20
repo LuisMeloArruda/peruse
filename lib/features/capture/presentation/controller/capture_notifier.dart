@@ -13,17 +13,12 @@ class CaptureController extends _$CaptureController {
     return repository.getLocalCaptures();
   }
 
-  Future<Capture> saveLocalCapture(
-    String localPath,
-    List<Label> labels,
-  ) async {
+  Future<Capture> saveLocalCapture(String localPath, List<Label> labels) async {
     final repository = ref.read(captureRepositoryProvider);
 
-    final capture =
-        await repository.saveLocalCapture(localPath, labels);
+    final capture = await repository.saveLocalCapture(localPath, labels);
 
-    final currentCaptures =
-        state.value ?? <Capture>[];
+    final currentCaptures = state.value ?? <Capture>[];
 
     state = AsyncData([capture, ...currentCaptures]);
 
@@ -33,8 +28,7 @@ class CaptureController extends _$CaptureController {
   Future<bool> syncAll({bool silent = false}) async {
     final repository = ref.read(captureRepositoryProvider);
 
-    final previousCaptures =
-        state.value ?? <Capture>[];
+    final previousCaptures = state.value ?? <Capture>[];
 
     if (!ref.mounted) {
       return false;
@@ -49,8 +43,7 @@ class CaptureController extends _$CaptureController {
         return false;
       }
 
-      final refreshed =
-          await repository.getLocalCaptures();
+      final refreshed = await repository.getLocalCaptures();
 
       if (!ref.mounted) {
         return false;

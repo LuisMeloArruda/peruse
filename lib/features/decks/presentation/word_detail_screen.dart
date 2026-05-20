@@ -285,10 +285,7 @@ class _InfoChip extends StatelessWidget {
         color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
-      child: Text(
-        label,
-        style: context.textTheme.labelSmall,
-      ),
+      child: Text(label, style: context.textTheme.labelSmall),
     );
   }
 }

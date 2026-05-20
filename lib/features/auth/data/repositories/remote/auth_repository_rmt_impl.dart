@@ -39,11 +39,10 @@ class AuthRepositoryImpl implements IAuthRepository {
       await _googleSignIn.signOut();
       final googleUser = await _googleSignIn.authenticate();
 
-
-      final googleAuth =  googleUser.authentication;
+      final googleAuth = googleUser.authentication;
 
       final idToken = googleAuth.idToken;
-      final accessToken = googleAuth.idToken;
+      final accessToken = googleAuth.idToken; // TODO: Change this
 
       if (idToken == null || accessToken == null) {
         throw Exception('Failure: idToken and accessToken Google.');

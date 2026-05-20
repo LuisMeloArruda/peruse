@@ -26,15 +26,17 @@ class LlmTranslationService {
               TextPart(
                 text:
                     'You are a professional translator. '
-                    'Translate the user\'s text into French. '
-                    'Always detect the source language and set targetLanguage to "French". '
+                    'Translate the user\'s text into ${request.targetLanguage}. '
+                    'Always detect the source language and set targetLanguage to "${request.targetLanguage}". '
                     'Respond only with the structured JSON — no explanations.',
               ),
             ],
           ),
           Message(
             role: Role.user,
-            content: [TextPart(text: request.prompt)],
+            content: [
+              TextPart(text: request.input.entries.map((e) => e.key).join(' ')),
+            ],
           ),
         ],
         outputSchema: TranslationOutput.$schema,
@@ -48,7 +50,7 @@ class LlmTranslationService {
       }
 
       log(
-        'Translated "${request.prompt}" → "${output.translatedText}"',
+        'Translated "${request.input}" → "${output.translatedTexts.values.join(', ')}"',
         name: 'LlmTranslationService',
       );
 

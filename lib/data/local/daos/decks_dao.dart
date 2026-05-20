@@ -13,8 +13,9 @@ class DecksDao extends DatabaseAccessor<AppDatabase> with _$DecksDaoMixin {
   }
 
   Stream<LocalDeck?> watchDeckById(String deckId) {
-    return (select(decksTable)..where((t) => t.id.equals(deckId)))
-        .watchSingleOrNull();
+    return (select(
+      decksTable,
+    )..where((t) => t.id.equals(deckId))).watchSingleOrNull();
   }
 
   Future<List<LocalDeck>> getDecks() {
@@ -22,10 +23,7 @@ class DecksDao extends DatabaseAccessor<AppDatabase> with _$DecksDaoMixin {
   }
 
   Future<void> upsertDeck(DecksTableCompanion companion) async {
-    await into(decksTable).insert(
-      companion,
-      mode: InsertMode.insertOrReplace,
-    );
+    await into(decksTable).insert(companion, mode: InsertMode.insertOrReplace);
   }
 
   Future<void> updateSyncStatus(String id, bool isSynced) async {
@@ -44,11 +42,7 @@ class DecksDao extends DatabaseAccessor<AppDatabase> with _$DecksDaoMixin {
 
   Future<void> upsertDecks(List<DecksTableCompanion> companions) async {
     await batch((batch) {
-      batch.insertAll(
-        decksTable,
-        companions,
-        mode: InsertMode.insertOrReplace,
-      );
+      batch.insertAll(decksTable, companions, mode: InsertMode.insertOrReplace);
     });
   }
 }

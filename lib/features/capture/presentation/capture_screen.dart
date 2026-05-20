@@ -63,9 +63,13 @@ class CaptureScreen extends ConsumerWidget {
                 onCaptureTap: screenState.takingPicture
                     ? null
                     : () async {
-                    final captureData = await screenNotifier.captureAndAnalyze();
-                    if (!context.mounted || captureData == null) return;
-                    context.push(AppRoutes.captureResult, extra: captureData);
+                        final captureData = await screenNotifier
+                            .captureAndAnalyze();
+                        if (!context.mounted || captureData == null) return;
+                        context.push(
+                          AppRoutes.captureResult,
+                          extra: captureData,
+                        );
                       },
                 onFlipTap: screenState.takingPicture
                     ? null
@@ -78,7 +82,12 @@ class CaptureScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCameraPanel(BuildContext context, WidgetRef ref, AsyncValue<List<CameraDescription>> camerasAsync, CaptureScreenState state) {
+  Widget _buildCameraPanel(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<CameraDescription>> camerasAsync,
+    CaptureScreenState state,
+  ) {
     if (state.cameraError != null) {
       return _SurfaceCard(
         child: Center(
@@ -110,7 +119,8 @@ class CaptureScreen extends ConsumerWidget {
       );
     }
 
-    if (state.cameraController == null || !state.cameraController!.value.isInitialized) {
+    if (state.cameraController == null ||
+        !state.cameraController!.value.isInitialized) {
       return _SurfaceCard(
         child: Center(
           child: Column(
@@ -145,7 +155,6 @@ class CaptureScreen extends ConsumerWidget {
       ],
     );
   }
-
 }
 
 class _CaptureStatusPill extends StatelessWidget {
@@ -177,10 +186,10 @@ class _CaptureStatusPill extends StatelessWidget {
               Text(
                 'ANALYZING OBJECT',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.onSurface,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                    ),
+                  color: AppColors.onSurface,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                ),
               ),
             ],
           ),
@@ -198,18 +207,19 @@ class _CaptureHintCard extends StatelessWidget {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Padding(
-        
         padding: const EdgeInsets.only(
-          left: AppSpacing.lg, 
-          right: AppSpacing.lg, 
-          bottom: 150.0, 
+          left: AppSpacing.lg,
+          right: AppSpacing.lg,
+          bottom: 150.0,
         ),
         child: _SurfaceCard(
           color: Colors.black.withValues(alpha: 0.5),
           child: Text(
             'Center the text or object within the frame for best results.',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.white),
           ),
         ),
       ),
@@ -233,10 +243,10 @@ class _CaptureControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final labelStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Colors.white.withValues(alpha: 0.9),
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
-        );
+      color: Colors.white.withValues(alpha: 0.9),
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.8,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -254,10 +264,7 @@ class _CaptureControls extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _LibraryButton(onTap: onLibraryTap),
-              _ShutterButton(
-                takingPicture: takingPicture,
-                onTap: onCaptureTap,
-              ),
+              _ShutterButton(takingPicture: takingPicture, onTap: onCaptureTap),
               _FlipButton(onTap: onFlipTap),
             ],
           ),
@@ -268,7 +275,11 @@ class _CaptureControls extends StatelessWidget {
 }
 
 class _ModeLabel extends StatelessWidget {
-  const _ModeLabel({required this.label, required this.isActive, required this.style});
+  const _ModeLabel({
+    required this.label,
+    required this.isActive,
+    required this.style,
+  });
 
   final String label;
   final bool isActive;
@@ -281,7 +292,11 @@ class _ModeLabel extends StatelessWidget {
       opacity: isActive ? 1 : 0.55,
       child: Text(
         label,
-        style: style?.copyWith(color: isActive ? AppColors.primary : Colors.white.withValues(alpha: 0.9)),
+        style: style?.copyWith(
+          color: isActive
+              ? AppColors.primary
+              : Colors.white.withValues(alpha: 0.9),
+        ),
       ),
     );
   }
@@ -308,11 +323,19 @@ class _LibraryButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
             ),
-            child: const Icon(Icons.photo_library_outlined, color: Colors.white),
+            child: const Icon(
+              Icons.photo_library_outlined,
+              color: Colors.white,
+            ),
           ),
         ),
         const SizedBox(height: 8),
-        Text('LIBRARY', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
+        Text(
+          'LIBRARY',
+          style: Theme.of(
+            context,
+          ).textTheme.labelSmall?.copyWith(color: Colors.white),
+        ),
       ],
     );
   }
@@ -339,11 +362,19 @@ class _FlipButton extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
             ),
-            child: const Icon(Icons.flip_camera_android_outlined, color: Colors.white),
+            child: const Icon(
+              Icons.flip_camera_android_outlined,
+              color: Colors.white,
+            ),
           ),
         ),
         const SizedBox(height: 8),
-        Text('FLIP', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
+        Text(
+          'FLIP',
+          style: Theme.of(
+            context,
+          ).textTheme.labelSmall?.copyWith(color: Colors.white),
+        ),
       ],
     );
   }
@@ -366,7 +397,10 @@ class _ShutterButton extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.white.withValues(alpha: 0.22),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.5),
+            width: 2,
+          ),
         ),
         child: Container(
           decoration: const BoxDecoration(
@@ -401,7 +435,11 @@ class _SurfaceCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color ?? Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.4)),
+        border: Border.all(
+          color: Theme.of(
+            context,
+          ).colorScheme.outlineVariant.withValues(alpha: 0.4),
+        ),
       ),
       child: child,
     );
@@ -413,11 +451,7 @@ class _CameraOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: CustomPaint(
-        painter: _CameraOverlayPainter(),
-      ),
-    );
+    return IgnorePointer(child: CustomPaint(painter: _CameraOverlayPainter()));
   }
 }
 

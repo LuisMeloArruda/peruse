@@ -21,7 +21,10 @@ class DeckModel {
     this.isSynced = true,
   });
 
-  factory DeckModel.fromJson(Map<String, dynamic> json, {bool isSynced = true}) {
+  factory DeckModel.fromJson(
+    Map<String, dynamic> json, {
+    bool isSynced = true,
+  }) {
     final createdAtValue = json['created_at'];
     final createdAtMillis = createdAtValue is int
         ? createdAtValue
@@ -45,8 +48,9 @@ class DeckModel {
       'user_id': userId,
       'color': color,
       'icon': icon,
-      'created_at':
-          DateTime.fromMillisecondsSinceEpoch(createdAt).toIso8601String(),
+      'created_at': DateTime.fromMillisecondsSinceEpoch(
+        createdAt,
+      ).toIso8601String(),
     };
   }
 

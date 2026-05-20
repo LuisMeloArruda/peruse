@@ -40,9 +40,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       }
 
       if (next.hasError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.error.toString())));
         return;
       }
 
@@ -52,9 +52,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         final session = ref.read(authStateProvider).value;
         if (session == null && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Confirm email to activate account'),
-            ),
+            const SnackBar(content: Text('Confirm email to activate account')),
           );
         }
       }
@@ -125,7 +123,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 onPressed: authAction.isLoading
                     ? null
                     : () {
-                        ref.read(authControllerProvider.notifier).register(
+                        ref
+                            .read(authControllerProvider.notifier)
+                            .register(
                               _emailController.text.trim(),
                               _passwordController.text.trim(),
                             );

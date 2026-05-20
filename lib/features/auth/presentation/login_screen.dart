@@ -42,9 +42,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
 
       if (next.hasError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.error.toString())));
       }
     });
   }
@@ -102,7 +102,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   onPressed: authAction.isLoading
                       ? null
                       : () {
-                          ref.read(authControllerProvider.notifier).login(
+                          ref
+                              .read(authControllerProvider.notifier)
+                              .login(
                                 _emailController.text.trim(),
                                 _passwordController.text.trim(),
                               );
@@ -114,8 +116,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   onPressed: authAction.isLoading
                       ? null
                       : () => ref
-                          .read(authControllerProvider.notifier)
-                          .loginWithGoogle(),
+                            .read(authControllerProvider.notifier)
+                            .loginWithGoogle(),
                   icon: const Icon(Icons.login),
                   label: const Text('Continue with Google'),
                 ),
