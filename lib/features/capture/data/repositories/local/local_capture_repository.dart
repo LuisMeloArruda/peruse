@@ -6,7 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
-import 'package:peruse/features/capture/data/local/app_database.dart';
+import 'package:peruse/data/local/database/app_database.dart';
 import 'package:peruse/features/capture/domain/entities/capture.dart';
 import 'package:peruse/features/capture/domain/entities/label.dart';
 import 'package:peruse/features/capture/domain/repositories/capture_repository.dart';

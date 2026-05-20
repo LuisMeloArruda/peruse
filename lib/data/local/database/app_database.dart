@@ -14,12 +14,37 @@ import 'package:peruse/data/local/tables/words_table.dart';
 
 part 'app_database.g.dart';
 
+class LocalCaptures extends Table {
+  TextColumn get id => text()();
+  TextColumn get localPath => text()();
+  TextColumn get remoteId => text().nullable()();
+  IntColumn get status => integer()();
+  IntColumn get createdAt => integer()();
+  IntColumn get updatedAt => integer()();
+  IntColumn get uploadAttempts => integer().withDefault(const Constant(0))();
+  TextColumn get errorMessage => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+class LocalCaptureLabels extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get captureId => text().references(LocalCaptures, #id, onDelete: KeyAction.cascade)();
+  TextColumn get label => text()();
+  RealColumn get confidence => real()();
+  TextColumn get language => text().withDefault(const Constant('en'))();
+  TextColumn get bboxJson => text().nullable()();
+}
+
 @DriftDatabase(
   tables: [
     DecksTable,
     WordsTable,
     WordDetailsTable,
     DeckWordsTable,
+    LocalCaptures,
+    LocalCaptureLabels,
   ],
   daos: [
     DecksDao,
@@ -30,7 +55,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -45,6 +70,10 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(wordsTable, wordsTable.synced);
             await m.addColumn(deckWordsTable, deckWordsTable.synced);
           }
+          if (from < 4) {
+            await m.createTable(localCaptures);
+            await m.createTable(localCaptureLabels);
+          }
         },
       );
 
@@ -54,18 +83,9 @@ class AppDatabase extends _$AppDatabase {
       await delete(wordDetailsTable).go();
       await delete(wordsTable).go();
       await delete(decksTable).go();
+      await delete(localCaptureLabels).go();
+      await delete(localCaptures).go();
     });
-
-    await _tryDeleteTable('captures');
-    await _tryDeleteTable('object_labels');
-  }
-
-  Future<void> _tryDeleteTable(String tableName) async {
-    try {
-      await customStatement('DELETE FROM $tableName');
-    } catch (_) {
-      // Table might not exist in the local schema yet.
-    }
   }
 }
 

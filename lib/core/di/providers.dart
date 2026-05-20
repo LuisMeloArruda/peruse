@@ -55,13 +55,6 @@ RegisterUseCase registerUseCase(Ref ref) {
   return RegisterUseCase(repository);
 }
 
-@Riverpod(keepAlive: true)
-capture_db.AppDatabase captureAppDatabase(Ref ref) {
-  final database = capture_db.AppDatabase();
-  ref.onDispose(database.close);
-  return database;
-}
-
 @riverpod
 Future<List<camera.CameraDescription>> availableCameras(Ref ref) async {
   try {
@@ -74,6 +67,6 @@ Future<List<camera.CameraDescription>> availableCameras(Ref ref) async {
 @Riverpod(keepAlive: true)
 ICaptureRepository captureRepository(Ref ref) {
   final client = ref.watch(supabaseClientProvider);
-  final database = ref.watch(captureAppDatabaseProvider);
+  final database = ref.watch(appDatabaseProvider);
   return LocalCaptureRepository(database, client);
 }

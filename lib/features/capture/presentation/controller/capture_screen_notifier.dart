@@ -26,6 +26,8 @@ class CaptureScreenState {
   const CaptureScreenState({
     this.cameraController,
     this.imageLabeler,
+    this.availableCameras = const [],
+    this.selectedCameraIndex = 0,
     this.initializingCamera = false,
     this.takingPicture = false,
     this.processingImage = false,
@@ -36,6 +38,8 @@ class CaptureScreenState {
 
   final CameraController? cameraController;
   final mlkit.ImageLabeler? imageLabeler;
+  final List<CameraDescription> availableCameras;
+  final int selectedCameraIndex;
 
   final bool initializingCamera;
   final bool takingPicture;
@@ -48,6 +52,8 @@ class CaptureScreenState {
   CaptureScreenState copyWith({
     CameraController? cameraController,
     mlkit.ImageLabeler? imageLabeler,
+    List<CameraDescription>? availableCameras,
+    int? selectedCameraIndex,
     bool? initializingCamera,
     bool? takingPicture,
     bool? processingImage,
@@ -58,6 +64,8 @@ class CaptureScreenState {
     return CaptureScreenState(
       cameraController: cameraController ?? this.cameraController,
       imageLabeler: imageLabeler ?? this.imageLabeler,
+      availableCameras: availableCameras ?? this.availableCameras,
+      selectedCameraIndex: selectedCameraIndex ?? this.selectedCameraIndex,
       initializingCamera: initializingCamera ?? this.initializingCamera,
       takingPicture: takingPicture ?? this.takingPicture,
       processingImage: processingImage ?? this.processingImage,
@@ -76,17 +84,21 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
     return const CaptureScreenState();
   }
 
-  Future<void> initializeCamera(List<CameraDescription> cameras) async {
+  Future<void> initializeCamera(List<CameraDescription> cameras, {int selectedCameraIndex = 0}) async {
     if (state.initializingCamera ||
-        state.cameraController != null ||
         cameras.isEmpty) return;
 
-    state = state.copyWith(initializingCamera: true);
+    final resolvedIndex = selectedCameraIndex.clamp(0, cameras.length - 1);
 
-    final cameraDescription = cameras.firstWhere(
-      (camera) => camera.lensDirection == CameraLensDirection.back,
-      orElse: () => cameras.first,
+    state = state.copyWith(
+      availableCameras: cameras,
+      selectedCameraIndex: resolvedIndex,
+      initializingCamera: true,
     );
+
+    await _disposeCameraResources();
+
+    final cameraDescription = cameras[resolvedIndex];
 
     final controller = CameraController(
       cameraDescription,
@@ -113,6 +125,14 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
     } finally {
       state = state.copyWith(initializingCamera: false);
     }
+  }
+
+  Future<void> switchCamera() async {
+    final cameras = state.availableCameras;
+    if (state.initializingCamera || state.takingPicture || cameras.length < 2) return;
+
+    final nextIndex = (state.selectedCameraIndex + 1) % cameras.length;
+    await initializeCamera(cameras, selectedCameraIndex: nextIndex);
   }
 
   Future<CaptureReviewData?> captureAndAnalyze() async {
@@ -184,6 +204,14 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
   void resetCameraSetup() {
     _disposeResources();
     state = const CaptureScreenState();
+  }
+
+  Future<void> _disposeCameraResources() async {
+    final controller = state.cameraController;
+    if (controller != null) {
+      await controller.dispose();
+    }
+    await state.imageLabeler?.close();
   }
 
   void _disposeResources() {
