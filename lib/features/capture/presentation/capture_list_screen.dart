@@ -42,7 +42,8 @@ class CaptureListScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            onPressed: () => ref.read(captureControllerProvider.notifier).refresh(),
+            onPressed: () =>
+                ref.read(captureControllerProvider.notifier).refresh(),
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
           ),
@@ -54,14 +55,12 @@ class CaptureListScreen extends ConsumerWidget {
           child: capturesAsync.when(
             data: (captures) {
               if (captures.isEmpty) {
-                return const Center(
-                  child: Text('No photos captured yet.'),
-                );
+                return const Center(child: Text('No photos captured yet.'));
               }
 
               return ListView.separated(
                 itemCount: captures.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final capture = captures[index];
                   return _CaptureListTile(
@@ -73,9 +72,8 @@ class CaptureListScreen extends ConsumerWidget {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => Center(
-              child: Text('Failed to load captures: $error'),
-            ),
+            error: (error, _) =>
+                Center(child: Text('Failed to load captures: $error')),
           ),
         ),
       ),
@@ -96,7 +94,9 @@ class _CaptureListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primaryLabel = capture.labels.isEmpty ? 'No label' : capture.labels.first.text;
+    final primaryLabel = capture.labels.isEmpty
+        ? 'No label'
+        : capture.labels.first.text;
     final secondaryText = capture.labels.isEmpty
         ? 'No labels available'
         : '${capture.labels.length} label${capture.labels.length == 1 ? '' : 's'}';
@@ -122,7 +122,7 @@ class _CaptureListTile extends StatelessWidget {
                   width: 72,
                   height: 72,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) {
+                  errorBuilder: (_, _, _) {
                     return Container(
                       width: 72,
                       height: 72,
@@ -141,7 +141,9 @@ class _CaptureListTile extends StatelessWidget {
                       primaryLabel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -166,8 +168,12 @@ class _CaptureListTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    capture.status == 'pending' ? 'Pending sync' : capture.status,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: statusColor),
+                    capture.status == 'pending'
+                        ? 'Pending sync'
+                        : capture.status,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelSmall?.copyWith(color: statusColor),
                   ),
                 ],
               ),

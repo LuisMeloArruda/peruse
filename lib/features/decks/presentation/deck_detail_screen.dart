@@ -42,12 +42,8 @@ class DeckDetailScreen extends ConsumerWidget {
                 child: _DeckSummary(
                   wordCount: state.words.length,
                   avgMastery: _averageMastery(state.words),
-                  onStudyNow: () => context.push(
-                    AppRoutes.deckStudy(deckId),
-                  ),
-                  onAddWord: () => context.push(
-                    AppRoutes.deckAddWord(deckId),
-                  ),
+                  onStudyNow: () => context.push(AppRoutes.deckStudy(deckId)),
+                  onAddWord: () => context.push(AppRoutes.deckAddWord(deckId)),
                 ),
               ),
             ),
@@ -71,7 +67,7 @@ class DeckDetailScreen extends ConsumerWidget {
                 child: PeruseTextField(
                   hintText: 'Search in deck...',
                   prefixIcon: const Icon(Icons.search),
-                    onChanged: (value) => ref
+                  onChanged: (value) => ref
                       .read(deckDetailProvider(deckId).notifier)
                       .updateSearchQuery(value),
                 ),
@@ -91,9 +87,8 @@ class DeckDetailScreen extends ConsumerWidget {
                   final word = state.filteredWords[index];
                   return _WordCard(
                     word: word,
-                    onTap: () => context.push(
-                      AppRoutes.wordDetail(deckId, word.id),
-                    ),
+                    onTap: () =>
+                        context.push(AppRoutes.wordDetail(deckId, word.id)),
                   );
                 },
               ),
@@ -106,10 +101,7 @@ class DeckDetailScreen extends ConsumerWidget {
 }
 
 class _DeckHeader extends StatelessWidget {
-  const _DeckHeader({
-    required this.title,
-    required this.onBack,
-  });
+  const _DeckHeader({required this.title, required this.onBack});
 
   final String title;
   final VoidCallback onBack;
@@ -123,12 +115,7 @@ class _DeckHeader extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_rounded),
           color: AppColors.brandTitle,
         ),
-        Expanded(
-          child: Text(
-            title,
-            style: context.textTheme.headlineSmall,
-          ),
-        ),
+        Expanded(child: Text(title, style: context.textTheme.headlineSmall)),
         Container(
           width: 36,
           height: 36,
@@ -178,10 +165,7 @@ class _DeckSummary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Daily Vocabulary',
-            style: context.textTheme.headlineSmall,
-          ),
+          Text('Daily Vocabulary', style: context.textTheme.headlineSmall),
           const SizedBox(height: AppSpacing.md),
           Row(
             children: [
@@ -266,10 +250,7 @@ class _WordCard extends StatelessWidget {
                     style: context.textTheme.titleLarge,
                   ),
                   const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    'Confidence',
-                    style: context.textTheme.labelSmall,
-                  ),
+                  Text('Confidence', style: context.textTheme.labelSmall),
                   const SizedBox(height: AppSpacing.xxs),
                   Row(
                     children: [

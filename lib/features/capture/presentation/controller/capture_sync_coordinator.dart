@@ -15,7 +15,9 @@ final captureSyncCoordinatorProvider = Provider<void>((ref) {
   }
 
   bool isConnected(List<ConnectivityResult>? results) {
-    return results != null && results.isNotEmpty && !results.contains(ConnectivityResult.none);
+    return results != null &&
+        results.isNotEmpty &&
+        !results.contains(ConnectivityResult.none);
   }
 
   ref.listen(connectivityProvider, (previous, next) {

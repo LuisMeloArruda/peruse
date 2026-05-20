@@ -23,20 +23,14 @@ class StudySessionScreen extends StatelessWidget {
                 color: AppColors.brandTitle,
               ),
               const SizedBox(height: AppSpacing.lg),
-              Text(
-                'Study Session',
-                style: context.textTheme.headlineSmall,
-              ),
+              Text('Study Session', style: context.textTheme.headlineSmall),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 'We are preparing the study experience for this deck.',
                 style: context.textTheme.bodyLarge,
               ),
               const SizedBox(height: AppSpacing.lg),
-              PeruseStatusTile(
-                title: 'Deck ID',
-                value: deckId,
-              ),
+              PeruseStatusTile(title: 'Deck ID', value: deckId),
             ],
           ),
         ),
@@ -63,10 +57,7 @@ class PeruseStatusTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title.toUpperCase(),
-            style: context.textTheme.labelSmall,
-          ),
+          Text(title.toUpperCase(), style: context.textTheme.labelSmall),
           const SizedBox(height: AppSpacing.xxs),
           Text(value, style: context.textTheme.bodyLarge),
         ],

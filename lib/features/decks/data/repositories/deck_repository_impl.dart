@@ -51,9 +51,9 @@ class DeckRepositoryImpl implements IDeckRepository {
 
   @override
   Stream<List<AppWord>> watchDeckWords(String deckId) {
-    return _localDb.wordsDao.watchWordsForDeck(deckId).map(
-          (words) => words.map(_mapWord).toList(),
-        );
+    return _localDb.wordsDao
+        .watchWordsForDeck(deckId)
+        .map((words) => words.map(_mapWord).toList());
   }
 
   @override
@@ -110,7 +110,9 @@ class DeckRepositoryImpl implements IDeckRepository {
 
     try {
       await _localDb.transaction(() async {
-        await _localDb.into(_localDb.wordsTable).insert(
+        await _localDb
+            .into(_localDb.wordsTable)
+            .insert(
               WordsTableCompanion.insert(
                 id: word.id,
                 wordText: normalized,
@@ -123,7 +125,9 @@ class DeckRepositoryImpl implements IDeckRepository {
               mode: InsertMode.insertOrReplace,
             );
 
-        await _localDb.into(_localDb.deckWordsTable).insert(
+        await _localDb
+            .into(_localDb.deckWordsTable)
+            .insert(
               DeckWordsTableCompanion.insert(
                 deckId: deckId,
                 wordId: word.id,
@@ -145,11 +149,7 @@ class DeckRepositoryImpl implements IDeckRepository {
         addedAt: word.createdAt,
       );
       if (deckWordSynced) {
-        await _localDb.wordsDao.updateDeckWordSyncStatus(
-          deckId,
-          word.id,
-          true,
-        );
+        await _localDb.wordsDao.updateDeckWordSyncStatus(deckId, word.id, true);
       }
     } catch (e) {
       debugPrint('Create word failed: $e');
@@ -166,9 +166,7 @@ class DeckRepositoryImpl implements IDeckRepository {
       await _supabase.from('decks').insert(model.toJson());
       await _localDb.decksDao.updateSyncStatus(deck.id, true);
     } catch (e) {
-      debugPrint(
-        'Deck sync failed. Saved locally for later retry. Error: $e',
-      );
+      debugPrint('Deck sync failed. Saved locally for later retry. Error: $e');
     }
   }
 
@@ -194,9 +192,7 @@ class DeckRepositoryImpl implements IDeckRepository {
     try {
       await _supabase.from('decks').delete().eq('id', id);
     } catch (e) {
-      debugPrint(
-        'Remote delete failed. Will retry on next sync. Error: $e',
-      );
+      debugPrint('Remote delete failed. Will retry on next sync. Error: $e');
     }
   }
 
@@ -229,7 +225,9 @@ class DeckRepositoryImpl implements IDeckRepository {
 
   @override
   Future<void> addWordToDeck(DeckWord deckWord) async {
-    await _localDb.into(_localDb.deckWordsTable).insert(
+    await _localDb
+        .into(_localDb.deckWordsTable)
+        .insert(
           DeckWordsTableCompanion.insert(
             deckId: deckWord.deckId,
             wordId: deckWord.wordId,
@@ -242,9 +240,9 @@ class DeckRepositoryImpl implements IDeckRepository {
 
   @override
   Future<void> removeWordFromDeck(String deckId, String wordId) async {
-    await (_localDb.delete(_localDb.deckWordsTable)
-          ..where((t) => t.deckId.equals(deckId) & t.wordId.equals(wordId)))
-        .go();
+    await (_localDb.delete(
+      _localDb.deckWordsTable,
+    )..where((t) => t.deckId.equals(deckId) & t.wordId.equals(wordId))).go();
   }
 
   @override
@@ -311,39 +309,39 @@ class DeckRepositoryImpl implements IDeckRepository {
           .eq('user_id', userId);
 
       final deckModels = (decksResponse as List)
-          .map((json) =>
-              DeckModel.fromJson(json as Map<String, dynamic>, isSynced: true))
+          .map(
+            (json) => DeckModel.fromJson(
+              json as Map<String, dynamic>,
+              isSynced: true,
+            ),
+          )
           .toList();
-      final wordJson = (wordsResponse as List)
-          .cast<Map<String, dynamic>>();
-      final wordCompanions =
-          wordJson.map(_wordCompanionFromJson).toList();
+      final wordJson = (wordsResponse as List).cast<Map<String, dynamic>>();
+      final wordCompanions = wordJson.map(_wordCompanionFromJson).toList();
 
       final deckIds = deckModels.map((deck) => deck.id).toList();
-      final wordIds = wordJson
-          .map((json) => json['id'] as String)
-          .toList();
+      final wordIds = wordJson.map((json) => json['id'] as String).toList();
 
-        List<Map<String, dynamic>> deckWordsJson = const [];
+      List<Map<String, dynamic>> deckWordsJson = const [];
       if (deckIds.isNotEmpty) {
         deckWordsJson = await _supabase
             .from('deck_words')
             .select()
-          .inFilter('deck_id', deckIds);
+            .inFilter('deck_id', deckIds);
       }
 
-        List<Map<String, dynamic>> wordDetailsJson = const [];
+      List<Map<String, dynamic>> wordDetailsJson = const [];
       if (wordIds.isNotEmpty) {
         wordDetailsJson = await _supabase
             .from('word_details')
             .select()
-          .inFilter('word_id', wordIds);
+            .inFilter('word_id', wordIds);
       }
 
-        final deckWordCompanions = deckWordsJson
+      final deckWordCompanions = deckWordsJson
           .map(_deckWordCompanionFromJson)
           .toList();
-        final wordDetailsCompanions = wordDetailsJson
+      final wordDetailsCompanions = wordDetailsJson
           .map(_wordDetailsCompanionFromJson)
           .toList();
 
@@ -476,8 +474,9 @@ class DeckRepositoryImpl implements IDeckRepository {
         'confidence': word.confidence,
         'source_scan_id': word.sourceScanId,
         'user_id': userId,
-        'created_at': DateTime.fromMillisecondsSinceEpoch(word.createdAt)
-            .toIso8601String(),
+        'created_at': DateTime.fromMillisecondsSinceEpoch(
+          word.createdAt,
+        ).toIso8601String(),
       });
       return true;
     } catch (e) {
@@ -495,8 +494,9 @@ class DeckRepositoryImpl implements IDeckRepository {
       await _supabase.from('deck_words').upsert({
         'deck_id': deckId,
         'word_id': wordId,
-        'added_at': DateTime.fromMillisecondsSinceEpoch(addedAt)
-            .toIso8601String(),
+        'added_at': DateTime.fromMillisecondsSinceEpoch(
+          addedAt,
+        ).toIso8601String(),
       });
       return true;
     } catch (e) {

@@ -9,18 +9,22 @@ class LabelModel extends Label {
   });
 
   Map<String, dynamic> toMap() => {
-        'text': text,
-        'confidence': confidence,
-        'bbox': bbox,
-        'language': language,
-      };
+    'text': text,
+    'confidence': confidence,
+    'bbox': bbox,
+    'language': language,
+  };
 
   factory LabelModel.fromMap(Map<String, dynamic> map) => LabelModel(
-        text: map['text'] as String,
-        confidence: (map['confidence'] as num).toDouble(),
-        bbox: map['bbox'] == null
-            ? null
-            : Map<String, double>.from((map['bbox'] as Map).map((k, v) => MapEntry(k as String, (v as num).toDouble()))),
-        language: map['language'] as String? ?? 'en',
-      );
+    text: map['text'] as String,
+    confidence: (map['confidence'] as num).toDouble(),
+    bbox: map['bbox'] == null
+        ? null
+        : Map<String, double>.from(
+            (map['bbox'] as Map).map(
+              (k, v) => MapEntry(k as String, (v as num).toDouble()),
+            ),
+          ),
+    language: map['language'] as String? ?? 'en',
+  );
 }

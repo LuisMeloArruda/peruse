@@ -30,7 +30,8 @@ class LocalCaptures extends Table {
 
 class LocalCaptureLabels extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get captureId => text().references(LocalCaptures, #id, onDelete: KeyAction.cascade)();
+  TextColumn get captureId =>
+      text().references(LocalCaptures, #id, onDelete: KeyAction.cascade)();
   TextColumn get label => text()();
   RealColumn get confidence => real()();
   TextColumn get language => text().withDefault(const Constant('en'))();
@@ -46,10 +47,7 @@ class LocalCaptureLabels extends Table {
     LocalCaptures,
     LocalCaptureLabels,
   ],
-  daos: [
-    DecksDao,
-    WordsDao,
-  ],
+  daos: [DecksDao, WordsDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -59,23 +57,23 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) => m.createAll(),
-        onUpgrade: (m, from, to) async {
-          if (from < 2) {
-            await m.createTable(wordsTable);
-            await m.createTable(wordDetailsTable);
-            await m.createTable(deckWordsTable);
-          }
-          if (from < 3) {
-            await m.addColumn(wordsTable, wordsTable.synced);
-            await m.addColumn(deckWordsTable, deckWordsTable.synced);
-          }
-          if (from < 4) {
-            await m.createTable(localCaptures);
-            await m.createTable(localCaptureLabels);
-          }
-        },
-      );
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(wordsTable);
+        await m.createTable(wordDetailsTable);
+        await m.createTable(deckWordsTable);
+      }
+      if (from < 3) {
+        await m.addColumn(wordsTable, wordsTable.synced);
+        await m.addColumn(deckWordsTable, deckWordsTable.synced);
+      }
+      if (from < 4) {
+        await m.createTable(localCaptures);
+        await m.createTable(localCaptureLabels);
+      }
+    },
+  );
 
   Future<void> clearUserData() async {
     await transaction(() async {

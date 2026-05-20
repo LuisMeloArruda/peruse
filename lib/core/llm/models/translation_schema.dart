@@ -4,7 +4,8 @@ part 'translation_schema.g.dart';
 
 @Schema()
 abstract class $TranslationOutput {
-  String get translatedText;
+  /// map of original words and their translation
+  Map<String, String> get translatedTexts;
 
   String get sourceLanguage;
 

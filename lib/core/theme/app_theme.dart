@@ -27,7 +27,9 @@ abstract final class AppTheme {
       outlineVariant: AppColors.neutralOutline,
     );
 
-    final baseText = Typography.material2021(platform: TargetPlatform.iOS).black;
+    final baseText = Typography.material2021(
+      platform: TargetPlatform.iOS,
+    ).black;
     final textTheme = AppTypography.textTheme(baseText);
 
     return ThemeData(
@@ -105,7 +107,10 @@ abstract final class AppTheme {
           disabledBackgroundColor: AppColors.neutralOutline,
           foregroundColor: AppColors.onPrimarySoft,
           disabledForegroundColor: AppColors.onSurfaceVariant,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.md,
+          ),
           minimumSize: const Size(64, 48),
           shape: const StadiumBorder(),
           textStyle: GoogleFonts.plusJakartaSans(
@@ -114,25 +119,29 @@ abstract final class AppTheme {
             height: 28 / 18,
             color: AppColors.onPrimarySoft,
           ),
-          backgroundBuilder: (BuildContext context, Set<WidgetState> states, Widget? child) {
-            final disabled = states.contains(WidgetState.disabled);
-            return ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: disabled
-                      ? null
-                      : const LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [AppColors.primary, AppColors.primaryGradientEnd],
-                        ),
-                  color: disabled ? AppColors.neutralOutline : null,
-                ),
-                child: child,
-              ),
-            );
-          },
+          backgroundBuilder:
+              (BuildContext context, Set<WidgetState> states, Widget? child) {
+                final disabled = states.contains(WidgetState.disabled);
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: disabled
+                          ? null
+                          : const LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: [
+                                AppColors.primary,
+                                AppColors.primaryGradientEnd,
+                              ],
+                            ),
+                      color: disabled ? AppColors.neutralOutline : null,
+                    ),
+                    child: child,
+                  ),
+                );
+              },
         ),
       ),
       textButtonTheme: TextButtonThemeData(

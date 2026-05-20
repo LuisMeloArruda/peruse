@@ -40,11 +40,9 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
     final color = _colorOptions[_selectedColorIndex].value;
     final icon = _iconOptions[_selectedIconIndex].key;
 
-    await ref.read(decksProvider.notifier).createDeck(
-          name: name,
-          color: color,
-          icon: icon,
-        );
+    await ref
+        .read(decksProvider.notifier)
+        .createDeck(name: name, color: color, icon: icon);
 
     if (mounted) {
       context.pop();
@@ -113,12 +111,13 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _iconOptions.length,
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 4,
-                        mainAxisSpacing: AppSpacing.sm,
-                        crossAxisSpacing: AppSpacing.sm,
-                        childAspectRatio: 1,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4,
+                            mainAxisSpacing: AppSpacing.sm,
+                            crossAxisSpacing: AppSpacing.sm,
+                            childAspectRatio: 1,
+                          ),
                       itemBuilder: (context, index) {
                         final option = _iconOptions[index];
                         final isSelected = _selectedIconIndex == index;
@@ -300,10 +299,7 @@ class _ColorDot extends StatelessWidget {
         ),
         padding: const EdgeInsets.all(3),
         child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
       ),
     );
@@ -354,10 +350,7 @@ class _CoverImageCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFFAEC4FF),
-            AppColors.surfaceContainer,
-          ],
+          colors: [const Color(0xFFAEC4FF), AppColors.surfaceContainer],
         ),
       ),
       child: Center(

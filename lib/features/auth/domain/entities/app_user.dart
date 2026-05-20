@@ -8,17 +8,9 @@ class AppUser {
   final String email;
   final String? name;
 
-  const AppUser({
-    required this.id,
-    required this.email,
-    this.name,
-  });
+  const AppUser({required this.id, required this.email, this.name});
 
-  AppUser copyWith({
-    UserId? id,
-    String? email,
-    String? name,
-  }) {
+  AppUser copyWith({UserId? id, String? email, String? name}) {
     return AppUser(
       id: id ?? this.id,
       email: email ?? this.email,

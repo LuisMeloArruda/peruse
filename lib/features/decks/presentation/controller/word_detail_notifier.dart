@@ -43,8 +43,8 @@ class WordDetailNotifier extends _$WordDetailNotifier {
       final prevList = previous?.value ?? const <ConnectivityResult>[];
       final nextList = next.value ?? const <ConnectivityResult>[];
       final wasOffline = prevList.contains(ConnectivityResult.none);
-      final isOnline = nextList.isNotEmpty &&
-          !nextList.contains(ConnectivityResult.none);
+      final isOnline =
+          nextList.isNotEmpty && !nextList.contains(ConnectivityResult.none);
 
       if (wasOffline && isOnline) {
         unawaited(ref.read(deckRepositoryProvider).syncPendingWords());

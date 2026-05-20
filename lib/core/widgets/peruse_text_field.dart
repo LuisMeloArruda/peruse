@@ -29,7 +29,6 @@ class PeruseTextField extends StatefulWidget {
   final TextEditingController? controller;
   final FocusNode? focusNode;
 
-
   final String? labelText;
 
   final String? hintText;
@@ -149,7 +148,9 @@ class _PeruseTextFieldState extends State<PeruseTextField> {
     return IconButton(
       onPressed: () => setState(() => _obscureText = !_obscureText),
       icon: Icon(
-        _obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+        _obscureText
+            ? Icons.visibility_outlined
+            : Icons.visibility_off_outlined,
         size: 22,
       ),
       color: AppColors.onSurfaceVariant,

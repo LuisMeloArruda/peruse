@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:peruse/core/theme/theme.dart';
 
 /// Bento stat tile variants from the Growth screen (muted grey, green streak, white elevated).
-enum PeruseStatBentoVariant {
-  muted,
-  primary,
-  elevated,
-}
+enum PeruseStatBentoVariant { muted, primary, elevated }
 
 class PeruseStatBentoCard extends StatelessWidget {
   const PeruseStatBentoCard({
@@ -67,15 +63,15 @@ class PeruseStatBentoCard extends StatelessWidget {
                 ),
               ]
             : isElevated
-                ? const [
-                    BoxShadow(
-                      color: Color(0x0F2C2F2F),
-                      blurRadius: 40,
-                      offset: Offset(0, 20),
-                      spreadRadius: -4,
-                    ),
-                  ]
-                : null,
+            ? const [
+                BoxShadow(
+                  color: Color(0x0F2C2F2F),
+                  blurRadius: 40,
+                  offset: Offset(0, 20),
+                  spreadRadius: -4,
+                ),
+              ]
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

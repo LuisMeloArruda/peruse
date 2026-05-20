@@ -4,11 +4,7 @@ import 'package:peruse/core/theme/theme.dart';
 
 /// Horizontal progress bar with a trailing percentage label.
 class PeruseLinearProgress extends StatelessWidget {
-  const PeruseLinearProgress({
-    super.key,
-    required this.progress,
-    this.color,
-  });
+  const PeruseLinearProgress({super.key, required this.progress, this.color});
 
   /// 0–1; shown as a bar and trailing label.
   final double progress;
@@ -35,9 +31,7 @@ class PeruseLinearProgress extends StatelessWidget {
         const SizedBox(width: AppSpacing.sm),
         Text(
           '${(value * 100).round()}%',
-          style: context.textTheme.labelLarge?.copyWith(
-            color: accentColor,
-          ),
+          style: context.textTheme.labelLarge?.copyWith(color: accentColor),
         ),
       ],
     );

@@ -28,16 +28,14 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
     final word = _wordController.text.trim();
     if (word.isEmpty) {
       debugPrint('Word text is required.');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a word.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter a word.')));
       return;
     }
 
     try {
-      await ref
-          .read(deckDetailProvider(widget.deckId).notifier)
-          .addWord(word);
+      await ref.read(deckDetailProvider(widget.deckId).notifier).addWord(word);
       if (mounted) {
         context.pop();
       }
@@ -67,10 +65,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                     icon: const Icon(Icons.arrow_back_rounded),
                     color: AppColors.brandTitle,
                   ),
-                  Text(
-                    'Add Word',
-                    style: context.textTheme.headlineSmall,
-                  ),
+                  Text('Add Word', style: context.textTheme.headlineSmall),
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),

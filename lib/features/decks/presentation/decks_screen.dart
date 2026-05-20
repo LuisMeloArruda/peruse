@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:peruse/core/llm/widget/model_download_widget.dart';
-
 import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/widgets/peruse_linear_progress.dart';
@@ -29,7 +27,6 @@ class DecksScreen extends ConsumerWidget {
         child: decksState.when(
           data: (decks) => Column(
             children: [
-              TranslationWidget(),
               Flexible(
                 child: _DecksLoadedView(
                   decks: decks,

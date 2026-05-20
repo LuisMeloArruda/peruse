@@ -3,20 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart'
     as mlkit;
 
-import 'package:peruse/core/di/providers.dart';
+import 'package:peruse/core/llm/models/llm_request.dart';
+import 'package:peruse/core/llm/provider/llm_providers.dart';
 import 'package:peruse/features/capture/domain/entities/label.dart';
 import 'package:peruse/features/capture/presentation/controller/capture_notifier.dart';
 
 final captureScreenProvider =
     NotifierProvider.autoDispose<CaptureScreenNotifier, CaptureScreenState>(
-  CaptureScreenNotifier.new,
-);
+      CaptureScreenNotifier.new,
+    );
 
 class CaptureReviewData {
-  const CaptureReviewData({
-    required this.localPath,
-    required this.labels,
-  });
+  const CaptureReviewData({required this.localPath, required this.labels});
 
   final String localPath;
   final List<Label> labels;
@@ -77,16 +75,17 @@ class CaptureScreenState {
 }
 
 class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
-
   @override
   CaptureScreenState build() {
     ref.onDispose(_disposeResources);
     return const CaptureScreenState();
   }
 
-  Future<void> initializeCamera(List<CameraDescription> cameras, {int selectedCameraIndex = 0}) async {
-    if (state.initializingCamera ||
-        cameras.isEmpty) return;
+  Future<void> initializeCamera(
+    List<CameraDescription> cameras, {
+    int selectedCameraIndex = 0,
+  }) async {
+    if (state.initializingCamera || cameras.isEmpty) return;
 
     final resolvedIndex = selectedCameraIndex.clamp(0, cameras.length - 1);
 
@@ -129,7 +128,9 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
 
   Future<void> switchCamera() async {
     final cameras = state.availableCameras;
-    if (state.initializingCamera || state.takingPicture || cameras.length < 2) return;
+    if (state.initializingCamera || state.takingPicture || cameras.length < 2) {
+      return;
+    }
 
     final nextIndex = (state.selectedCameraIndex + 1) % cameras.length;
     await initializeCamera(cameras, selectedCameraIndex: nextIndex);
@@ -155,50 +156,49 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
     try {
       final xFile = await controller.takePicture();
 
-      final inputImage =
-          mlkit.InputImage.fromFilePath(xFile.path);
+      final inputImage = mlkit.InputImage.fromFilePath(xFile.path);
 
-      final labels =
-          await imageLabeler.processImage(inputImage);
+      final labels = await imageLabeler.processImage(inputImage);
+
+      final llmRequest = LlmRequest(
+        input: Map.fromEntries(
+          labels.map((e) => MapEntry(e.label, e.confidence)),
+        ),
+        sourceLanguage: 'english',
+        targetLanguage: 'french',
+      );
+      final translations = await ref.read(
+        llmTranslateProvider(llmRequest).future,
+      );
 
       final detectedLabels = [
-        for (final label in labels)
+        for (final translation in translations.translatedTexts.entries)
           Label(
-            text: label.label,
-            confidence: label.confidence,
-            language: 'en',
-          )
+            text: translation.value,
+            confidence: llmRequest.input[translation.key] ?? 0,
+            language: translations.targetLanguage,
+          ),
       ];
 
       state = state.copyWith(
         lastCapturedPath: xFile.path,
         lastDetectedLabels: detectedLabels,
       );
-      return CaptureReviewData(
-        localPath: xFile.path,
-        labels: detectedLabels,
-      );
+      return CaptureReviewData(localPath: xFile.path, labels: detectedLabels);
     } catch (error) {
       state = state.copyWith(cameraError: error.toString());
       return null;
     } finally {
-      state = state.copyWith(
-        takingPicture: false,
-        processingImage: false,
-      );
+      state = state.copyWith(takingPicture: false, processingImage: false);
     }
   }
 
   Future<void> syncAll() async {
-    await ref
-        .read(captureControllerProvider.notifier)
-        .syncAll();
+    await ref.read(captureControllerProvider.notifier).syncAll();
   }
 
   Future<void> refreshCaptures() async {
-    await ref
-        .read(captureControllerProvider.notifier)
-        .refresh();
+    await ref.read(captureControllerProvider.notifier).refresh();
   }
 
   void resetCameraSetup() {

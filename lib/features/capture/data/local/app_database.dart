@@ -23,7 +23,8 @@ class LocalCaptures extends Table {
 
 class LocalCaptureLabels extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get captureId => text().references(LocalCaptures, #id, onDelete: KeyAction.cascade)();
+  TextColumn get captureId =>
+      text().references(LocalCaptures, #id, onDelete: KeyAction.cascade)();
   TextColumn get label => text()();
   RealColumn get confidence => real()();
   TextColumn get language => text().withDefault(const Constant('en'))();
@@ -39,19 +40,18 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (Migrator m) async {
-          await m.createAll();
-        },
-        onUpgrade: (Migrator m, int from, int to) async {
-          if (from < to) {
-            // Basic fallback: ensure all tables/columns exist when upgrading.
-            // For more complex migrations, add specific steps per version.
-            await m.createAll();
-          }
-        },
-      );
+    onCreate: (Migrator m) async {
+      await m.createAll();
+    },
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from < to) {
+        // Basic fallback: ensure all tables/columns exist when upgrading.
+        // For more complex migrations, add specific steps per version.
+        await m.createAll();
+      }
+    },
+  );
 }
-
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
