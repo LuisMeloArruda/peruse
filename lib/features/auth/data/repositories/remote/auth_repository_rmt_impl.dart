@@ -10,7 +10,8 @@ class AuthRepositoryImpl implements IAuthRepository {
   final GoogleSignIn _googleSignIn;
 
   AuthRepositoryImpl(this._client)
-      : _googleSignIn = GoogleSignIn(serverClientId: _webClientId);
+    : _googleSignIn = GoogleSignIn.instance
+        ..initialize(serverClientId: _webClientId);
 
   @override
   Future<AppUser> signInWithEmail(String email, String password) async {
@@ -36,16 +37,13 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<void> signInWithGoogle() async {
     try {
       await _googleSignIn.signOut();
-      final googleUser = await _googleSignIn.signIn();
+      final googleUser = await _googleSignIn.authenticate();
 
-      if (googleUser == null) {
-        throw Exception('Sign-In canceled.');
-      }
 
-      final googleAuth = await googleUser.authentication;
+      final googleAuth =  googleUser.authentication;
 
       final idToken = googleAuth.idToken;
-      final accessToken = googleAuth.accessToken;
+      final accessToken = googleAuth.idToken;
 
       if (idToken == null || accessToken == null) {
         throw Exception('Failure: idToken and accessToken Google.');
@@ -74,7 +72,7 @@ class AuthRepositoryImpl implements IAuthRepository {
   @override
   Stream<AppUser?> get authStateChanges =>
       _client.auth.onAuthStateChange.map((data) {
-        final user = data.session?.user; 
+        final user = data.session?.user;
         return user?.toEntity();
       });
 

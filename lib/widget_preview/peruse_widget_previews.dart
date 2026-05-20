@@ -3,6 +3,7 @@ import 'package:flutter/widget_previews.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/widgets/peruse_deck_list_tile.dart';
 import 'package:peruse/core/widgets/peruse_hero_heading.dart';
+import 'package:peruse/core/widgets/peruse_linear_progress.dart';
 import 'package:peruse/core/widgets/peruse_pill_toggle.dart';
 import 'package:peruse/core/widgets/peruse_section_header.dart';
 import 'package:peruse/core/widgets/peruse_sheet_card.dart';
@@ -139,6 +140,14 @@ class _PeruseCatalogBodyState extends State<_PeruseCatalogBody> {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          _PreviewSectionLabel('PeruseLinearProgress'),
+          const PeruseLinearProgress(progress: 0.68),
+          const SizedBox(height: AppSpacing.md),
+          const PeruseLinearProgress(
+            progress: 0.32,
+            color: AppColors.brandTitle,
           ),
           const SizedBox(height: AppSpacing.xl),
           _PreviewSectionLabel('PeruseDeckListTile'),
