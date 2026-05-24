@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
+import 'package:peruse/core/utils/assets.dart';
 import 'package:peruse/core/widgets/peruse_linear_progress.dart';
 import 'package:peruse/core/widgets/peruse_sheet_card.dart';
 import 'package:peruse/core/widgets/peruse_text_field.dart';
@@ -451,11 +452,35 @@ class _DeckCoverImage extends StatelessWidget {
 
   final String imageUrl;
 
+  Widget _placeholder() {
+    return Image.asset(
+      kImagePlaceholderAsset,
+      fit: BoxFit.contain,
+      width: double.infinity,
+      height: double.infinity,
+      alignment: Alignment.center,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return _isLocalImagePath(imageUrl)
-        ? Image.file(File(imageUrl), fit: BoxFit.cover)
-        : Image.network(imageUrl, fit: BoxFit.cover);
+        ? Image.file(
+            File(imageUrl),
+            fit: BoxFit.contain,
+            width: double.infinity,
+            height: double.infinity,
+            alignment: Alignment.center,
+            errorBuilder: (_, __, ___) => _placeholder(),
+          )
+        : Image.network(
+            imageUrl,
+            fit: BoxFit.contain,
+            width: double.infinity,
+            height: double.infinity,
+            alignment: Alignment.center,
+            errorBuilder: (_, __, ___) => _placeholder(),
+          );
   }
 }
 

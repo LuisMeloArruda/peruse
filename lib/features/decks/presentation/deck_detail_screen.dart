@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
+import 'package:peruse/core/utils/assets.dart';
 import 'package:peruse/core/widgets/peruse_stat_bento_card.dart';
 import 'package:peruse/core/widgets/peruse_text_field.dart';
 import 'package:peruse/features/decks/domain/entities/word.dart';
@@ -342,6 +343,16 @@ class _WordImageHeader extends StatelessWidget {
   final String badge;
   final Color badgeColor;
 
+  Widget _placeholder() {
+    return Image.asset(
+      kImagePlaceholderAsset,
+      fit: BoxFit.contain,
+      width: double.infinity,
+      height: double.infinity,
+      alignment: Alignment.center,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -364,15 +375,17 @@ class _WordImageHeader extends StatelessWidget {
                       imageUrl!,
                       width: double.infinity,
                       height: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                      fit: BoxFit.contain,
+                      alignment: Alignment.center,
+                      errorBuilder: (_, __, ___) => _placeholder(),
                     )
                   : Image.file(
                       File(imageUrl!),
                       width: double.infinity,
                       height: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                      fit: BoxFit.contain,
+                      alignment: Alignment.center,
+                      errorBuilder: (_, __, ___) => _placeholder(),
                     ),
             ),
           Positioned(

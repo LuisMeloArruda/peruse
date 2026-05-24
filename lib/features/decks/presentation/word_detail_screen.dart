@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:peruse/core/theme/theme.dart';
+import 'package:peruse/core/utils/assets.dart';
 import 'package:peruse/core/widgets/peruse_sheet_card.dart';
 import 'package:peruse/features/decks/presentation/controller/word_detail_notifier.dart';
 
@@ -227,6 +228,16 @@ class _WordHeroImage extends StatelessWidget {
 
   final String? imageUrl;
 
+  Widget _placeholder() {
+    return Image.asset(
+      kImagePlaceholderAsset,
+      fit: BoxFit.contain,
+      width: double.infinity,
+      height: double.infinity,
+      alignment: Alignment.center,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -242,21 +253,19 @@ class _WordHeroImage extends StatelessWidget {
               child: _isRemoteImage(imageUrl!)
                   ? Image.network(
                       imageUrl!,
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                       width: double.infinity,
                       height: double.infinity,
-                      errorBuilder: (_, _, _) => const Center(
-                        child: Icon(Icons.image_not_supported_rounded),
-                      ),
+                      alignment: Alignment.center,
+                      errorBuilder: (_, __, ___) => _placeholder(),
                     )
                   : Image.file(
                       File(imageUrl!),
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                       width: double.infinity,
                       height: double.infinity,
-                      errorBuilder: (_, _, _) => const Center(
-                        child: Icon(Icons.image_not_supported_rounded),
-                      ),
+                      alignment: Alignment.center,
+                      errorBuilder: (_, __, ___) => _placeholder(),
                     ),
             ),
     );

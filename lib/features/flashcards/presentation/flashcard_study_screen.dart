@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:peruse/core/router/router.dart';
 import 'package:peruse/core/theme/theme.dart';
+import 'package:peruse/core/utils/assets.dart';
 import 'package:peruse/features/decks/data/repositories/deck_repository_impl.dart';
 import 'package:peruse/features/decks/presentation/controller/deck_detail_notifier.dart';
 import 'package:peruse/features/decks/presentation/controller/word_audio_provider.dart';
@@ -724,6 +725,16 @@ class _CardImage extends StatelessWidget {
   final String? mediaUrl;
   final double height;
 
+  Widget _placeholder() {
+    return Image.asset(
+      kImagePlaceholderAsset,
+      fit: BoxFit.contain,
+      width: double.infinity,
+      height: double.infinity,
+      alignment: Alignment.center,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final resolvedUrl = mediaUrl?.trim() ?? '';
@@ -743,10 +754,9 @@ class _CardImage extends StatelessWidget {
                 resolvedUrl,
                 width: double.infinity,
                 height: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const Center(
-                  child: Icon(Icons.image_not_supported_rounded, color: Colors.white70, size: 48),
-                ),
+                fit: BoxFit.contain,
+                alignment: Alignment.center,
+                errorBuilder: (_, __, ___) => _placeholder(),
               ),
       ),
     );

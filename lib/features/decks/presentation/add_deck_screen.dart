@@ -418,7 +418,8 @@ class _CoverImageCard extends StatelessWidget {
           image: hasImage
               ? DecorationImage(
                   image: FileImage(File(imagePath!)),
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.center,
                 )
               : null,
         ),

@@ -50,5 +50,6 @@ flutter:
   uses-material-design: true
   assets:
     - .env
+    - assets/images/image_placeholder.png
 
 
