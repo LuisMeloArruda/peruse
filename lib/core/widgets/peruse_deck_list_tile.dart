@@ -63,11 +63,6 @@ class PeruseDeckListTile extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.onSurfaceVariant,
-                size: 24,
-              ),
             ],
           ),
         ),

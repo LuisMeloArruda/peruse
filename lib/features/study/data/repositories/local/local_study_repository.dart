@@ -69,9 +69,9 @@ class LocalStudyRepository implements IStudyRepository {
       final totalCorrectAll =
           totalsRow.read(_localDb.dailyProgressTable.correctAnswers.sum()) ?? 0;
 
-      final accuracy = totalWords == 0
+        final accuracy = totalWords == 0
           ? 0.0
-          : (totalCorrectAll / totalWords) * 100.0;
+          : (totalCorrectAll / totalWords);
 
       final currentProgress =
           await (_localDb.select(_localDb.userProgressTable)

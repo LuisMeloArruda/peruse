@@ -14,6 +14,7 @@ class PeruseStatBentoCard extends StatelessWidget {
     this.leading,
     this.badge,
     this.minHeight = 192,
+    this.isHorizontal = false,
   });
 
   final String value;
@@ -22,6 +23,7 @@ class PeruseStatBentoCard extends StatelessWidget {
   final Widget? leading;
   final String? badge;
   final double minHeight;
+  final bool isHorizontal;
 
   @override
   Widget build(BuildContext context) {
@@ -73,32 +75,63 @@ class PeruseStatBentoCard extends StatelessWidget {
               ]
             : null,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          if (leading != null || badge != null)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: isHorizontal
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                leading ?? const SizedBox.shrink(),
-                if (badge != null)
-                  Text(badge!.toUpperCase(), style: badgeStyle)
-                else
-                  const SizedBox.shrink(),
+                if (leading != null) leading!,
+                if (leading != null) const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(value, style: valueStyle),
+                      ),
+                      const SizedBox(height: AppSpacing.xxs),
+                      Text(label.toUpperCase(), style: labelStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
+                ),
+                if (badge != null) ...[
+                  const SizedBox(width: AppSpacing.md),
+                  Text(badge!.toUpperCase(), style: badgeStyle),
+                ],
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (leading != null || badge != null)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      leading ?? const SizedBox.shrink(),
+                      if (badge != null)
+                        Text(badge!.toUpperCase(), style: badgeStyle)
+                      else
+                        const SizedBox.shrink(),
+                    ],
+                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(value, style: valueStyle),
+                    ),
+                    const SizedBox(height: AppSpacing.xxs),
+                    Text(label.toUpperCase(), style: labelStyle),
+                  ],
+                ),
               ],
             ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(value, style: valueStyle),
-              const SizedBox(height: AppSpacing.xxs),
-              Text(label.toUpperCase(), style: labelStyle),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }

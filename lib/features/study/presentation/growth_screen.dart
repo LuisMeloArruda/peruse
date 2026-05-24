@@ -29,6 +29,11 @@ class GrowthScreen extends ConsumerStatefulWidget {
 class _GrowthScreenState extends ConsumerState<GrowthScreen> {
   bool _isWeekly = true;
 
+  String _formatAccuracy(double accuracy) {
+    final normalized = accuracy > 1 ? accuracy / 100 : accuracy;
+    return '${(normalized.clamp(0.0, 1.0) * 100).toStringAsFixed(1)}%';
+  }
+
   @override
   Widget build(BuildContext context) {
     final userId = ref.watch(authRepositoryProvider).currentUser?.id;
@@ -57,33 +62,30 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     ref.watch(userGlobalStatsProvider(userId)).when(
-                          data: (stats) => Row(
+                          data: (stats) => Column(
                             children: [
-                              Expanded(
-                                child: PeruseStatBentoCard(
-                                  value: '${stats.currentStreak} Days',
-                                  label: 'Daily Streak',
-                                  variant: PeruseStatBentoVariant.primary,
-                                  leading: const Icon(
-                                    Icons.local_fire_department,
-                                    color: AppColors.onPrimarySoft,
-                                  ),
-                                  minHeight: 140,
+                              PeruseStatBentoCard(
+                                value: '${stats.currentStreak} Days',
+                                label: 'Daily Streak',
+                                variant: PeruseStatBentoVariant.primary,
+                                leading: const Icon(
+                                  Icons.local_fire_department,
+                                  color: AppColors.onPrimarySoft,
                                 ),
+                                minHeight: 140,
                               ),
-                              const SizedBox(width: AppSpacing.md),
-                              Expanded(
-                                child: PeruseStatBentoCard(
-                                  value:
-                                      '${(stats.lifetimeAccuracy * 100).toStringAsFixed(1)}%',
-                                  label: 'Avg. Accuracy',
-                                  variant: PeruseStatBentoVariant.elevated,
-                                  leading: const Icon(
-                                    Icons.verified_rounded,
-                                    color: AppColors.primary,
-                                  ),
-                                  minHeight: 140,
+                              const SizedBox(height: AppSpacing.md),
+                              PeruseStatBentoCard(
+                                value: _formatAccuracy(
+                                  stats.lifetimeAccuracy,
                                 ),
+                                label: 'Avg. Accuracy',
+                                variant: PeruseStatBentoVariant.elevated,
+                                leading: const Icon(
+                                  Icons.verified_rounded,
+                                  color: AppColors.primary,
+                                ),
+                                minHeight: 140,
                               ),
                             ],
                           ),
@@ -188,6 +190,7 @@ class _VelocityChart extends StatelessWidget {
   final AsyncValue<List<LocalDailyProgress>> monthly;
 
   static const _weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  static const double _yAxisWidth = 36;
 
   @override
   Widget build(BuildContext context) {
@@ -209,29 +212,62 @@ class _VelocityChart extends StatelessWidget {
                 color: AppColors.onSurfaceVariant,
               ),
             ),
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Words studied per day',
+                  style: context.textTheme.titleSmall,
+                ),
+                Text(
+                  '${_average(points).toStringAsFixed(1)} avg/day',
+                  style: context.textTheme.labelSmall?.copyWith(
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: AppSpacing.lg),
             SizedBox(
               height: 160,
-              child: CustomPaint(
-                painter: _VelocityPainter(
-                  values: points,
-                  maxValue: maxValue <= 0 ? 1 : maxValue,
-                ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _VelocityYAxis(
+                    maxValue: maxValue <= 0 ? 1 : maxValue,
+                    width: _yAxisWidth,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: CustomPaint(
+                      painter: _VelocityPainter(
+                        values: points,
+                        maxValue: maxValue <= 0 ? 1 : maxValue,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: _weekLabels
-                  .map(
-                    (label) => Text(
-                      label,
-                      style: context.textTheme.labelSmall?.copyWith(
-                        color: AppColors.onSurfaceVariant,
+            Padding(
+              padding: const EdgeInsets.only(
+                left: _yAxisWidth + AppSpacing.sm,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: _labelsForRange(isWeekly)
+                    .map(
+                      (label) => Text(
+                        label,
+                        style: context.textTheme.labelSmall?.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                  )
-                  .toList(),
+                    )
+                    .toList(),
+              ),
             ),
           ],
         );
@@ -242,6 +278,20 @@ class _VelocityChart extends StatelessWidget {
         style: context.textTheme.bodyMedium,
       ),
     );
+  }
+
+  List<String> _labelsForRange(bool weekly) {
+    if (weekly) return _weekLabels;
+
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, now.day).subtract(
+      const Duration(days: 29),
+    );
+    const ticks = [0, 6, 12, 18, 24, 29];
+    return ticks.map((offset) {
+      final date = start.add(Duration(days: offset));
+      return '${date.month}/${date.day}';
+    }).toList();
   }
 
   List<double> _buildWeekSeries(List<LocalDailyProgress> rows) {
@@ -258,19 +308,15 @@ class _VelocityChart extends StatelessWidget {
   }
 
   List<double> _buildMonthSeries(List<LocalDailyProgress> rows) {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, now.day)
+        .subtract(const Duration(days: 29));
     final lookup = _toDateMap(rows);
-    final totals = List<double>.filled(7, 0);
-    final counts = List<int>.filled(7, 0);
 
-    for (final entry in lookup.entries) {
-      final weekdayIndex = entry.key.weekday - 1;
-      totals[weekdayIndex] += entry.value;
-      counts[weekdayIndex] += 1;
-    }
-
-    return List<double>.generate(7, (index) {
-      if (counts[index] == 0) return 0;
-      return totals[index] / counts[index];
+    return List<double>.generate(30, (index) {
+      final date = start.add(Duration(days: index));
+      final normalized = DateTime(date.year, date.month, date.day);
+      return (lookup[normalized] ?? 0).toDouble();
     });
   }
 
@@ -294,6 +340,12 @@ class _VelocityChart extends StatelessWidget {
       int.parse(parts[1]),
       int.parse(parts[2]),
     );
+  }
+
+  double _average(List<double> values) {
+    if (values.isEmpty) return 0;
+    final total = values.fold<double>(0, (sum, value) => sum + value);
+    return total / values.length;
   }
 }
 
@@ -352,6 +404,45 @@ class _VelocityPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _VelocityPainter oldDelegate) {
     return oldDelegate.values != values || oldDelegate.maxValue != maxValue;
+  }
+}
+
+class _VelocityYAxis extends StatelessWidget {
+  const _VelocityYAxis({required this.maxValue, required this.width});
+
+  final double maxValue;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final ticks = _buildTicks(maxValue);
+
+    return SizedBox(
+      width: width,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: ticks
+            .map(
+              (value) => Text(
+                value.toStringAsFixed(0),
+                style: context.textTheme.labelSmall?.copyWith(
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+
+  List<double> _buildTicks(double max) {
+    final roundedMax = max <= 1 ? 1 : max.ceilToDouble();
+    return <double>[
+      roundedMax.toDouble(), 
+      (roundedMax * 0.66), 
+      (roundedMax * 0.33), 
+      0.0,
+    ];
   }
 }
 
@@ -526,30 +617,55 @@ class _DecksSkeleton extends StatelessWidget {
 class _HeatmapLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final colors = [
-      AppColors.heatmapEmpty,
-      AppColors.primary.withValues(alpha: 0.25),
-      AppColors.primary.withValues(alpha: 0.6),
-      AppColors.primary,
+    final entries = [
+      _HeatmapLegendEntry(AppColors.heatmapEmpty, '0'),
+      _HeatmapLegendEntry(
+        AppColors.primary.withValues(alpha: 0.25),
+        '1-5',
+      ),
+      _HeatmapLegendEntry(
+        AppColors.primary.withValues(alpha: 0.6),
+        '6-10',
+      ),
+      _HeatmapLegendEntry(AppColors.primary, '11+'),
     ];
 
     return Row(
       children: [
         Text('Less', style: context.textTheme.labelSmall),
         const SizedBox(width: AppSpacing.xs),
-        for (final color in colors) ...[
-          Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(3),
-            ),
+        for (final entry in entries) ...[
+          Column(
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: entry.color,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                entry.label,
+                style: context.textTheme.labelSmall?.copyWith(
+                  color: AppColors.onSurfaceVariant,
+                  fontSize: 9,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 6),
         ],
         Text('More', style: context.textTheme.labelSmall),
       ],
     );
   }
+}
+
+class _HeatmapLegendEntry {
+  const _HeatmapLegendEntry(this.color, this.label);
+
+  final Color color;
+  final String label;
 }
