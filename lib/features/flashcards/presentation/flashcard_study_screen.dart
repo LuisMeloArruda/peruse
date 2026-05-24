@@ -232,7 +232,6 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen> {
                   ? _CompletionState(
                       deckName: deckName,
                       onBack: () => context.pop(),
-                      onRefresh: () => flashcardNotifier.refresh(),
                     )
                   : Column(
                       children: [
@@ -711,12 +710,10 @@ class _CompletionState extends StatelessWidget {
   const _CompletionState({
     required this.deckName,
     required this.onBack,
-    required this.onRefresh,
   });
 
   final String deckName;
   final VoidCallback onBack;
-  final VoidCallback onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -733,19 +730,12 @@ class _CompletionState extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'You finished this round. Pull new edits from sync or start again.',
+            'You finished this round. Congratulations!',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: AppSpacing.lg),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              OutlinedButton(onPressed: onBack, child: const Text('Back')),
-              const SizedBox(width: AppSpacing.sm),
-              FilledButton(onPressed: onRefresh, child: const Text('Refresh')),
-            ],
-          ),
+          OutlinedButton(onPressed: onBack, child: const Text('Back')),
         ],
       ),
     );

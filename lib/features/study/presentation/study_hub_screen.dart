@@ -8,7 +8,6 @@ import 'package:peruse/core/widgets/peruse_sheet_card.dart';
 import 'package:peruse/features/decks/domain/entities/deck.dart';
 import 'package:peruse/features/study/presentation/controller/study_focus_provider.dart';
 import 'package:peruse/features/flashcards/presentation/controller/study_session_notifier.dart';
-import 'package:peruse/features/study/presentation/widgets/study_recent_progress_card.dart';
 
 class StudyHubScreen extends ConsumerWidget {
   const StudyHubScreen({super.key});
@@ -134,17 +133,6 @@ class StudyHubScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.lg,
-                  AppSpacing.lg,
-                  AppSpacing.xxl,
-                ),
-                child: const StudyRecentProgressCard(),
               ),
             ),
           ],
