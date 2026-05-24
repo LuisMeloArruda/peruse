@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -227,18 +229,36 @@ class _WordHeroImage extends StatelessWidget {
           ? const Center(child: Icon(Icons.image, size: 48))
           : ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.xxl),
-              child: Image.network(
-                imageUrl!,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-                errorBuilder: (_, _, _) => const Center(
-                  child: Icon(Icons.image_not_supported_rounded),
-                ),
-              ),
+              child: _isRemoteImage(imageUrl!)
+                  ? Image.network(
+                      imageUrl!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      errorBuilder: (_, _, _) => const Center(
+                        child: Icon(Icons.image_not_supported_rounded),
+                      ),
+                    )
+                  : Image.file(
+                      File(imageUrl!),
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      errorBuilder: (_, _, _) => const Center(
+                        child: Icon(Icons.image_not_supported_rounded),
+                      ),
+                    ),
             ),
     );
   }
+}
+
+bool _isRemoteImage(String value) {
+  final uri = Uri.tryParse(value);
+  if (uri == null) {
+    return false;
+  }
+  return uri.scheme == 'http' || uri.scheme == 'https';
 }
 
 class _SectionTitle extends StatelessWidget {

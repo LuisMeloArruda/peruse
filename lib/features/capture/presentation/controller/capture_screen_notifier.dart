@@ -13,11 +13,40 @@ final captureScreenProvider =
       CaptureScreenNotifier.new,
     );
 
+enum CaptureLaunchTarget {
+  captureLibrary,
+  addWord,
+}
+
+class CapturedWordResult {
+  const CapturedWordResult({required this.text, required this.imagePath});
+
+  final String text;
+  final String imagePath;
+}
+
+class CaptureSuggestion {
+  const CaptureSuggestion({
+    required this.englishText,
+    required this.translatedText,
+    required this.confidence,
+  });
+
+  final String englishText;
+  final String translatedText;
+  final double confidence;
+}
+
 class CaptureReviewData {
-  const CaptureReviewData({required this.localPath, required this.labels});
+  const CaptureReviewData({
+    required this.localPath,
+    required this.suggestions,
+    this.launchTarget = CaptureLaunchTarget.captureLibrary,
+  });
 
   final String localPath;
-  final List<Label> labels;
+  final List<CaptureSuggestion> suggestions;
+  final CaptureLaunchTarget launchTarget;
 }
 
 class CaptureScreenState {
@@ -165,26 +194,36 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
           labels.map((e) => MapEntry(e.label, e.confidence)),
         ),
         sourceLanguage: 'english',
-        targetLanguage: 'french',
+        targetLanguage: 'portuguese',
       );
       final translations = await ref.read(
         llmTranslateProvider(llmRequest).future,
       );
 
-      final detectedLabels = [
+      final detectedSuggestions = [
         for (final translation in translations.translatedTexts.entries)
-          Label(
-            text: translation.value,
+          CaptureSuggestion(
+            englishText: translation.key,
+            translatedText: translation.value,
             confidence: llmRequest.input[translation.key] ?? 0,
-            language: translations.targetLanguage,
           ),
       ];
 
       state = state.copyWith(
         lastCapturedPath: xFile.path,
-        lastDetectedLabels: detectedLabels,
+        lastDetectedLabels: [
+          for (final suggestion in detectedSuggestions)
+            Label(
+              text: suggestion.englishText,
+              confidence: suggestion.confidence,
+              language: 'english',
+            ),
+        ],
       );
-      return CaptureReviewData(localPath: xFile.path, labels: detectedLabels);
+      return CaptureReviewData(
+        localPath: xFile.path,
+        suggestions: detectedSuggestions,
+      );
     } catch (error) {
       state = state.copyWith(cameraError: error.toString());
       return null;

@@ -76,13 +76,13 @@ class DeckDetailNotifier extends _$DeckDetailNotifier {
     state = state.copyWith(searchQuery: normalized, filteredWords: filtered);
   }
 
-  Future<void> addWord(String wordText) async {
+  Future<void> addWord(String wordText, {String? imageUrl}) async {
     final repository = ref.read(deckRepositoryProvider);
     final now = DateTime.now().millisecondsSinceEpoch;
     final word = AppWord(
       id: const Uuid().v4(),
       text: wordText,
-      imageUrl: null,
+      imageUrl: imageUrl,
       confidence: 0,
       sourceScanId: null,
       createdAt: now,

@@ -24,9 +24,13 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
   int _selectedIndex = 0;
   bool _saving = false;
 
-  List<Label> get _options => widget.reviewData.labels.take(5).toList();
+  bool get _returnsWordToCaller =>
+      widget.reviewData.launchTarget == CaptureLaunchTarget.addWord;
 
-  Label? get _selectedOption {
+  List<CaptureSuggestion> get _options =>
+      widget.reviewData.suggestions.take(5).toList();
+
+  CaptureSuggestion? get _selectedOption {
     if (_options.isEmpty) {
       return null;
     }
@@ -39,7 +43,7 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
   @override
   void initState() {
     super.initState();
-    final initial = _options.isNotEmpty ? _options.first.text : '';
+    final initial = _options.isNotEmpty ? _options.first.englishText : '';
     _textController = TextEditingController(text: initial);
   }
 
@@ -65,9 +69,18 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
     final label = Label(
       text: typedText,
       confidence: selected.confidence,
-      language: selected.language,
-      bbox: selected.bbox,
+      language: 'english',
     );
+
+    if (_returnsWordToCaller) {
+      context.pop(
+        CapturedWordResult(
+          text: label.text,
+          imagePath: widget.reviewData.localPath,
+        ),
+      );
+      return;
+    }
 
     setState(() => _saving = true);
 
@@ -96,7 +109,7 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
     final option = _options[index];
     setState(() {
       _selectedIndex = index;
-      _textController.text = option.text;
+      _textController.text = option.englishText;
       _textController.selection = TextSelection.collapsed(
         offset: _textController.text.length,
       );
@@ -107,6 +120,7 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
   Widget build(BuildContext context) {
     final options = _options;
     final selected = _selectedOption;
+    final actionLabel = _returnsWordToCaller ? 'Use Word' : 'Save Word';
     final canSave =
         !_saving && selected != null && _textController.text.trim().isNotEmpty;
 
@@ -125,9 +139,14 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.file(
-                        File(widget.reviewData.localPath),
-                        fit: BoxFit.cover,
+                      Container(
+                        color: Colors.black,
+                        alignment: Alignment.center,
+                        child: Image.file(
+                          File(widget.reviewData.localPath),
+                          fit: BoxFit.contain,
+                          alignment: Alignment.center,
+                        ),
                       ),
                       DecoratedBox(
                         decoration: BoxDecoration(
@@ -210,9 +229,7 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                                           ),
                                           borderSide: BorderSide.none,
                                         ),
-                                        suffixIcon: const Icon(
-                                          Icons.edit_outlined,
-                                        ),
+                                          suffixIcon: const Icon(Icons.edit_outlined),
                                       ),
                                       style: Theme.of(context)
                                           .textTheme
@@ -287,7 +304,9 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                                       borderRadius: BorderRadius.circular(24),
                                     ),
                                   ),
-                                  child: const Text('Discard'),
+                                  child: Text(
+                                    _returnsWordToCaller ? 'Cancel' : 'Discard',
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 14),
@@ -312,7 +331,7 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                                             strokeWidth: 2,
                                           ),
                                         )
-                                      : const Text('Save Word'),
+                                      : Text(actionLabel),
                                 ),
                               ),
                             ],
@@ -340,7 +359,7 @@ class _SuggestionCard extends StatelessWidget {
     required this.onTap,
   });
 
-  final Label option;
+  final CaptureSuggestion option;
   final bool isSelected;
   final int rank;
   final VoidCallback? onTap;
@@ -390,7 +409,7 @@ class _SuggestionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      option.text,
+                      '${option.translatedText} -> ${option.englishText}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),

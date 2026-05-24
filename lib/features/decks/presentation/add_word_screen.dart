@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/widgets/peruse_text_field.dart';
+import 'package:peruse/features/capture/presentation/controller/capture_screen_notifier.dart';
 import 'package:peruse/features/decks/presentation/controller/deck_detail_notifier.dart';
 
 class AddWordScreen extends ConsumerStatefulWidget {
@@ -17,6 +19,29 @@ class AddWordScreen extends ConsumerStatefulWidget {
 
 class _AddWordScreenState extends ConsumerState<AddWordScreen> {
   final _wordController = TextEditingController();
+  String? _imagePath;
+
+  Future<void> _captureWord() async {
+    final capturedWord = await context.push<CapturedWordResult>(
+      AppRoutes.capture,
+      extra: CaptureLaunchTarget.addWord,
+    );
+
+    if (!mounted || capturedWord == null) {
+      return;
+    }
+
+    final normalized = capturedWord.text.trim();
+    if (normalized.isEmpty) {
+      return;
+    }
+
+    _wordController.text = normalized;
+    _imagePath = capturedWord.imagePath;
+    _wordController.selection = TextSelection.collapsed(
+      offset: _wordController.text.length,
+    );
+  }
 
   @override
   void dispose() {
@@ -35,7 +60,9 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
     }
 
     try {
-      await ref.read(deckDetailProvider(widget.deckId).notifier).addWord(word);
+      await ref
+          .read(deckDetailProvider(widget.deckId).notifier)
+          .addWord(word, imageUrl: _imagePath);
       if (mounted) {
         context.pop();
       }
@@ -75,6 +102,12 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                 hintText: 'e.g. Flight',
                 textInputAction: TextInputAction.done,
                 onFieldSubmitted: (_) => _saveWord(),
+                suffixIcon: IconButton(
+                  onPressed: _captureWord,
+                  icon: const Icon(Icons.photo_camera_outlined),
+                  color: AppColors.onSurfaceVariant,
+                  tooltip: 'Capture word',
+                ),
               ),
               const Spacer(),
               FilledButton(

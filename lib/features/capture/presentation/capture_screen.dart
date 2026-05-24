@@ -15,6 +15,10 @@ class CaptureScreen extends ConsumerWidget {
     final camerasAsync = ref.watch(availableCamerasProvider);
     final screenState = ref.watch(captureScreenProvider);
     final screenNotifier = ref.read(captureScreenProvider.notifier);
+    final extra = GoRouterState.of(context).extra;
+    final launchTarget = extra is CaptureLaunchTarget
+        ? extra
+        : CaptureLaunchTarget.captureLibrary;
 
     camerasAsync.whenData((cameras) {
       if (screenState.cameraController == null &&
@@ -66,9 +70,34 @@ class CaptureScreen extends ConsumerWidget {
                         final captureData = await screenNotifier
                             .captureAndAnalyze();
                         if (!context.mounted || captureData == null) return;
+
+                        if (launchTarget == CaptureLaunchTarget.addWord) {
+                          final selectedWord = await context.push<
+                            CapturedWordResult
+                          >(
+                            AppRoutes.captureResult,
+                            extra: CaptureReviewData(
+                              localPath: captureData.localPath,
+                              suggestions: captureData.suggestions,
+                              launchTarget: launchTarget,
+                            ),
+                          );
+
+                          if (!context.mounted || selectedWord == null) {
+                            return;
+                          }
+
+                          context.pop(selectedWord);
+                          return;
+                        }
+
                         context.push(
                           AppRoutes.captureResult,
-                          extra: captureData,
+                          extra: CaptureReviewData(
+                            localPath: captureData.localPath,
+                            suggestions: captureData.suggestions,
+                            launchTarget: launchTarget,
+                          ),
                         );
                       },
                 onFlipTap: screenState.takingPicture

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -326,13 +328,21 @@ class _WordImageHeader extends StatelessWidget {
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(AppRadius.xxl),
               ),
-              child: Image.network(
-                imageUrl!,
-                width: double.infinity,
-                height: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const SizedBox.shrink(),
-              ),
+              child: _isRemoteImage(imageUrl!)
+                  ? Image.network(
+                      imageUrl!,
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                    )
+                  : Image.file(
+                      File(imageUrl!),
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                    ),
             ),
           Positioned(
             top: AppSpacing.md,
@@ -358,6 +368,14 @@ class _WordImageHeader extends StatelessWidget {
       ),
     );
   }
+}
+
+bool _isRemoteImage(String value) {
+  final uri = Uri.tryParse(value);
+  if (uri == null) {
+    return false;
+  }
+  return uri.scheme == 'http' || uri.scheme == 'https';
 }
 
 double _averageMastery(List<AppWord> words) {

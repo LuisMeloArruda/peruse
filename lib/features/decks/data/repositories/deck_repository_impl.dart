@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
+import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -467,10 +469,15 @@ class DeckRepositoryImpl implements IDeckRepository {
         return false;
       }
 
+      final remoteImageUrl = await _resolveWordImageUrl(word, userId);
+      if (word.imageUrl != null && _isLocalImagePath(word.imageUrl!) && remoteImageUrl == null) {
+        return false;
+      }
+
       await _supabase.from('words').upsert({
         'id': word.id,
         'word_text': normalizedText,
-        'image_url': word.imageUrl,
+        'image_url': remoteImageUrl ?? word.imageUrl,
         'confidence': word.confidence,
         'source_scan_id': word.sourceScanId,
         'user_id': userId,
@@ -478,11 +485,44 @@ class DeckRepositoryImpl implements IDeckRepository {
           word.createdAt,
         ).toIso8601String(),
       });
+
+      if (remoteImageUrl != null && remoteImageUrl != word.imageUrl) {
+        await _localDb.wordsDao.updateWordImageUrl(word.id, remoteImageUrl);
+      }
+
       return true;
     } catch (e) {
       debugPrint('Word upload failed: $e');
       return false;
     }
+  }
+
+  Future<String?> _resolveWordImageUrl(AppWord word, String userId) async {
+    final imageUrl = word.imageUrl;
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return null;
+    }
+
+    if (!_isLocalImagePath(imageUrl)) {
+      return imageUrl;
+    }
+
+    final file = File(imageUrl);
+    if (!await file.exists()) {
+      debugPrint('Word image upload skipped: local file not found: $imageUrl');
+      return null;
+    }
+
+    final extension = p.extension(imageUrl).isEmpty ? '.jpg' : p.extension(imageUrl);
+    final storagePath = 'words/$userId/${word.id}$extension';
+    await _supabase.storage.from('captures').upload(storagePath, file);
+    return _supabase.storage.from('captures').getPublicUrl(storagePath);
+  }
+
+  bool _isLocalImagePath(String value) {
+    final uri = Uri.tryParse(value);
+    if (uri == null) return true;
+    return !uri.hasScheme || uri.scheme == 'file';
   }
 
   Future<bool> _uploadDeckWord({

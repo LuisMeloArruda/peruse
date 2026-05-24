@@ -54,6 +54,12 @@ class WordsDao extends DatabaseAccessor<AppDatabase> with _$WordsDaoMixin {
     );
   }
 
+  Future<void> updateWordImageUrl(String wordId, String? imageUrl) async {
+    await (update(wordsTable)..where((t) => t.id.equals(wordId))).write(
+      WordsTableCompanion(imageUrl: Value(imageUrl)),
+    );
+  }
+
   Future<void> upsertWords(List<WordsTableCompanion> companions) async {
     if (companions.isEmpty) return;
 
