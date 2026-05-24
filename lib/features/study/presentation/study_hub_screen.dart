@@ -182,10 +182,6 @@ Future<void> _startFlashcards(
     return;
   }
 
-  await ref
-      .read(studySessionProvider.notifier)
-      .startSession(deckId: deckId, mode: 'flashcards');
-
   if (context.mounted) {
     context.push(AppRoutes.deckStudy(deckId));
   }

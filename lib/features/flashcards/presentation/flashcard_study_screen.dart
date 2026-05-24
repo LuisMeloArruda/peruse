@@ -27,7 +27,7 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen> {
   ProviderSubscription<FlashcardStudyState>? _flashcardSub;
   String? _activeCardId;
 
-@override
+  @override
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
@@ -42,7 +42,7 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen> {
           _restartStopwatch();
         }
 
-        if (!next.isLoading && next.flashcards.isEmpty) {
+        if (!next.isLoading && next.currentCard == null) {
           _stopwatch.stop();
           ref.read(studySessionProvider.notifier).endSession();
         }
@@ -51,8 +51,8 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen> {
 
     Future.microtask(() {
       final session = ref.read(studySessionProvider);
-      
-      if ((session.sessionId == null && !session.isLoading) ||
+
+      if (session.sessionId == null ||
           session.deckId != widget.deckId ||
           session.mode != 'flashcards' ||
           session.isCompleted) {
@@ -68,12 +68,12 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen> {
     _flashcardSub?.close();
     _audioPlayer.dispose();
     _stopwatch.stop();
-    
+
     final session = ref.read(studySessionProvider);
-    if (session.sessionId != null && !session.isCompleted) {
+    if (session.sessionId != null) {
       ref.read(studySessionProvider.notifier).endSession();
     }
-    
+
     super.dispose();
   }
 

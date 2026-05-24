@@ -105,11 +105,21 @@ class StudySessionState {
 @riverpod
 class StudySessionNotifier extends _$StudySessionNotifier {
   final Uuid _uuid = const Uuid();
+  bool _startInProgress = false;
+  bool _endInProgress = false;
 
   @override
   StudySessionState build() => StudySessionState.initial;
 
   Future<void> startSession({required String deckId, required String mode}) async {
+    if (_startInProgress) return;
+    if (state.sessionId != null &&
+        state.deckId == deckId &&
+        state.mode == mode &&
+        !state.isCompleted) {
+      return;
+    }
+
     final auth = ref.read(authRepositoryProvider);
     final user = auth.currentUser;
     if (user == null) {
@@ -117,6 +127,7 @@ class StudySessionNotifier extends _$StudySessionNotifier {
       return;
     }
 
+    _startInProgress = true;
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
@@ -159,6 +170,8 @@ class StudySessionNotifier extends _$StudySessionNotifier {
         isLoading: false,
         errorMessage: error.toString(),
       );
+    } finally {
+      _startInProgress = false;
     }
   }
 
@@ -230,8 +243,7 @@ class StudySessionNotifier extends _$StudySessionNotifier {
 
   Future<void> endSession() async {
     final sessionId = state.sessionId;
-    
-    if (sessionId == null || state.isCompleted) return;
+    if (sessionId == null || _endInProgress) return;
 
     final auth = ref.read(authRepositoryProvider);
     final user = auth.currentUser;
@@ -241,6 +253,8 @@ class StudySessionNotifier extends _$StudySessionNotifier {
     }
 
     final endedAt = DateTime.now().millisecondsSinceEpoch;
+
+    _endInProgress = true;
 
     try {
       final db = ref.read(appDatabaseProvider);
@@ -256,6 +270,8 @@ class StudySessionNotifier extends _$StudySessionNotifier {
     } catch (error) {
       debugPrint('Study session end failed: $error');
       state = state.copyWith(errorMessage: error.toString(), isCompleted: false);
+    } finally {
+      _endInProgress = false;
     }
   }
 
