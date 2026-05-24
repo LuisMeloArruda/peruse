@@ -159,7 +159,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                         const _SectionTitle(title: 'Definition'),
                         const SizedBox(height: AppSpacing.sm),
                         Text(
-                          details?.definition ?? 'No definition available yet.',
+                          state.definitionText,
                           style: context.textTheme.bodyLarge,
                         ),
                         if (details != null && details.example.isNotEmpty) ...[
