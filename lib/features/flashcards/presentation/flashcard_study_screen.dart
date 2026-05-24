@@ -10,6 +10,7 @@ import 'package:peruse/features/decks/data/repositories/deck_repository_impl.dar
 import 'package:peruse/features/decks/presentation/controller/deck_detail_notifier.dart';
 import 'package:peruse/features/flashcards/domain/entities/flashcard.dart';
 import 'package:peruse/features/flashcards/presentation/controller/flashcard_notifier.dart';
+import 'package:peruse/features/flashcards/presentation/controller/study_session_notifier.dart';
 
 class FlashcardStudyScreen extends ConsumerStatefulWidget {
   const FlashcardStudyScreen({super.key, required this.deckId});
@@ -22,17 +23,76 @@ class FlashcardStudyScreen extends ConsumerStatefulWidget {
 
 class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen> {
   late final AudioPlayer _audioPlayer;
+  late final Stopwatch _stopwatch;
+  ProviderSubscription<FlashcardStudyState>? _flashcardSub;
+  String? _activeCardId;
 
-  @override
+@override
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
+    _stopwatch = Stopwatch();
+
+    _flashcardSub = ref.listenManual<FlashcardStudyState>(
+      flashcardStudyProvider(widget.deckId),
+      (previous, next) {
+        final nextId = next.currentCard?.id;
+        if (nextId != null && nextId != _activeCardId) {
+          _activeCardId = nextId;
+          _restartStopwatch();
+        }
+
+        if (!next.isLoading && next.flashcards.isEmpty) {
+          _stopwatch.stop();
+          ref.read(studySessionProvider.notifier).endSession();
+        }
+      },
+    );
+
+    Future.microtask(() {
+      final session = ref.read(studySessionProvider);
+      
+      if ((session.sessionId == null && !session.isLoading) ||
+          session.deckId != widget.deckId ||
+          session.mode != 'flashcards' ||
+          session.isCompleted) {
+        ref
+            .read(studySessionProvider.notifier)
+            .startSession(deckId: widget.deckId, mode: 'flashcards');
+      }
+    });
   }
 
   @override
   void dispose() {
+    _flashcardSub?.close();
     _audioPlayer.dispose();
+    _stopwatch.stop();
+    
+    final session = ref.read(studySessionProvider);
+    if (session.sessionId != null && !session.isCompleted) {
+      ref.read(studySessionProvider.notifier).endSession();
+    }
+    
     super.dispose();
+  }
+
+  void _restartStopwatch() {
+    _stopwatch
+      ..reset()
+      ..start();
+  }
+
+  int _stopwatchElapsed() {
+    _stopwatch.stop();
+    return _stopwatch.elapsedMilliseconds;
+  }
+
+  Future<void> _gradeCard(AppFlashcard card, bool correct) async {
+    final elapsed = _stopwatchElapsed();
+    await ref
+        .read(studySessionProvider.notifier)
+        .gradeWord(wordId: card.wordId, correct: correct, elapsedMillis: elapsed);
   }
 
   Future<void> _playAudio(AppFlashcard card) async {
@@ -146,16 +206,14 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen> {
   Widget build(BuildContext context) {
     final deckState = ref.watch(deckDetailProvider(widget.deckId));
     final flashcardState = ref.watch(flashcardStudyProvider(widget.deckId));
-    final flashcardNotifier = ref.read(
-      flashcardStudyProvider(widget.deckId).notifier,
-    );
+    final sessionState = ref.watch(studySessionProvider);
+    final flashcardNotifier = ref.read(flashcardStudyProvider(widget.deckId).notifier);
 
     final deckName = deckState.deck?.name ?? 'Study Session';
     final currentCard = flashcardState.currentCard;
-    final totalCount = math.max(flashcardState.totalCount, 0);
-    final currentCount = currentCard == null
-        ? flashcardState.completedCount
-        : flashcardState.completedCount + 1;
+    
+    final totalCount = sessionState.totalCount;
+    final currentCount = totalCount == 0 ? 0 : math.min(sessionState.currentIndex + 1, totalCount);
     final progressValue = totalCount == 0 ? 0.0 : currentCount / totalCount;
 
     return Scaffold(
@@ -168,159 +226,193 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen> {
             AppSpacing.lg,
             AppSpacing.lg,
           ),
-          child: flashcardState.isLoading
+          child: flashcardState.isLoading || sessionState.isLoading
               ? const Center(child: CircularProgressIndicator())
-              : currentCard == null
-              ? _CompletionState(
-                  deckName: deckName,
-                  onBack: () => context.pop(),
-                  onRefresh: () => flashcardNotifier.refresh(),
-                )
-              : Column(
-                  children: [
-                    Row(
+              : sessionState.isCompleted
+                  ? _CompletionState(
+                      deckName: deckName,
+                      onBack: () => context.pop(),
+                      onRefresh: () => flashcardNotifier.refresh(),
+                    )
+                  : Column(
                       children: [
-                        _CircleButton(
-                          icon: Icons.close,
-                          onTap: () => context.pop(),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
                         Expanded(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'CURRENT DECK',
-                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      letterSpacing: 1.3,
-                                      color: AppColors.onSurfaceVariant,
+                              Row(
+                                children: [
+                                  _CircleButton(
+                                    icon: Icons.close,
+                                    onTap: () async {
+                                      await ref
+                                          .read(studySessionProvider.notifier)
+                                          .endSession();
+                                      if (mounted) {
+                                        context.pop();
+                                      }
+                                    },
+                                  ),
+                                  const SizedBox(width: AppSpacing.md),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'CURRENT DECK',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall
+                                              ?.copyWith(
+                                                letterSpacing: 1.3,
+                                                color: AppColors.onSurfaceVariant,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          deckName,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                                color: AppColors.primary,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
                                     ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.md),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        '$currentCount/$totalCount',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      SizedBox(
+                                        width: 76,
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(999),
+                                          child: LinearProgressIndicator(
+                                            minHeight: 6,
+                                            value: progressValue,
+                                            backgroundColor:
+                                                const Color(0xFFE0DDD5),
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                deckName,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w800,
+                              const SizedBox(height: AppSpacing.lg),
+                              if (currentCard != null)
+                                Expanded(
+                                  child: Center(
+                                    child: GestureDetector(
+                                      onTap: () => flashcardNotifier.toggleFlip(),
+                                      child: AnimatedSwitcher(
+                                        duration: const Duration(milliseconds: 280),
+                                        switchInCurve: Curves.easeOutBack,
+                                        switchOutCurve: Curves.easeIn,
+                                        transitionBuilder: (child, animation) {
+                                          final rotate =
+                                              Tween<double>(begin: math.pi, end: 0)
+                                                  .animate(animation);
+                                          return AnimatedBuilder(
+                                            animation: rotate,
+                                            child: child,
+                                            builder: (context, child) {
+                                              final value = rotate.value;
+                                              final isUnder = value > math.pi / 2;
+                                              final displayValue =
+                                                  isUnder ? value - math.pi : value;
+                                              return Transform(
+                                                alignment: Alignment.center,
+                                                transform:
+                                                    Matrix4.rotationY(displayValue),
+                                                child: child,
+                                              );
+                                            },
+                                          );
+                                        },
+                                        child: _FlashcardCard(
+                                          key: ValueKey(
+                                            '${currentCard.id}-${flashcardState.isFlipped}',
+                                          ),
+                                          card: currentCard,
+                                          isFlipped: flashcardState.isFlipped,
+                                          onAudioTap: () => _playAudio(currentCard),
+                                          onEditTap: () => _editCurrentCard(currentCard),
+                                        ),
+                                      ),
                                     ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                                  ),
+                                )
+                              else
+                                const Expanded(child: SizedBox.shrink()),
+                              const SizedBox(height: AppSpacing.lg),
+                              if (currentCard != null)
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    _MiniAction(
+                                      icon: Icons.volume_up_rounded,
+                                      label: 'Audio',
+                                      onTap: () => _playAudio(currentCard),
+                                    ),
+                                    _MiniAction(
+                                      icon: Icons.edit_rounded,
+                                      label: 'Edit',
+                                      onTap: () => _editCurrentCard(currentCard),
+                                    ),
+                                  ],
+                                ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.md),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '$currentCount/$totalCount',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                            ),
-                            const SizedBox(height: 6),
-                            SizedBox(
-                              width: 76,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(999),
-                                child: LinearProgressIndicator(
-                                  minHeight: 6,
-                                  value: progressValue,
-                                  backgroundColor: const Color(0xFFE0DDD5),
-                                  color: AppColors.primary,
+                        const SizedBox(height: AppSpacing.md),
+                        if (currentCard != null)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _ActionButton(
+                                  label: 'TRY AGAIN',
+                                  icon: Icons.close_rounded,
+                                  backgroundColor: const Color(0xFFE2E6E4),
+                                  foregroundColor: const Color(0xFFC7351D),
+                                  onTap: () async {
+                                    await _gradeCard(currentCard, false);
+                                    await flashcardNotifier.markTryAgain();
+                                  },
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: _ActionButton(
+                                  label: 'GOT IT',
+                                  icon: Icons.check_rounded,
+                                  backgroundColor: const Color(0xFF53D769),
+                                  foregroundColor: Colors.white,
+                                  onTap: () async {
+                                    await _gradeCard(currentCard, true);
+                                    await flashcardNotifier.markGotIt();
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        const SizedBox(height: AppSpacing.sm),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Expanded(
-                      child: Center(
-                        child: GestureDetector(
-                          onTap: () => flashcardNotifier.toggleFlip(),
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 280),
-                            switchInCurve: Curves.easeOutBack,
-                            switchOutCurve: Curves.easeIn,
-                            transitionBuilder: (child, animation) {
-                              final rotate = Tween<double>(begin: math.pi, end: 0)
-                                  .animate(animation);
-                              return AnimatedBuilder(
-                                animation: rotate,
-                                child: child,
-                                builder: (context, child) {
-                                  final value = rotate.value;
-                                  final isUnder = value > math.pi / 2;
-                                  final displayValue = isUnder ? value - math.pi : value;
-                                  return Transform(
-                                    alignment: Alignment.center,
-                                    transform: Matrix4.rotationY(displayValue),
-                                    child: child,
-                                  );
-                                },
-                              );
-                            },
-                            child: _FlashcardCard(
-                              key: ValueKey('${currentCard.id}-${flashcardState.isFlipped}'),
-                              card: currentCard,
-                              isFlipped: flashcardState.isFlipped,
-                              onAudioTap: () => _playAudio(currentCard),
-                              onSaveTap: () => flashcardNotifier.saveCurrentCard(),
-                              onEditTap: () => _editCurrentCard(currentCard),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _ActionButton(
-                            label: 'TRY AGAIN',
-                            icon: Icons.close_rounded,
-                            backgroundColor: const Color(0xFFE2E6E4),
-                            foregroundColor: const Color(0xFFC7351D),
-                            onTap: () => flashcardNotifier.markTryAgain(),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: _ActionButton(
-                            label: 'GOT IT',
-                            icon: Icons.check_rounded,
-                            backgroundColor: const Color(0xFF53D769),
-                            foregroundColor: Colors.white,
-                            onTap: () => flashcardNotifier.markGotIt(),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _MiniAction(
-                          icon: Icons.volume_up_rounded,
-                          label: 'Audio',
-                          onTap: () => _playAudio(currentCard),
-                        ),
-                        _MiniAction(
-                          icon: Icons.star_border_rounded,
-                          label: 'Save',
-                          onTap: () => flashcardNotifier.saveCurrentCard(),
-                        ),
-                        _MiniAction(
-                          icon: Icons.edit_rounded,
-                          label: 'Edit',
-                          onTap: () => _editCurrentCard(currentCard),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
         ),
       ),
     );
@@ -333,14 +425,12 @@ class _FlashcardCard extends StatelessWidget {
     required this.card,
     required this.isFlipped,
     required this.onAudioTap,
-    required this.onSaveTap,
     required this.onEditTap,
   });
 
   final AppFlashcard card;
   final bool isFlipped;
   final VoidCallback onAudioTap;
-  final VoidCallback onSaveTap;
   final VoidCallback onEditTap;
 
   @override
@@ -442,10 +532,6 @@ class _FlashcardCard extends StatelessWidget {
                 _CardIconButton(
                   icon: Icons.volume_up_rounded,
                   onTap: onAudioTap,
-                ),
-                _CardIconButton(
-                  icon: Icons.star_border_rounded,
-                  onTap: onSaveTap,
                 ),
                 _CardIconButton(
                   icon: Icons.edit_rounded,

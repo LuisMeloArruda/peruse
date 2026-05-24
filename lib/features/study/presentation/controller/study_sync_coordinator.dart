@@ -10,10 +10,39 @@ final studyConnectivityProvider = StreamProvider<List<ConnectivityResult>>(
   (ref) => Connectivity().onConnectivityChanged,
 );
 
-final studySyncCoordinatorProvider = Provider<void>((ref) {
-  Future<void> syncSilently() async {
-    final db = ref.read(appDatabaseProvider);
-    final client = ref.read(supabaseClientProvider);
+final studySyncCoordinatorProvider = Provider<StudySyncCoordinator>((ref) {
+  final coordinator = StudySyncCoordinator(ref);
+  return coordinator;
+});
+
+class StudySyncCoordinator {
+  StudySyncCoordinator(this._ref) {
+    _ref.listen(studyConnectivityProvider, (previous, next) {
+      final wasConnected = _isConnected(previous?.value);
+      final nowConnected = _isConnected(next.value);
+
+      if (!wasConnected && nowConnected) {
+        unawaited(syncNow());
+      }
+    });
+
+    Future.microtask(() async {
+      final current = await Connectivity().checkConnectivity();
+      if (_isConnected(current)) {
+        await syncNow();
+      }
+    });
+  }
+
+  final Ref _ref;
+  bool _isSyncing = false;
+
+  Future<void> syncNow() async {
+    if (_isSyncing) return;
+    _isSyncing = true;
+
+    final db = _ref.read(appDatabaseProvider);
+    final client = _ref.read(supabaseClientProvider);
 
     try {
       final sessions = await db.studyDao.getUnsyncedSessions();
@@ -37,6 +66,7 @@ final studySyncCoordinatorProvider = Provider<void>((ref) {
           await db.studyDao.updateSessionSyncStatus(session.id, true);
         } catch (error) {
           debugPrint('Study session sync failed: $error');
+          return;
         }
       }
 
@@ -55,6 +85,7 @@ final studySyncCoordinatorProvider = Provider<void>((ref) {
           await db.studyDao.updateResultSyncStatus(result.id, true);
         } catch (error) {
           debugPrint('Study result sync failed: $error');
+          return;
         }
       }
 
@@ -74,6 +105,7 @@ final studySyncCoordinatorProvider = Provider<void>((ref) {
           await db.studyDao.updateUserProgressSyncStatus(progress.userId, true);
         } catch (error) {
           debugPrint('User progress sync failed: $error');
+          return;
         }
       }
 
@@ -91,32 +123,19 @@ final studySyncCoordinatorProvider = Provider<void>((ref) {
           await db.studyDao.updateDailyProgressSyncStatus(progress.id, true);
         } catch (error) {
           debugPrint('Daily progress sync failed: $error');
+          return;
         }
       }
     } catch (error) {
       debugPrint('Study sync failed: $error');
+    } finally {
+      _isSyncing = false;
     }
   }
 
-  bool isConnected(List<ConnectivityResult>? results) {
+  bool _isConnected(List<ConnectivityResult>? results) {
     return results != null &&
         results.isNotEmpty &&
         !results.contains(ConnectivityResult.none);
   }
-
-  ref.listen(studyConnectivityProvider, (previous, next) {
-    final wasConnected = isConnected(previous?.value);
-    final nowConnected = isConnected(next.value);
-
-    if (!wasConnected && nowConnected) {
-      unawaited(syncSilently());
-    }
-  });
-
-  Future.microtask(() async {
-    final current = await Connectivity().checkConnectivity();
-    if (isConnected(current)) {
-      await syncSilently();
-    }
-  });
-});
+}

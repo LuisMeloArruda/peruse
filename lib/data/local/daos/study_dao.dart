@@ -4,6 +4,7 @@ import 'package:peruse/data/local/tables/daily_progress_table.dart';
 import 'package:peruse/data/local/tables/study_results_table.dart';
 import 'package:peruse/data/local/tables/study_sessions_table.dart';
 import 'package:peruse/data/local/tables/user_progress_table.dart';
+import 'package:peruse/features/study/data/models/user_global_stats.dart';
 
 part 'study_dao.g.dart';
 
@@ -17,6 +18,86 @@ part 'study_dao.g.dart';
 )
 class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
   StudyDao(super.db);
+
+  Stream<double> watchDailyGoalProgress(
+    String userId,
+    DateTime date,
+    int dailyGoalTarget,
+  ) {
+    final dateKey = _formatDateKey(date);
+    final query = select(dailyProgressTable)
+      ..where((t) => t.userId.equals(userId) & t.date.equals(dateKey));
+
+    return query.watchSingleOrNull().map((row) {
+      if (row == null || dailyGoalTarget <= 0) return 0.0;
+      final progress = row.wordsStudied / dailyGoalTarget;
+      return progress.clamp(0.0, 1.0);
+    });
+  }
+
+  Stream<List<LocalDailyProgress>> watchWeeklyVelocity(String userId) {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, now.day)
+        .subtract(const Duration(days: 6));
+    final startKey = _formatDateKey(start);
+    final endKey = _formatDateKey(now);
+
+    final query = select(dailyProgressTable)
+      ..where(
+        (t) => t.userId.equals(userId) & t.date.isBetweenValues(startKey, endKey),
+      )
+      ..orderBy([(t) => OrderingTerm.asc(t.date)]);
+
+    return query.watch();
+  }
+
+  Stream<Map<DateTime, int>> watchContributionGrid(String userId) {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, now.day)
+        .subtract(const Duration(days: 83));
+    final startKey = _formatDateKey(start);
+
+    final query = select(dailyProgressTable)
+      ..where((t) => t.userId.equals(userId) & t.date.isBiggerOrEqualValue(startKey))
+      ..orderBy([(t) => OrderingTerm.asc(t.date)]);
+
+    return query.watch().map((rows) {
+      final map = <DateTime, int>{};
+      for (final row in rows) {
+        final parsed = _parseDateKey(row.date);
+        map[parsed] = row.wordsStudied;
+      }
+      return map;
+    });
+  }
+
+  Stream<UserGlobalStats> watchUserGlobalStats(String userId) {
+    final dateKey = _formatDateKey(DateTime.now());
+    final query = select(userProgressTable).join([
+      leftOuterJoin(
+        dailyProgressTable,
+        dailyProgressTable.userId.equalsExp(userProgressTable.userId) &
+            dailyProgressTable.date.equals(dateKey),
+      ),
+    ])
+      ..where(userProgressTable.userId.equals(userId));
+
+    return query.watchSingleOrNull().map((row) {
+      if (row == null) {
+        return UserGlobalStats.empty;
+      }
+
+      final progress = row.readTable(userProgressTable);
+      final daily = row.readTableOrNull(dailyProgressTable);
+
+      return UserGlobalStats(
+        totalWords: progress.totalWordsMastered,
+        lifetimeAccuracy: progress.lifetimeAccuracy,
+        wordsStudiedToday: daily?.wordsStudied ?? 0,
+        currentStreak: progress.currentStreak,
+      );
+    });
+  }
 
   Future<void> upsertStudySession(StudySessionsTableCompanion companion) async {
     await into(studySessionsTable).insert(
@@ -126,6 +207,26 @@ class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
   Future<void> updateDailyProgressSyncStatus(String id, bool isSynced) async {
     await (update(dailyProgressTable)..where((t) => t.id.equals(id))).write(
       DailyProgressTableCompanion(isSynced: Value(isSynced)),
+    );
+  }
+
+  String _formatDateKey(DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    final year = normalized.year.toString().padLeft(4, '0');
+    final month = normalized.month.toString().padLeft(2, '0');
+    final day = normalized.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
+  }
+
+  DateTime _parseDateKey(String dateKey) {
+    final parts = dateKey.split('-');
+    if (parts.length != 3) {
+      return DateTime.fromMillisecondsSinceEpoch(0);
+    }
+    return DateTime(
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+      int.parse(parts[2]),
     );
   }
 }

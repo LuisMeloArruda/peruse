@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import 'package:peruse/core/di/providers.dart';
 import 'package:peruse/data/local/database/app_database.dart';
+import 'package:peruse/features/study/presentation/controller/study_sync_coordinator.dart';
 
 part 'study_session_notifier.g.dart';
 
@@ -161,7 +162,11 @@ class StudySessionNotifier extends _$StudySessionNotifier {
     }
   }
 
-  Future<void> gradeWord({required String wordId, required bool correct}) async {
+  Future<void> gradeWord({
+    required String wordId,
+    required bool correct,
+    int? elapsedMillis,
+  }) async {
     final sessionId = state.sessionId;
     final deckId = state.deckId;
     if (sessionId == null || deckId == null) return;
@@ -176,7 +181,7 @@ class StudySessionNotifier extends _$StudySessionNotifier {
     final db = ref.read(appDatabaseProvider);
     final now = DateTime.now().millisecondsSinceEpoch;
     final startedAt = state.wordStartedAt ?? now;
-    final delta = math.max(now - startedAt, 0);
+    final delta = math.max(elapsedMillis ?? (now - startedAt), 0);
     final resultId = _uuid.v4();
 
     try {
@@ -225,7 +230,8 @@ class StudySessionNotifier extends _$StudySessionNotifier {
 
   Future<void> endSession() async {
     final sessionId = state.sessionId;
-    if (sessionId == null) return;
+    
+    if (sessionId == null || state.isCompleted) return;
 
     final auth = ref.read(authRepositoryProvider);
     final user = auth.currentUser;
@@ -234,94 +240,23 @@ class StudySessionNotifier extends _$StudySessionNotifier {
       return;
     }
 
-    final db = ref.read(appDatabaseProvider);
     final endedAt = DateTime.now().millisecondsSinceEpoch;
 
     try {
-      await db.studyDao.endStudySession(sessionId, endedAt);
-      await _updateAggregates(db, user.id, endedAt);
+      final db = ref.read(appDatabaseProvider);
+      
       state = state.copyWith(isCompleted: true, wordStartedAt: null);
+      
+      await db.studyDao.endStudySession(sessionId, endedAt);
+      await ref
+          .read(studyRepositoryProvider)
+          .completeSession(sessionId: sessionId, userId: user.id);
+          
+      await ref.read(studySyncCoordinatorProvider).syncNow();
     } catch (error) {
       debugPrint('Study session end failed: $error');
-      state = state.copyWith(errorMessage: error.toString());
+      state = state.copyWith(errorMessage: error.toString(), isCompleted: false);
     }
-  }
-
-  Future<void> _updateAggregates(
-    AppDatabase db,
-    String userId,
-    int endedAt,
-  ) async {
-    if (state.results.isEmpty) return;
-
-    final totalStudied = state.results.length;
-    final totalCorrect = state.results.where((r) => r.isCorrect).length;
-
-    final current = await db.studyDao.getUserProgress(userId);
-    final previousTotal = current?.totalWordsMastered ?? 0;
-    final previousAccuracy = current?.lifetimeAccuracy ?? 0;
-    final nextTotal = previousTotal + totalStudied;
-    final nextAccuracy = nextTotal == 0
-        ? 0.0
-        : ((previousAccuracy * previousTotal) + totalCorrect) / nextTotal;
-
-    final nextStreak = _calculateNextStreak(
-      current?.lastStudyDate.toInt(),
-      endedAt,
-      current?.currentStreak ?? 0,
-    );
-
-    await db.studyDao.upsertUserProgress(
-      UserProgressTableCompanion.insert(
-        userId: userId,
-        totalWordsMastered: Value(nextTotal),
-        currentStreak: Value(nextStreak),
-        lastStudyDate: Value(BigInt.from(endedAt)),
-        lifetimeAccuracy: Value(nextAccuracy),
-        isSynced: const Value(false),
-      ),
-    );
-
-    final dateKey = _formatDateKey(DateTime.fromMillisecondsSinceEpoch(endedAt));
-    final existingDaily = await db.studyDao.getDailyProgress(userId, dateKey);
-    final dailyId = existingDaily?.id ?? '$userId-$dateKey';
-
-    await db.studyDao.upsertDailyProgress(
-      DailyProgressTableCompanion.insert(
-        id: dailyId,
-        userId: userId,
-        date: dateKey,
-        wordsStudied:
-            Value((existingDaily?.wordsStudied ?? 0) + totalStudied),
-        correctAnswers:
-            Value((existingDaily?.correctAnswers ?? 0) + totalCorrect),
-        isSynced: const Value(false),
-      ),
-    );
-  }
-
-  int _calculateNextStreak(int? lastStudyMillis, int nowMillis, int current) {
-    if (lastStudyMillis == null || lastStudyMillis == 0) return 1;
-
-    final lastDate = DateTime.fromMillisecondsSinceEpoch(lastStudyMillis);
-    final nowDate = DateTime.fromMillisecondsSinceEpoch(nowMillis);
-    final lastKey = _formatDateKey(lastDate);
-    final nowKey = _formatDateKey(nowDate);
-
-    if (lastKey == nowKey) return current == 0 ? 1 : current;
-
-    final yesterday = nowDate.subtract(const Duration(days: 1));
-    final yesterdayKey = _formatDateKey(yesterday);
-    if (lastKey == yesterdayKey) return current + 1;
-
-    return 1;
-  }
-
-  String _formatDateKey(DateTime date) {
-    final year = date.year.toString().padLeft(4, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    return '$year-$month-$day';
   }
 
   Future<void> _updateWordConfidence(
