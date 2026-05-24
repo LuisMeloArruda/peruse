@@ -4,6 +4,7 @@ create table if not exists public.decks (
   name text not null,
   color text not null,
   icon text not null,
+  cover_image_url text,
   user_id uuid not null references auth.users(id) on delete cascade,
   created_at timestamptz not null default now()
 );

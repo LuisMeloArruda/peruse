@@ -7,6 +7,7 @@ class DecksTable extends Table {
   TextColumn get userId => text()();
   TextColumn get color => text()();
   TextColumn get icon => text()();
+  TextColumn get coverImageUrl => text().nullable()();
   Int64Column get createdAt => int64()();
 
   // Tracks whether the row has been synced with the remote source.

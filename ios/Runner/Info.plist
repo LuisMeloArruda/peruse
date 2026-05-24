@@ -26,6 +26,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Peruse needs camera access to detect objects and learn English names.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Peruse needs photo library access so you can choose a cover image for your deck.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

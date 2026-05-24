@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/widgets/peruse_text_field.dart';
@@ -14,9 +18,11 @@ class AddDeckScreen extends ConsumerStatefulWidget {
 }
 
 class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
+  final _imagePicker = ImagePicker();
   final _nameController = TextEditingController();
   final _bioController = TextEditingController();
 
+  String? _coverImagePath;
   int _selectedColorIndex = 0;
   int _selectedIconIndex = 0;
 
@@ -25,6 +31,34 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
     _nameController.dispose();
     _bioController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickCoverImage() async {
+    final permission = await Permission.photos.request();
+    if (!permission.isGranted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Allow photo library access to choose a deck cover.'),
+          ),
+        );
+      }
+      return;
+    }
+
+    final image = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1600,
+    );
+
+    if (!mounted || image == null) {
+      return;
+    }
+
+    setState(() {
+      _coverImagePath = image.path;
+    });
   }
 
   Future<void> _saveDeck() async {
@@ -42,7 +76,12 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
 
     await ref
         .read(decksProvider.notifier)
-        .createDeck(name: name, color: color, icon: icon);
+        .createDeck(
+          name: name,
+          color: color,
+          icon: icon,
+          coverImageUrl: _coverImagePath,
+        );
 
     if (mounted) {
       context.pop();
@@ -143,7 +182,24 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-              _CoverImageCard(),
+              _SectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Deck cover',
+                      style: context.textTheme.labelSmall?.copyWith(
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    _CoverImageCard(
+                      imagePath: _coverImagePath,
+                      onTap: _pickCoverImage,
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: AppSpacing.xl),
               FilledButton.icon(
                 onPressed: _saveDeck,
@@ -341,29 +397,71 @@ class _IconTile extends StatelessWidget {
 }
 
 class _CoverImageCard extends StatelessWidget {
+  const _CoverImageCard({required this.imagePath, required this.onTap});
+
+  final String? imagePath;
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 140,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.xxl),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [const Color(0xFFAEC4FF), AppColors.surfaceContainer],
+    final hasImage = imagePath != null && imagePath!.isNotEmpty;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.xxl),
+      child: Container(
+        height: 180,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
+          color: AppColors.surfaceContainer,
+          image: hasImage
+              ? DecorationImage(
+                  image: FileImage(File(imagePath!)),
+                  fit: BoxFit.cover,
+                )
+              : null,
         ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            const Icon(Icons.photo_camera_rounded, color: AppColors.link),
-            const SizedBox(height: AppSpacing.xxs),
-            Text(
-              'COVER IMAGE',
-              style: context.textTheme.labelSmall?.copyWith(
-                letterSpacing: 1.2,
-                color: AppColors.link,
+            if (!hasImage)
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.xxl),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFFAEC4FF), AppColors.surfaceContainer],
+                  ),
+                ),
+              ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.xxl),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.08),
+                    Colors.black.withValues(alpha: 0.30),
+                  ],
+                ),
+              ),
+            ),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.photo_camera_rounded, color: AppColors.link),
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(
+                    hasImage ? 'CHANGE COVER IMAGE' : 'ADD COVER IMAGE',
+                    style: context.textTheme.labelSmall?.copyWith(
+                      letterSpacing: 1.2,
+                      color: AppColors.link,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -118,6 +120,7 @@ class _DecksLoadedViewState extends State<_DecksLoadedView> {
                       progress: progress,
                       accentColor: progressColor,
                       icon: icon,
+                      coverImageUrl: deck.coverImageUrl,
                       onTap: () => context.push(AppRoutes.deckDetail(deck.id)),
                     );
                   },
@@ -260,6 +263,7 @@ class _DeckCard extends StatelessWidget {
     required this.progress,
     required this.accentColor,
     required this.icon,
+    required this.coverImageUrl,
     required this.onTap,
   });
 
@@ -269,6 +273,7 @@ class _DeckCard extends StatelessWidget {
   final double progress;
   final Color accentColor;
   final IconData icon;
+  final String? coverImageUrl;
   final VoidCallback onTap;
 
   @override
@@ -282,7 +287,11 @@ class _DeckCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _DeckImageHeader(accentColor: accentColor, icon: icon),
+            _DeckImageHeader(
+              accentColor: accentColor,
+              icon: icon,
+              coverImageUrl: coverImageUrl,
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,
@@ -323,10 +332,15 @@ class _DeckCard extends StatelessWidget {
 }
 
 class _DeckImageHeader extends StatelessWidget {
-  const _DeckImageHeader({required this.accentColor, required this.icon});
+  const _DeckImageHeader({
+    required this.accentColor,
+    required this.icon,
+    this.coverImageUrl,
+  });
 
   final Color accentColor;
   final IconData icon;
+  final String? coverImageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -336,32 +350,81 @@ class _DeckImageHeader extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppRadius.xxl),
         ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            accentColor.withValues(alpha: 0.6),
-            AppColors.surfaceContainer,
-          ],
-        ),
+        color: AppColors.surfaceContainer,
       ),
-      child: Align(
-        alignment: Alignment.bottomRight,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainer,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xxl),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (coverImageUrl != null && coverImageUrl!.isNotEmpty)
+              _DeckCoverImage(imageUrl: coverImageUrl!)
+            else
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      accentColor.withValues(alpha: 0.6),
+                      AppColors.surfaceContainer,
+                    ],
+                  ),
+                ),
+              ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.06),
+                    Colors.black.withValues(alpha: 0.22),
+                  ],
+                ),
+              ),
             ),
-            child: Icon(icon, color: accentColor, size: 32),
-          ),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainer,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  child: Icon(icon, color: accentColor, size: 32),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _DeckCoverImage extends StatelessWidget {
+  const _DeckCoverImage({required this.imageUrl});
+
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return _isLocalImagePath(imageUrl)
+        ? Image.file(File(imageUrl), fit: BoxFit.cover)
+        : Image.network(imageUrl, fit: BoxFit.cover);
+  }
+}
+
+bool _isLocalImagePath(String value) {
+  final uri = Uri.tryParse(value);
+  if (uri == null) return true;
+  return !uri.hasScheme || uri.scheme == 'file';
 }
 
 class _WordCountPill extends StatelessWidget {

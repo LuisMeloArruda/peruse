@@ -61,7 +61,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -98,6 +98,9 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(studyResultsTable);
         await m.createTable(userProgressTable);
         await m.createTable(dailyProgressTable);
+      }
+      if (from < 8) {
+        await m.addColumn(decksTable, decksTable.coverImageUrl);
       }
     },
   );

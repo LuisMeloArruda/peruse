@@ -165,7 +165,22 @@ class DeckRepositoryImpl implements IDeckRepository {
     await _localDb.decksDao.upsertDeck(model.toCompanion());
 
     try {
-      await _supabase.from('decks').insert(model.toJson());
+      final coverImageUrl = await _resolveDeckCoverUrl(deck);
+      final remoteModel = DeckModel(
+        id: deck.id,
+        name: deck.name,
+        userId: deck.userId,
+        color: deck.color,
+        icon: deck.icon,
+        coverImageUrl: coverImageUrl,
+        createdAt: deck.createdAt,
+        isSynced: true,
+      );
+
+      await _supabase.from('decks').upsert(remoteModel.toJson());
+      if (coverImageUrl != null && coverImageUrl != deck.coverImageUrl) {
+        await _localDb.decksDao.updateCoverImageUrl(deck.id, coverImageUrl);
+      }
       await _localDb.decksDao.updateSyncStatus(deck.id, true);
     } catch (e) {
       debugPrint('Deck sync failed. Saved locally for later retry. Error: $e');
@@ -178,7 +193,22 @@ class DeckRepositoryImpl implements IDeckRepository {
     await _localDb.decksDao.upsertDeck(model.toCompanion());
 
     try {
-      await _supabase.from('decks').update(model.toJson()).eq('id', deck.id);
+      final coverImageUrl = await _resolveDeckCoverUrl(deck);
+      final remoteModel = DeckModel(
+        id: deck.id,
+        name: deck.name,
+        userId: deck.userId,
+        color: deck.color,
+        icon: deck.icon,
+        coverImageUrl: coverImageUrl,
+        createdAt: deck.createdAt,
+        isSynced: true,
+      );
+
+      await _supabase.from('decks').upsert(remoteModel.toJson());
+      if (coverImageUrl != null && coverImageUrl != deck.coverImageUrl) {
+        await _localDb.decksDao.updateCoverImageUrl(deck.id, coverImageUrl);
+      }
       await _localDb.decksDao.updateSyncStatus(deck.id, true);
     } catch (e) {
       debugPrint(
@@ -204,7 +234,23 @@ class DeckRepositoryImpl implements IDeckRepository {
 
       for (final localDeck in unsyncedDecks) {
         final model = DeckModel.fromDrift(localDeck);
-        await _supabase.from('decks').insert(model.toJson());
+        final deckEntity = model.toEntity();
+        final coverImageUrl = await _resolveDeckCoverUrl(deckEntity);
+        final remoteModel = DeckModel(
+          id: deckEntity.id,
+          name: deckEntity.name,
+          userId: deckEntity.userId,
+          color: deckEntity.color,
+          icon: deckEntity.icon,
+          coverImageUrl: coverImageUrl,
+          createdAt: deckEntity.createdAt,
+          isSynced: true,
+        );
+
+        await _supabase.from('decks').upsert(remoteModel.toJson());
+        if (coverImageUrl != null && coverImageUrl != deckEntity.coverImageUrl) {
+          await _localDb.decksDao.updateCoverImageUrl(model.id, coverImageUrl);
+        }
         await _localDb.decksDao.updateSyncStatus(model.id, true);
       }
 
@@ -367,6 +413,34 @@ class DeckRepositoryImpl implements IDeckRepository {
   AppDeck? _mapDeck(LocalDeck? deck) {
     if (deck == null) return null;
     return DeckModel.fromDrift(deck).toEntity();
+  }
+
+  Future<String?> _resolveDeckCoverUrl(AppDeck deck) async {
+    final coverImageUrl = deck.coverImageUrl;
+    if (coverImageUrl == null || coverImageUrl.isEmpty) {
+      return null;
+    }
+
+    if (!_isLocalImagePath(coverImageUrl)) {
+      return coverImageUrl;
+    }
+
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      debugPrint('Deck cover upload skipped: no authenticated user.');
+      return null;
+    }
+
+    final file = File(coverImageUrl);
+    if (!await file.exists()) {
+      debugPrint('Deck cover upload skipped: local file not found: $coverImageUrl');
+      return null;
+    }
+
+    final extension = p.extension(coverImageUrl).isEmpty ? '.jpg' : p.extension(coverImageUrl);
+    final storagePath = 'decks/$userId/${deck.id}$extension';
+    await _supabase.storage.from('deck-covers').upload(storagePath, file);
+    return _supabase.storage.from('deck-covers').getPublicUrl(storagePath);
   }
 
   AppWord _mapWord(LocalWord word) {

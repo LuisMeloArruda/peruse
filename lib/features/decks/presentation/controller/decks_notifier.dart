@@ -20,6 +20,7 @@ class DecksNotifier extends _$DecksNotifier {
     required String name,
     required String color,
     required String icon,
+    String? coverImageUrl,
   }) async {
     final authRepository = ref.read(authRepositoryProvider);
     final user = authRepository.currentUser;
@@ -35,6 +36,7 @@ class DecksNotifier extends _$DecksNotifier {
       userId: user.id,
       color: color,
       icon: icon,
+      coverImageUrl: coverImageUrl,
       createdAt: DateTime.now().millisecondsSinceEpoch,
     );
 

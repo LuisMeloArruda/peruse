@@ -32,6 +32,12 @@ class DecksDao extends DatabaseAccessor<AppDatabase> with _$DecksDaoMixin {
     );
   }
 
+  Future<void> updateCoverImageUrl(String id, String? coverImageUrl) async {
+    await (update(decksTable)..where((t) => t.id.equals(id))).write(
+      DecksTableCompanion(coverImageUrl: Value(coverImageUrl)),
+    );
+  }
+
   Future<void> deleteDeck(String id) async {
     await (delete(decksTable)..where((t) => t.id.equals(id))).go();
   }

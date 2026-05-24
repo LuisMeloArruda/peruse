@@ -8,6 +8,7 @@ class DeckModel {
   final String userId;
   final String color;
   final String icon;
+  final String? coverImageUrl;
   final int createdAt;
   final bool isSynced;
 
@@ -17,6 +18,7 @@ class DeckModel {
     required this.userId,
     required this.color,
     required this.icon,
+    this.coverImageUrl,
     required this.createdAt,
     this.isSynced = true,
   });
@@ -36,6 +38,7 @@ class DeckModel {
       userId: json['user_id'] as String,
       color: json['color'] as String,
       icon: json['icon'] as String,
+      coverImageUrl: json['cover_image_url'] as String?,
       createdAt: createdAtMillis,
       isSynced: isSynced,
     );
@@ -48,6 +51,7 @@ class DeckModel {
       'user_id': userId,
       'color': color,
       'icon': icon,
+      'cover_image_url': coverImageUrl,
       'created_at': DateTime.fromMillisecondsSinceEpoch(
         createdAt,
       ).toIso8601String(),
@@ -61,6 +65,7 @@ class DeckModel {
       userId: local.userId,
       color: local.color,
       icon: local.icon,
+      coverImageUrl: local.coverImageUrl,
       createdAt: local.createdAt.toInt(),
       isSynced: local.isSynced,
     );
@@ -73,6 +78,7 @@ class DeckModel {
       userId: userId,
       color: color,
       icon: icon,
+      coverImageUrl: coverImageUrl,
       createdAt: BigInt.from(createdAt),
       isSynced: isSynced,
     );
@@ -85,6 +91,7 @@ class DeckModel {
       userId: userId,
       color: color,
       icon: icon,
+      coverImageUrl: Value(coverImageUrl),
       createdAt: BigInt.from(createdAt),
       isSynced: Value(isSyncedOverride ?? isSynced),
     );
@@ -97,6 +104,7 @@ class DeckModel {
       userId: userId,
       color: color,
       icon: icon,
+      coverImageUrl: coverImageUrl,
       createdAt: createdAt,
     );
   }
@@ -108,6 +116,7 @@ class DeckModel {
       userId: entity.userId,
       color: entity.color,
       icon: entity.icon,
+      coverImageUrl: entity.coverImageUrl,
       createdAt: entity.createdAt,
       isSynced: isSynced,
     );
