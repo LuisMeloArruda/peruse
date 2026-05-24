@@ -10,6 +10,7 @@ import 'package:peruse/core/widgets/peruse_stat_bento_card.dart';
 import 'package:peruse/core/widgets/peruse_text_field.dart';
 import 'package:peruse/features/decks/domain/entities/word.dart';
 import 'package:peruse/features/decks/presentation/controller/deck_detail_notifier.dart';
+import 'package:peruse/features/decks/presentation/controller/word_audio_provider.dart';
 
 class DeckDetailScreen extends ConsumerWidget {
   const DeckDetailScreen({super.key, required this.deckId});
@@ -214,14 +215,16 @@ class _DeckSummary extends StatelessWidget {
   }
 }
 
-class _WordCard extends StatelessWidget {
+class _WordCard extends ConsumerWidget {
   const _WordCard({required this.word, required this.onTap});
 
   final AppWord word;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final audioUrl = ref.watch(wordAudioUrlProvider(word.id)).value;
+    final hasAudio = audioUrl != null && audioUrl.trim().isNotEmpty;
     final confidence = word.confidence.clamp(0.0, 1.0).toDouble();
     final badge = confidence >= 0.85 ? 'MASTERED' : 'LEARNING';
     final badgeColor = confidence >= 0.85
@@ -275,17 +278,24 @@ class _WordCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: AppSpacing.sm),
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceMuted,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        child: const Icon(
-                          Icons.volume_up_rounded,
-                          size: 18,
-                          color: AppColors.onSurfaceVariant,
+                      Tooltip(
+                        message: hasAudio ? 'Audio available' : 'No audio available',
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceMuted,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                          child: Icon(
+                            hasAudio
+                                ? Icons.volume_up_rounded
+                                : Icons.volume_off_rounded,
+                            size: 18,
+                            color: hasAudio
+                                ? AppColors.onSurfaceVariant
+                                : AppColors.onSurfaceVariant.withValues(alpha: 0.45),
+                          ),
                         ),
                       ),
                     ],

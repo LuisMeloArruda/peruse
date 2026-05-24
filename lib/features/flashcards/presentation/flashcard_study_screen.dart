@@ -9,6 +9,7 @@ import 'package:peruse/core/router/router.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/features/decks/data/repositories/deck_repository_impl.dart';
 import 'package:peruse/features/decks/presentation/controller/deck_detail_notifier.dart';
+import 'package:peruse/features/decks/presentation/controller/word_audio_provider.dart';
 import 'package:peruse/features/flashcards/domain/entities/flashcard.dart';
 import 'package:peruse/features/flashcards/presentation/controller/flashcard_notifier.dart';
 import 'package:peruse/features/flashcards/presentation/controller/study_session_notifier.dart';
@@ -256,6 +257,10 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
 
     final deckName = deckState.deck?.name ?? 'Study Session';
     final currentCard = flashcardState.currentCard;
+    final currentAudioUrl = currentCard == null
+      ? null
+      : ref.watch(wordAudioUrlProvider(currentCard.wordId)).value;
+    final hasAudio = currentAudioUrl != null && currentAudioUrl.trim().isNotEmpty;
     
     final totalCount = sessionState.totalCount;
     final currentCount = totalCount == 0 ? 0 : math.min(sessionState.currentIndex + 1, totalCount);
@@ -400,6 +405,7 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
                                           ),
                                           card: currentCard,
                                           isFlipped: flashcardState.isFlipped,
+                                          hasAudio: hasAudio,
                                           onAudioTap: () => _playAudio(currentCard),
                                           onEditTap: () => _editCurrentCard(currentCard),
                                         ),
@@ -415,13 +421,17 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
                                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                   children: [
                                     _MiniAction(
-                                      icon: Icons.volume_up_rounded,
-                                      label: 'Audio',
+                                      icon: hasAudio
+                                          ? Icons.volume_up_rounded
+                                          : Icons.volume_off_rounded,
+                                      label: hasAudio ? 'Audio' : 'No Audio',
+                                      enabled: hasAudio,
                                       onTap: () => _playAudio(currentCard),
                                     ),
                                     _MiniAction(
                                       icon: Icons.edit_rounded,
                                       label: 'Edit',
+                                      enabled: true,
                                       onTap: () => _editCurrentCard(currentCard),
                                     ),
                                   ],
@@ -475,12 +485,14 @@ class _FlashcardCard extends StatelessWidget {
     super.key,
     required this.card,
     required this.isFlipped,
+    required this.hasAudio,
     required this.onAudioTap,
     required this.onEditTap,
   });
 
   final AppFlashcard card;
   final bool isFlipped;
+  final bool hasAudio;
   final VoidCallback onAudioTap;
   final VoidCallback onEditTap;
 
@@ -581,11 +593,13 @@ class _FlashcardCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _CardIconButton(
-                  icon: Icons.volume_up_rounded,
+                  icon: hasAudio ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                  enabled: hasAudio,
                   onTap: onAudioTap,
                 ),
                 _CardIconButton(
                   icon: Icons.edit_rounded,
+                  enabled: true,
                   onTap: onEditTap,
                 ),
               ],
@@ -706,26 +720,39 @@ class _ActionButton extends StatelessWidget {
 }
 
 class _MiniAction extends StatelessWidget {
-  const _MiniAction({required this.icon, required this.label, required this.onTap});
+  const _MiniAction({
+    required this.icon,
+    required this.label,
+    required this.enabled,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;
+  final bool enabled;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkResponse(
-      onTap: onTap,
+      onTap: enabled ? onTap : null,
       radius: 32,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: AppColors.onSurfaceVariant),
+          Icon(
+            icon,
+            color: enabled
+                ? AppColors.onSurfaceVariant
+                : AppColors.onSurfaceVariant.withValues(alpha: 0.45),
+          ),
           const SizedBox(height: 6),
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: enabled
+                      ? AppColors.onSurfaceVariant
+                      : AppColors.onSurfaceVariant.withValues(alpha: 0.45),
                 ),
           ),
         ],
@@ -735,15 +762,20 @@ class _MiniAction extends StatelessWidget {
 }
 
 class _CardIconButton extends StatelessWidget {
-  const _CardIconButton({required this.icon, required this.onTap});
+  const _CardIconButton({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
 
   final IconData icon;
+  final bool enabled;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkResponse(
-      onTap: onTap,
+      onTap: enabled ? onTap : null,
       radius: 26,
       child: Container(
         width: 44,
@@ -752,7 +784,12 @@ class _CardIconButton extends StatelessWidget {
           color: const Color(0xFFF3F3F1),
           borderRadius: BorderRadius.circular(999),
         ),
-        child: Icon(icon, color: AppColors.onSurfaceVariant),
+        child: Icon(
+          icon,
+          color: enabled
+              ? AppColors.onSurfaceVariant
+              : AppColors.onSurfaceVariant.withValues(alpha: 0.45),
+        ),
       ),
     );
   }

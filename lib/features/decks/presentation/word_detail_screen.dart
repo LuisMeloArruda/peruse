@@ -121,12 +121,22 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                           ),
                         ),
                       ),
-                      if (details != null)
-                        IconButton(
-                          onPressed: () => _playAudio(details.audioUrl),
-                          icon: const Icon(Icons.volume_up_rounded),
-                          color: AppColors.primary,
+                      IconButton(
+                        onPressed: details?.audioUrl.trim().isNotEmpty == true
+                            ? () => _playAudio(details!.audioUrl)
+                            : null,
+                        icon: Icon(
+                          details?.audioUrl.trim().isNotEmpty == true
+                              ? Icons.volume_up_rounded
+                              : Icons.volume_off_rounded,
                         ),
+                        color: details?.audioUrl.trim().isNotEmpty == true
+                            ? AppColors.primary
+                            : AppColors.onSurfaceVariant.withValues(alpha: 0.45),
+                        tooltip: details?.audioUrl.trim().isNotEmpty == true
+                            ? 'Play audio'
+                            : 'No audio available',
+                      ),
                     ],
                   ),
                   if (details != null)
