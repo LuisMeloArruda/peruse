@@ -469,15 +469,25 @@ class DeckRepositoryImpl implements IDeckRepository {
         return false;
       }
 
-      final remoteImageUrl = await _resolveWordImageUrl(word, userId);
-      if (word.imageUrl != null && _isLocalImagePath(word.imageUrl!) && remoteImageUrl == null) {
-        return false;
+      String? remoteImageUrl;
+      try {
+        remoteImageUrl = await _resolveWordImageUrl(word, userId);
+      } catch (e) {
+        debugPrint('Word image upload skipped: $e');
+        remoteImageUrl =
+            word.imageUrl != null && !_isLocalImagePath(word.imageUrl!)
+            ? word.imageUrl
+            : null;
       }
 
       await _supabase.from('words').upsert({
         'id': word.id,
         'word_text': normalizedText,
-        'image_url': remoteImageUrl ?? word.imageUrl,
+        'image_url': remoteImageUrl ?? (
+          word.imageUrl != null && !_isLocalImagePath(word.imageUrl!)
+              ? word.imageUrl
+              : null
+        ),
         'confidence': word.confidence,
         'source_scan_id': word.sourceScanId,
         'user_id': userId,
@@ -515,8 +525,8 @@ class DeckRepositoryImpl implements IDeckRepository {
 
     final extension = p.extension(imageUrl).isEmpty ? '.jpg' : p.extension(imageUrl);
     final storagePath = 'words/$userId/${word.id}$extension';
-    await _supabase.storage.from('captures').upload(storagePath, file);
-    return _supabase.storage.from('captures').getPublicUrl(storagePath);
+    await _supabase.storage.from('words').upload(storagePath, file);
+    return _supabase.storage.from('words').getPublicUrl(storagePath);
   }
 
   bool _isLocalImagePath(String value) {
