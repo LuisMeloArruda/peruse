@@ -50,6 +50,11 @@ class MainShellScreen extends ConsumerWidget {
               label: 'Study',
             ),
             NavigationDestination(
+              icon: Icon(Icons.insights_outlined),
+              selectedIcon: Icon(Icons.insights),
+              label: 'Growth',
+            ),
+            NavigationDestination(
               icon: _CaptureIcon(isSelected: false),
               selectedIcon: _CaptureIcon(isSelected: true),
               label: 'Capture',

@@ -17,6 +17,7 @@ import 'package:peruse/features/capture/presentation/capture_result_screen.dart'
 import 'package:peruse/features/capture/presentation/capture_detail_screen.dart';
 import 'package:peruse/features/capture/presentation/controller/capture_screen_notifier.dart';
 import 'package:peruse/features/profile/presentation/profile_screen.dart';
+import 'package:peruse/features/study/presentation/growth_screen.dart';
 import 'package:peruse/features/study/presentation/study_hub_screen.dart';
 import 'package:peruse/core/widgets/main_shell_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -116,6 +117,14 @@ GoRouter router(Ref ref) {
               GoRoute(
                 path: AppRoutes.study,
                 builder: (context, state) => const StudyHubScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.growth,
+                builder: (context, state) => const GrowthScreen(),
               ),
             ],
           ),

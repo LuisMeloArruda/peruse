@@ -9,6 +9,7 @@ abstract final class AppRoutes {
   static const String captureResult = '/capture-result';
   static const String captureDetail = '/capture-detail';
   static const String study = '/study';
+  static const String growth = '/growth';
   static const String profile = '/profile';
   static const String login = '/login';
   static const String register = '/register';

@@ -5,6 +5,7 @@ import 'package:peruse/data/local/tables/study_results_table.dart';
 import 'package:peruse/data/local/tables/study_sessions_table.dart';
 import 'package:peruse/data/local/tables/user_progress_table.dart';
 import 'package:peruse/features/study/data/models/user_global_stats.dart';
+import 'package:peruse/features/study/data/models/deck_mastery_stats.dart';
 
 part 'study_dao.g.dart';
 
@@ -39,6 +40,22 @@ class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, now.day)
         .subtract(const Duration(days: 6));
+    final startKey = _formatDateKey(start);
+    final endKey = _formatDateKey(now);
+
+    final query = select(dailyProgressTable)
+      ..where(
+        (t) => t.userId.equals(userId) & t.date.isBetweenValues(startKey, endKey),
+      )
+      ..orderBy([(t) => OrderingTerm.asc(t.date)]);
+
+    return query.watch();
+  }
+
+  Stream<List<LocalDailyProgress>> watchMonthlyVelocity(String userId) {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, now.day)
+        .subtract(const Duration(days: 29));
     final startKey = _formatDateKey(start);
     final endKey = _formatDateKey(now);
 
@@ -95,6 +112,48 @@ class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
         lifetimeAccuracy: progress.lifetimeAccuracy,
         wordsStudiedToday: daily?.wordsStudied ?? 0,
         currentStreak: progress.currentStreak,
+      );
+    });
+  }
+
+  Stream<DeckMasteryStats> watchDeckMastery({
+    required String userId,
+    required String deckId,
+    int lookbackDays = 30,
+    int limit = 50,
+  }) {
+    final cutoff = DateTime.now().subtract(Duration(days: lookbackDays));
+    final cutoffMillis = BigInt.from(cutoff.millisecondsSinceEpoch);
+
+    final query = select(studyResultsTable).join([
+      innerJoin(
+        studySessionsTable,
+        studySessionsTable.id.equalsExp(studyResultsTable.sessionId),
+      ),
+    ])
+      ..where(
+        studySessionsTable.userId.equals(userId) &
+            studySessionsTable.deckId.equals(deckId) &
+            studySessionsTable.endedAt.isNotNull() &
+            studySessionsTable.startedAt.isBiggerOrEqualValue(cutoffMillis),
+      )
+      ..orderBy([
+        OrderingTerm.desc(studySessionsTable.startedAt),
+      ])
+      ..limit(limit);
+
+    return query.watch().map((rows) {
+      if (rows.isEmpty) return DeckMasteryStats.empty;
+
+      final total = rows.length;
+      final correct = rows
+          .where((row) => row.readTable(studyResultsTable).isCorrect)
+          .length;
+
+      return DeckMasteryStats(
+        accuracy: total == 0 ? 0 : correct / total,
+        totalAnswers: total,
+        correctAnswers: correct,
       );
     });
   }
