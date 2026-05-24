@@ -38,6 +38,12 @@ class DecksDao extends DatabaseAccessor<AppDatabase> with _$DecksDaoMixin {
     );
   }
 
+  Future<void> updateBio(String id, String? bio) async {
+    await (update(decksTable)..where((t) => t.id.equals(id))).write(
+      DecksTableCompanion(bio: Value(bio)),
+    );
+  }
+
   Future<void> deleteDeck(String id) async {
     await (delete(decksTable)..where((t) => t.id.equals(id))).go();
   }

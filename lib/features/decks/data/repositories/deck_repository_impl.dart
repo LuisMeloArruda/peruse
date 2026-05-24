@@ -169,6 +169,7 @@ class DeckRepositoryImpl implements IDeckRepository {
       final remoteModel = DeckModel(
         id: deck.id,
         name: deck.name,
+        bio: deck.bio,
         userId: deck.userId,
         color: deck.color,
         icon: deck.icon,
@@ -197,6 +198,7 @@ class DeckRepositoryImpl implements IDeckRepository {
       final remoteModel = DeckModel(
         id: deck.id,
         name: deck.name,
+        bio: deck.bio,
         userId: deck.userId,
         color: deck.color,
         icon: deck.icon,
@@ -239,6 +241,7 @@ class DeckRepositoryImpl implements IDeckRepository {
         final remoteModel = DeckModel(
           id: deckEntity.id,
           name: deckEntity.name,
+          bio: deckEntity.bio,
           userId: deckEntity.userId,
           color: deckEntity.color,
           icon: deckEntity.icon,

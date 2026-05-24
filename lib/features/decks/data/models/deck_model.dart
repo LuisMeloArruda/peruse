@@ -5,6 +5,7 @@ import 'package:peruse/features/decks/domain/entities/deck.dart';
 class DeckModel {
   final String id;
   final String name;
+  final String? bio;
   final String userId;
   final String color;
   final String icon;
@@ -15,6 +16,7 @@ class DeckModel {
   const DeckModel({
     required this.id,
     required this.name,
+    this.bio,
     required this.userId,
     required this.color,
     required this.icon,
@@ -35,6 +37,7 @@ class DeckModel {
     return DeckModel(
       id: json['id'] as String,
       name: json['name'] as String,
+      bio: json['bio'] as String?,
       userId: json['user_id'] as String,
       color: json['color'] as String,
       icon: json['icon'] as String,
@@ -48,6 +51,7 @@ class DeckModel {
     return {
       'id': id,
       'name': name,
+      'bio': bio,
       'user_id': userId,
       'color': color,
       'icon': icon,
@@ -62,6 +66,7 @@ class DeckModel {
     return DeckModel(
       id: local.id,
       name: local.name,
+      bio: local.bio,
       userId: local.userId,
       color: local.color,
       icon: local.icon,
@@ -75,6 +80,7 @@ class DeckModel {
     return LocalDeck(
       id: id,
       name: name,
+      bio: bio,
       userId: userId,
       color: color,
       icon: icon,
@@ -88,6 +94,7 @@ class DeckModel {
     return DecksTableCompanion.insert(
       id: id,
       name: name,
+      bio: Value(bio),
       userId: userId,
       color: color,
       icon: icon,
@@ -101,6 +108,7 @@ class DeckModel {
     return AppDeck(
       id: id,
       name: name,
+      bio: bio,
       userId: userId,
       color: color,
       icon: icon,
@@ -113,6 +121,7 @@ class DeckModel {
     return DeckModel(
       id: entity.id,
       name: entity.name,
+      bio: entity.bio,
       userId: entity.userId,
       color: entity.color,
       icon: entity.icon,

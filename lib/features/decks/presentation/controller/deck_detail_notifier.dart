@@ -1,8 +1,11 @@
 import 'dart:async';
 
+import 'package:peruse/core/di/providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:peruse/features/decks/data/models/deck_model.dart';
 import 'package:peruse/features/decks/domain/entities/deck.dart';
 import 'package:peruse/features/decks/domain/entities/word.dart';
 import 'package:peruse/features/decks/data/repositories/deck_repository_impl.dart';
@@ -52,10 +55,13 @@ class DeckDetailNotifier extends _$DeckDetailNotifier {
   @override
   DeckDetailState build(String deckId) {
     final repository = ref.watch(deckRepositoryProvider);
+    final supabase = ref.watch(supabaseClientProvider);
 
     _deckSubscription = repository.watchDeck(deckId).listen((deck) {
       state = state.copyWith(deck: deck);
     });
+
+    unawaited(_refreshRemoteBio(supabase, deckId));
 
     _wordsSubscription = repository.watchDeckWords(deckId).listen((words) {
       final filtered = _filterWords(words, state.searchQuery);
@@ -68,6 +74,37 @@ class DeckDetailNotifier extends _$DeckDetailNotifier {
     });
 
     return DeckDetailState.initial;
+  }
+
+  Future<void> _refreshRemoteBio(
+    SupabaseClient supabase,
+    String deckId,
+  ) async {
+    try {
+      final response = await supabase
+          .from('decks')
+          .select()
+          .eq('id', deckId)
+          .maybeSingle();
+      if (!ref.mounted || response == null) {
+        return;
+      }
+
+      final remoteDeck = DeckModel.fromJson(
+        Map<String, dynamic>.from(response as Map),
+      ).toEntity();
+
+      if (remoteDeck.bio != null && remoteDeck.bio!.trim().isNotEmpty) {
+        await ref.read(appDatabaseProvider).decksDao.updateBio(
+          deckId,
+          remoteDeck.bio,
+        );
+      }
+
+      state = state.copyWith(deck: remoteDeck);
+    } catch (_) {
+      // Keep the locally cached deck if the remote fetch fails.
+    }
   }
 
   void updateSearchQuery(String query) {

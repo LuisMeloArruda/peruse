@@ -18,6 +18,7 @@ class DecksNotifier extends _$DecksNotifier {
 
   Future<void> createDeck({
     required String name,
+    String? bio,
     required String color,
     required String icon,
     String? coverImageUrl,
@@ -33,6 +34,7 @@ class DecksNotifier extends _$DecksNotifier {
     final deck = AppDeck(
       id: const Uuid().v4(),
       name: name.trim(),
+      bio: bio?.trim().isEmpty == true ? null : bio?.trim(),
       userId: user.id,
       color: color,
       icon: icon,

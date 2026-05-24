@@ -78,6 +78,7 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
         .read(decksProvider.notifier)
         .createDeck(
           name: name,
+          bio: _bioController.text.trim(),
           color: color,
           icon: icon,
           coverImageUrl: _coverImagePath,

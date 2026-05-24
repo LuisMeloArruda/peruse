@@ -43,6 +43,7 @@ class DeckDetailScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: _DeckSummary(
+                  bio: state.deck?.bio,
                   wordCount: state.words.length,
                   avgMastery: _averageMastery(state.words),
                   onStudyNow: () => context.push(AppRoutes.deckStudy(deckId)),
@@ -139,12 +140,14 @@ class _DeckHeader extends StatelessWidget {
 
 class _DeckSummary extends StatelessWidget {
   const _DeckSummary({
+    required this.bio,
     required this.wordCount,
     required this.avgMastery,
     required this.onStudyNow,
     required this.onAddWord,
   });
 
+  final String? bio;
   final int wordCount;
   final double avgMastery;
   final VoidCallback onStudyNow;
@@ -192,6 +195,24 @@ class _DeckSummary extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
+          if (bio != null && bio!.trim().isNotEmpty) ...[
+            Text(
+              'About this deck',
+              style: context.textTheme.labelMedium?.copyWith(
+                color: AppColors.onSurfaceVariant,
+                letterSpacing: 0.3,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              bio!.trim(),
+              style: context.textTheme.bodyMedium?.copyWith(
+                color: AppColors.onSurface,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
           FilledButton.icon(
             onPressed: onStudyNow,
             icon: const Icon(Icons.play_arrow_rounded),

@@ -9,6 +9,16 @@ LazyDatabase lazyOpenConnection() {
   return LazyDatabase(() async {
     final directory = await getApplicationDocumentsDirectory();
     final dbPath = p.join(directory.path, 'peruse.sqlite');
-    return NativeDatabase(File(dbPath));
+    final dbFile = File(dbPath);
+    final resetMarker = File(p.join(directory.path, 'peruse.sqlite.reset.v1'));
+
+    if (!await resetMarker.exists()) {
+      if (await dbFile.exists()) {
+        await dbFile.delete();
+      }
+      await resetMarker.writeAsString('reset complete');
+    }
+
+    return NativeDatabase(dbFile);
   });
 }
