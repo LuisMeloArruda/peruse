@@ -13,6 +13,10 @@ import 'package:peruse/features/decks/presentation/controller/word_audio_provide
 import 'package:peruse/features/flashcards/domain/entities/flashcard.dart';
 import 'package:peruse/features/flashcards/presentation/controller/flashcard_notifier.dart';
 import 'package:peruse/features/flashcards/presentation/controller/study_session_notifier.dart';
+import 'package:peruse/core/llm/models/llm_request.dart';
+import 'package:peruse/core/llm/provider/llm_providers.dart';
+import 'package:peruse/features/profile/presentation/controller/profile_notifier.dart';
+import 'package:peruse/features/profile/domain/profile_languages.dart';
 
 class FlashcardStudyScreen extends ConsumerStatefulWidget {
   const FlashcardStudyScreen({super.key, required this.deckId});
@@ -177,9 +181,7 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           child: Container(
             decoration: const BoxDecoration(
               color: AppColors.surface,
@@ -480,7 +482,7 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
   }
 }
 
-class _FlashcardCard extends StatelessWidget {
+class _FlashcardCard extends ConsumerWidget {
   const _FlashcardCard({
     super.key,
     required this.card,
@@ -497,32 +499,47 @@ class _FlashcardCard extends StatelessWidget {
   final VoidCallback onEditTap;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 360, minHeight: 420),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x18000000),
-            blurRadius: 30,
-            offset: Offset(0, 18),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _CardImage(mediaUrl: card.mediaUrl),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
-            child: AnimatedSwitcher(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mediaHeight = MediaQuery.of(context).size.height;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableHeight = constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : mediaHeight * 0.62;
+        final cardHeight = availableHeight.clamp(360.0, 520.0).toDouble();
+        final imageHeight = (cardHeight * 0.42).clamp(160.0, 220.0).toDouble();
+        final maxBackTextHeight = math.max(80.0, cardHeight * 0.22);
+
+        return SizedBox(
+          width: double.infinity,
+          height: cardHeight,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 360),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(32),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x18000000),
+                  blurRadius: 30,
+                  offset: Offset(0, 18),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                _CardImage(mediaUrl: card.mediaUrl, height: imageHeight),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                    child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 220),
               child: isFlipped
                   ? Column(
                       key: const ValueKey('back'),
+                      mainAxisSize: MainAxisSize.max,
                       children: [
                         Text(
                           'ANSWER',
@@ -533,19 +550,96 @@ class _FlashcardCard extends StatelessWidget {
                               ),
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          card.backText?.isNotEmpty == true
-                              ? card.backText!
-                              : 'No back text yet.',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                height: 1.35,
-                              ),
+                        Expanded(
+                          child: Builder(
+                            builder: (context) {
+                            final profileState = ref.watch(profileProvider);
+                            final preferredLanguageCode =
+                                profileState.asData?.value?.preferredLanguage ?? 'en';
+
+                            final originalBackText = card.backText?.trim();
+                            final hasBackText = originalBackText?.isNotEmpty == true;
+                            final fallbackText =
+                                hasBackText ? originalBackText! : 'No back text yet.';
+
+                            final textStyle = Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.35,
+                                );
+
+                            Widget buildScrollableText(String text) {
+                              return Align(
+                                alignment: Alignment.topCenter,
+                                child: SingleChildScrollView(
+                                  child: Text(
+                                    text,
+                                    textAlign: TextAlign.center,
+                                    style: textStyle,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            if (preferredLanguageCode == 'en' || !hasBackText) {
+                              return buildScrollableText(fallbackText);
+                            }
+
+                            final targetLanguage =
+                                profileLanguageLabel(preferredLanguageCode).toLowerCase();
+                            final cacheKey = llmCacheKey(targetLanguage, fallbackText);
+                            final cache = ref.watch(llmTranslationCacheProvider);
+                            final cachedTranslation = cache[cacheKey];
+
+                            if (cachedTranslation != null && cachedTranslation.isNotEmpty) {
+                              return buildScrollableText(cachedTranslation);
+                            }
+
+                            final request = LlmRequest(
+                              input: {fallbackText: 1},
+                              sourceLanguage: 'english',
+                              targetLanguage: targetLanguage,
+                            );
+
+                            final translation = ref.watch(llmTranslateProvider(request));
+                            return translation.when(
+                              data: (output) {
+                                final translated = output.translatedTexts.isNotEmpty
+                                    ? output.translatedTexts.values.first
+                                    : fallbackText;
+
+                                if (translated.isNotEmpty && cache[cacheKey] != translated) {
+                                  Future.microtask(
+                                    () => ref
+                                        .read(llmTranslationCacheProvider.notifier)
+                                        .put(cacheKey, translated),
+                                  );
+                                }
+
+                                return buildScrollableText(translated);
+                              },
+                              loading: () => buildScrollableText(fallbackText),
+                              error: (_, __) {
+                                if (cache[cacheKey] == null) {
+                                  Future.microtask(
+                                    () => ref
+                                        .read(llmTranslationCacheProvider.notifier)
+                                        .put(cacheKey, fallbackText),
+                                  );
+                                }
+                                return buildScrollableText(fallbackText);
+                              },
+                            );
+                            },
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           card.frontText ?? '',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: AppColors.onSurfaceVariant,
@@ -555,6 +649,7 @@ class _FlashcardCard extends StatelessWidget {
                     )
                   : Column(
                       key: const ValueKey('front'),
+                      mainAxisSize: MainAxisSize.max,
                       children: [
                         Text(
                           'VISUAL PROMPT',
@@ -565,16 +660,22 @@ class _FlashcardCard extends StatelessWidget {
                               ),
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          card.frontText?.isNotEmpty == true
-                              ? card.frontText!
-                              : 'Untitled card',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                fontSize: 34,
-                                fontWeight: FontWeight.w800,
-                                height: 1.1,
+                        Expanded(
+                          child: Center(
+                            child: SingleChildScrollView(
+                              child: Text(
+                                card.frontText?.isNotEmpty == true
+                                    ? card.frontText!
+                                    : 'Untitled card',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                      fontSize: 34,
+                                      fontWeight: FontWeight.w800,
+                                      height: 1.1,
+                                    ),
                               ),
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -586,41 +687,48 @@ class _FlashcardCard extends StatelessWidget {
                       ],
                     ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _CardIconButton(
-                  icon: hasAudio ? Icons.volume_up_rounded : Icons.volume_off_rounded,
-                  enabled: hasAudio,
-                  onTap: onAudioTap,
+                  ),
                 ),
-                _CardIconButton(
-                  icon: Icons.edit_rounded,
-                  enabled: true,
-                  onTap: onEditTap,
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _CardIconButton(
+                        icon: hasAudio
+                            ? Icons.volume_up_rounded
+                            : Icons.volume_off_rounded,
+                        enabled: hasAudio,
+                        onTap: onAudioTap,
+                      ),
+                      _CardIconButton(
+                        icon: Icons.edit_rounded,
+                        enabled: true,
+                        onTap: onEditTap,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
 class _CardImage extends StatelessWidget {
-  const _CardImage({required this.mediaUrl});
+  const _CardImage({required this.mediaUrl, required this.height});
 
   final String? mediaUrl;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     final resolvedUrl = mediaUrl?.trim() ?? '';
     return Container(
-      height: 220,
+      height: height,
       decoration: const BoxDecoration(
         color: Color(0xFF121212),
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),

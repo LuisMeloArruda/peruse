@@ -114,8 +114,13 @@ class WordDetailNotifier extends _$WordDetailNotifier {
     if (preferredLanguageCode == 'en') {
       return details.definition;
     }
-
     final targetLanguage = profileLanguageLabel(preferredLanguageCode).toLowerCase();
+    final cacheKey = llmCacheKey(targetLanguage, details.definition);
+
+    final cache = ref.read(llmTranslationCacheProvider);
+    if (cache.containsKey(cacheKey)) {
+      return cache[cacheKey]!;
+    }
 
     try {
       final request = LlmRequest(
@@ -131,7 +136,9 @@ class WordDetailNotifier extends _$WordDetailNotifier {
         return details.definition;
       }
 
-      return output.translatedTexts.values.first;
+      final translated = output.translatedTexts.values.first;
+      ref.read(llmTranslationCacheProvider.notifier).put(cacheKey, translated);
+      return translated;
     } catch (error) {
       debugPrint('Definition translation failed, using English definition: $error');
       return details.definition;

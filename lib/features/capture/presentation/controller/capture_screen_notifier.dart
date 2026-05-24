@@ -261,8 +261,33 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
         return fallbackSuggestions;
       }
 
+      // try to use cached translations first
+      final cache = ref.read(llmTranslationCacheProvider);
+      final needed = <String, double>{};
+      final results = <String, String>{};
+
+      for (final entry in input.entries) {
+        final key = llmCacheKey(targetLanguage, entry.key);
+        if (cache.containsKey(key)) {
+          results[entry.key] = cache[key]!;
+        } else {
+          needed[entry.key] = entry.value;
+        }
+      }
+
+      if (needed.isEmpty) {
+        return [
+          for (final entry in input.entries)
+            CaptureSuggestion(
+              englishText: entry.key,
+              translatedText: results[entry.key] ?? entry.key,
+              confidence: entry.value,
+            ),
+        ];
+      }
+
       final llmRequest = LlmRequest(
-        input: input,
+        input: needed,
         sourceLanguage: 'english',
         targetLanguage: targetLanguage,
       );
@@ -270,12 +295,18 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
           .read(llmTranslateProvider(llmRequest).future)
           .timeout(_translationTimeout);
 
+      for (final t in translations.translatedTexts.entries) {
+        final key = llmCacheKey(targetLanguage, t.key);
+        results[t.key] = t.value;
+        ref.read(llmTranslationCacheProvider.notifier).put(key, t.value);
+      }
+
       return [
-        for (final translation in translations.translatedTexts.entries)
+        for (final entry in input.entries)
           CaptureSuggestion(
-            englishText: translation.key,
-            translatedText: translation.value,
-            confidence: input[translation.key] ?? 0,
+            englishText: entry.key,
+            translatedText: results[entry.key] ?? entry.key,
+            confidence: entry.value,
           ),
       ];
     } on TimeoutException catch (error) {
