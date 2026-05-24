@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:camera/camera.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart'
     as mlkit;
@@ -104,6 +108,8 @@ class CaptureScreenState {
 }
 
 class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
+  static const _translationTimeout = Duration(seconds: 8);
+
   @override
   CaptureScreenState build() {
     ref.onDispose(_disposeResources);
@@ -188,31 +194,12 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
       final inputImage = mlkit.InputImage.fromFilePath(xFile.path);
 
       final labels = await imageLabeler.processImage(inputImage);
-
-      final llmRequest = LlmRequest(
-        input: Map.fromEntries(
-          labels.map((e) => MapEntry(e.label, e.confidence)),
-        ),
-        sourceLanguage: 'english',
-        targetLanguage: 'portuguese',
-      );
-      final translations = await ref.read(
-        llmTranslateProvider(llmRequest).future,
-      );
-
-      final detectedSuggestions = [
-        for (final translation in translations.translatedTexts.entries)
-          CaptureSuggestion(
-            englishText: translation.key,
-            translatedText: translation.value,
-            confidence: llmRequest.input[translation.key] ?? 0,
-          ),
-      ];
+      final suggestions = await _buildSuggestions(labels);
 
       state = state.copyWith(
         lastCapturedPath: xFile.path,
         lastDetectedLabels: [
-          for (final suggestion in detectedSuggestions)
+          for (final suggestion in suggestions)
             Label(
               text: suggestion.englishText,
               confidence: suggestion.confidence,
@@ -222,7 +209,7 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
       );
       return CaptureReviewData(
         localPath: xFile.path,
-        suggestions: detectedSuggestions,
+        suggestions: suggestions,
       );
     } catch (error) {
       state = state.copyWith(cameraError: error.toString());
@@ -238,6 +225,56 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
 
   Future<void> refreshCaptures() async {
     await ref.read(captureControllerProvider.notifier).refresh();
+  }
+
+  Future<List<CaptureSuggestion>> _buildSuggestions(
+    List<mlkit.ImageLabel> labels,
+  ) async {
+    final input = Map<String, double>.fromEntries(
+      labels.map((entry) => MapEntry(entry.label, entry.confidence)),
+    );
+
+    final fallbackSuggestions = [
+      for (final entry in input.entries)
+        CaptureSuggestion(
+          englishText: entry.key,
+          translatedText: entry.key,
+          confidence: entry.value,
+        ),
+    ];
+
+    try {
+      final connectivity = await Connectivity().checkConnectivity();
+      final isOnline = connectivity.isNotEmpty &&
+          !connectivity.contains(ConnectivityResult.none);
+      if (!isOnline) {
+        return fallbackSuggestions;
+      }
+
+      final llmRequest = LlmRequest(
+        input: input,
+        sourceLanguage: 'english',
+        targetLanguage: 'portuguese',
+      );
+      final translations = await ref
+          .read(llmTranslateProvider(llmRequest).future)
+          .timeout(_translationTimeout);
+
+      return [
+        for (final translation in translations.translatedTexts.entries)
+          CaptureSuggestion(
+            englishText: translation.key,
+            translatedText: translation.value,
+            confidence: input[translation.key] ?? 0,
+          ),
+      ];
+    } on TimeoutException catch (error) {
+      debugPrint('Translation timed out, using English labels only: $error');
+      return fallbackSuggestions;
+    } catch (error) {
+      debugPrint('Translation failed, using English labels only: $error');
+      return fallbackSuggestions;
+    }
   }
 
   void resetCameraSetup() {

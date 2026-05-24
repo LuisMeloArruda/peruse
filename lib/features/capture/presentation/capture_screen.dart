@@ -176,13 +176,24 @@ class CaptureScreen extends ConsumerWidget {
       );
     }
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        ClipRect(child: CameraPreview(state.cameraController!)),
-        const _CameraOverlay(),
-      ],
+   return ClipRect(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Força o preview da câmara a preencher todo o espaço disponível
+          Transform.scale(
+            scale: 1 / (state.cameraController!.value.aspectRatio * MediaQuery.of(context).size.aspectRatio),
+            child: Center(
+              child: CameraPreview(state.cameraController!),
+            ),
+          ),
+          // Camada de overlay por cima da câmara
+          const _CameraOverlay(),
+        ],
+      ),
     );
+
+
   }
 }
 

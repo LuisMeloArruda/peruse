@@ -409,7 +409,9 @@ class _SuggestionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${option.translatedText} -> ${option.englishText}',
+                      option.translatedText == option.englishText
+                          ? option.englishText
+                          : '${option.translatedText} -> ${option.englishText}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),

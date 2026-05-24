@@ -52,14 +52,28 @@ class DecksScreen extends ConsumerWidget {
   }
 }
 
-class _DecksLoadedView extends StatelessWidget {
+class _DecksLoadedView extends StatefulWidget {
   const _DecksLoadedView({required this.decks, required this.onCreateDeck});
 
   final List<AppDeck> decks;
   final VoidCallback onCreateDeck;
 
   @override
+  State<_DecksLoadedView> createState() => _DecksLoadedViewState();
+}
+
+class _DecksLoadedViewState extends State<_DecksLoadedView> {
+  bool _sortByRecent = false;
+
+  @override
   Widget build(BuildContext context) {
+    final decks = _sortByRecent
+    ? ([...widget.decks]..sort(
+        (left, right) => right.createdAt.compareTo(left.createdAt),
+      ))
+    : widget.decks;
+
+
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -69,13 +83,22 @@ class _DecksLoadedView extends StatelessWidget {
             AppSpacing.lg,
             AppSpacing.lg,
           ),
-          sliver: SliverToBoxAdapter(child: const _DecksHeader()),
+          sliver: SliverToBoxAdapter(
+            child: _DecksHeader(
+              sortByRecent: _sortByRecent,
+              onSortTap: () {
+                setState(() {
+                  _sortByRecent = !_sortByRecent;
+                });
+              },
+            ),
+          ),
         ),
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           sliver: decks.isEmpty
               ? SliverToBoxAdapter(
-                  child: _EmptyDeckState(onCreateDeck: onCreateDeck),
+                  child: _EmptyDeckState(onCreateDeck: widget.onCreateDeck),
                 )
               : SliverList.separated(
                   itemCount: decks.length,
@@ -108,7 +131,7 @@ class _DecksLoadedView extends StatelessWidget {
             AppSpacing.xxl,
           ),
           sliver: SliverToBoxAdapter(
-            child: _CreateDeckCard(onTap: onCreateDeck),
+            child: _CreateDeckCard(onTap: widget.onCreateDeck),
           ),
         ),
       ],
@@ -146,7 +169,10 @@ class _DecksTopBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class _DecksHeader extends StatelessWidget {
-  const _DecksHeader();
+  const _DecksHeader({required this.sortByRecent, required this.onSortTap});
+
+  final bool sortByRecent;
+  final VoidCallback onSortTap;
 
   @override
   Widget build(BuildContext context) {
@@ -168,22 +194,31 @@ class _DecksHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
-        _SortChip(label: 'Sort by recent', onTap: () {}),
+        _SortChip(
+          label: sortByRecent ? 'Sorted by recent' : 'Sort by recent',
+          onTap: onSortTap,
+          isActive: sortByRecent,
+        ),
       ],
     );
   }
 }
 
 class _SortChip extends StatelessWidget {
-  const _SortChip({required this.label, required this.onTap});
+  const _SortChip({
+    required this.label,
+    required this.onTap,
+    required this.isActive,
+  });
 
   final String label;
   final VoidCallback onTap;
+  final bool isActive;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surfaceMuted,
+      color: isActive ? AppColors.primary.withValues(alpha: 0.12) : AppColors.surfaceMuted,
       borderRadius: BorderRadius.circular(AppRadius.pill),
       child: InkWell(
         onTap: onTap,
@@ -199,10 +234,16 @@ class _SortChip extends StatelessWidget {
               Icon(
                 Icons.sort_rounded,
                 size: 16,
-                color: AppColors.onSurfaceVariant,
+                color: isActive ? AppColors.primary : AppColors.onSurfaceVariant,
               ),
               const SizedBox(width: AppSpacing.xs),
-              Text(label.toUpperCase(), style: context.textTheme.labelSmall),
+              Text(
+                label.toUpperCase(),
+                style: context.textTheme.labelSmall?.copyWith(
+                  color: isActive ? AppColors.primary : null,
+                  fontWeight: isActive ? FontWeight.w700 : null,
+                ),
+              ),
             ],
           ),
         ),
