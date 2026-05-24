@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:peruse/core/router/router.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/features/decks/data/repositories/deck_repository_impl.dart';
 import 'package:peruse/features/decks/presentation/controller/deck_detail_notifier.dart';
@@ -21,11 +22,13 @@ class FlashcardStudyScreen extends ConsumerStatefulWidget {
   ConsumerState<FlashcardStudyScreen> createState() => _FlashcardStudyScreenState();
 }
 
-class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen> {
+class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
+    with RouteAware {
   late final AudioPlayer _audioPlayer;
   late final Stopwatch _stopwatch;
   ProviderSubscription<FlashcardStudyState>? _flashcardSub;
   String? _activeCardId;
+  bool _endRequested = false;
 
   @override
   void initState() {
@@ -44,37 +47,79 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen> {
 
         if (!next.isLoading && next.currentCard == null) {
           _stopwatch.stop();
-          ref.read(studySessionProvider.notifier).endSession();
+          _requestEndSession();
         }
       },
     );
 
-    Future.microtask(() {
-      final session = ref.read(studySessionProvider);
-
-      if (session.sessionId == null ||
-          session.deckId != widget.deckId ||
-          session.mode != 'flashcards' ||
-          session.isCompleted) {
-        ref
-            .read(studySessionProvider.notifier)
-            .startSession(deckId: widget.deckId, mode: 'flashcards');
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _ensureSession();
     });
   }
 
   @override
+  void didUpdateWidget(covariant FlashcardStudyScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.deckId != widget.deckId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _ensureSession();
+      });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
   void dispose() {
+    appRouteObserver.unsubscribe(this);
     _flashcardSub?.close();
     _audioPlayer.dispose();
     _stopwatch.stop();
 
-    final session = ref.read(studySessionProvider);
-    if (session.sessionId != null) {
-      ref.read(studySessionProvider.notifier).endSession();
-    }
-
     super.dispose();
+  }
+
+  @override
+  void didPushNext() {
+    _requestEndSession();
+  }
+
+  @override
+  void didPop() {
+    _requestEndSession();
+  }
+
+  void _requestEndSession() {
+    if (_endRequested) return;
+    _endRequested = true;
+    Future.microtask(() {
+      if (!mounted) return;
+      ref.read(studySessionProvider.notifier).endSession();
+    });
+  }
+
+  void _ensureSession() {
+    final notifier = ref.read(studySessionProvider.notifier);
+    final session = ref.read(studySessionProvider);
+
+    final isSameSession = session.sessionId != null &&
+        session.deckId == widget.deckId &&
+        session.mode == 'flashcards' &&
+        !session.isCompleted;
+
+    if (isSameSession) return;
+
+    notifier.resetSession();
+    notifier.startSession(deckId: widget.deckId, mode: 'flashcards');
   }
 
   void _restartStopwatch() {
@@ -216,25 +261,33 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen> {
     final currentCount = totalCount == 0 ? 0 : math.min(sessionState.currentIndex + 1, totalCount);
     final progressValue = totalCount == 0 ? 0.0 : currentCount / totalCount;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6F4EF),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.md,
-            AppSpacing.lg,
-            AppSpacing.lg,
-          ),
-          child: flashcardState.isLoading || sessionState.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : sessionState.isCompleted
-                  ? _CompletionState(
-                      deckName: deckName,
-                      onBack: () => context.pop(),
-                    )
-                  : Column(
-                      children: [
+    return WillPopScope(
+      onWillPop: () async {
+        _requestEndSession();
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF6F4EF),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.lg,
+            ),
+            child: flashcardState.isLoading ||
+                    sessionState.isLoading ||
+                    sessionState.deckId != widget.deckId ||
+                    sessionState.mode != 'flashcards'
+                ? const Center(child: CircularProgressIndicator())
+                : sessionState.isCompleted
+                    ? _CompletionState(
+                        deckName: deckName,
+                        onBack: () => context.pop(),
+                      )
+                    : Column(
+                        children: [
                         Expanded(
                           child: Column(
                             children: [
@@ -243,9 +296,7 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen> {
                                   _CircleButton(
                                     icon: Icons.close,
                                     onTap: () async {
-                                      await ref
-                                          .read(studySessionProvider.notifier)
-                                          .endSession();
+                                      _requestEndSession();
                                       if (mounted) {
                                         context.pop();
                                       }
@@ -410,8 +461,9 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen> {
                             ],
                           ),
                         const SizedBox(height: AppSpacing.sm),
-                      ],
-                    ),
+                        ],
+                      ),
+          ),
         ),
       ),
     );

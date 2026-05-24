@@ -111,6 +111,12 @@ class StudySessionNotifier extends _$StudySessionNotifier {
   @override
   StudySessionState build() => StudySessionState.initial;
 
+  void resetSession() {
+    _startInProgress = false;
+    _endInProgress = false;
+    state = StudySessionState.initial;
+  }
+
   Future<void> startSession({required String deckId, required String mode}) async {
     if (_startInProgress) return;
     if (state.sessionId != null &&

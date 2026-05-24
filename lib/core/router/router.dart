@@ -23,12 +23,16 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'router.g.dart';
 
+final RouteObserver<PageRoute<dynamic>> appRouteObserver =
+  RouteObserver<PageRoute<dynamic>>();
+
 @riverpod
 GoRouter router(Ref ref) {
   final authState = ref.watch(authStateProvider);
 
   return GoRouter(
     initialLocation: AppRoutes.decks,
+    observers: [appRouteObserver],
     redirect: (context, state) {
       final isLoading = authState.isLoading;
       if (isLoading) return null;
