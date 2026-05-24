@@ -690,26 +690,6 @@ class _FlashcardCard extends ConsumerWidget {
             ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _CardIconButton(
-                        icon: hasAudio
-                            ? Icons.volume_up_rounded
-                            : Icons.volume_off_rounded,
-                        enabled: hasAudio,
-                        onTap: onAudioTap,
-                      ),
-                      _CardIconButton(
-                        icon: Icons.edit_rounded,
-                        enabled: true,
-                        onTap: onEditTap,
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),
