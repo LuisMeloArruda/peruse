@@ -7,6 +7,7 @@ import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/widgets/peruse_linear_progress.dart';
 import 'package:peruse/core/widgets/peruse_sheet_card.dart';
+import 'package:peruse/core/widgets/peruse_text_field.dart';
 import 'package:peruse/features/decks/domain/entities/deck.dart';
 import 'package:peruse/features/decks/presentation/controller/decks_notifier.dart';
 import 'package:peruse/features/study/presentation/controller/study_metrics_providers.dart';
@@ -67,14 +68,20 @@ class _DecksLoadedView extends StatefulWidget {
 
 class _DecksLoadedViewState extends State<_DecksLoadedView> {
   bool _sortByRecent = false;
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
-    final decks = _sortByRecent
-    ? ([...widget.decks]..sort(
-        (left, right) => right.createdAt.compareTo(left.createdAt),
-      ))
-    : widget.decks;
+    final sortedDecks = _sortByRecent
+        ? ([...widget.decks]
+          ..sort((left, right) => right.createdAt.compareTo(left.createdAt)))
+        : widget.decks;
+    final normalizedQuery = _searchQuery.trim().toLowerCase();
+    final decks = normalizedQuery.isEmpty
+        ? sortedDecks
+        : sortedDecks
+            .where((deck) => deck.name.toLowerCase().contains(normalizedQuery))
+            .toList();
 
 
     return CustomScrollView(
@@ -84,16 +91,31 @@ class _DecksLoadedViewState extends State<_DecksLoadedView> {
             AppSpacing.lg,
             AppSpacing.sm,
             AppSpacing.lg,
-            AppSpacing.lg,
+            AppSpacing.md,
           ),
           sliver: SliverToBoxAdapter(
-            child: _DecksHeader(
-              sortByRecent: _sortByRecent,
-              onSortTap: () {
-                setState(() {
-                  _sortByRecent = !_sortByRecent;
-                });
-              },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                PeruseTextField(
+                  hintText: 'Search decks',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _DecksHeader(
+                  sortByRecent: _sortByRecent,
+                  onSortTap: () {
+                    setState(() {
+                      _sortByRecent = !_sortByRecent;
+                    });
+                  },
+                ),
+              ],
             ),
           ),
         ),
@@ -101,7 +123,16 @@ class _DecksLoadedViewState extends State<_DecksLoadedView> {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           sliver: decks.isEmpty
               ? SliverToBoxAdapter(
-                  child: _EmptyDeckState(onCreateDeck: widget.onCreateDeck),
+                  child: normalizedQuery.isEmpty
+                      ? _EmptyDeckState(onCreateDeck: widget.onCreateDeck)
+                      : _EmptyDeckSearchState(
+                          query: _searchQuery,
+                          onClear: () {
+                            setState(() {
+                              _searchQuery = '';
+                            });
+                          },
+                        ),
                 )
               : SliverList.separated(
                   itemCount: decks.length,
@@ -533,6 +564,36 @@ class _EmptyDeckState extends StatelessWidget {
           FilledButton(
             onPressed: onCreateDeck,
             child: const Text('Create deck'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyDeckSearchState extends StatelessWidget {
+  const _EmptyDeckSearchState({required this.query, required this.onClear});
+
+  final String query;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return PeruseSheetCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('No matching decks', style: context.textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'No collections match "$query".',
+            style: context.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          OutlinedButton(
+            onPressed: onClear,
+            child: const Text('Clear search'),
           ),
         ],
       ),
