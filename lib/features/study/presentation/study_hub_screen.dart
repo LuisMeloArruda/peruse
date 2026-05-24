@@ -326,7 +326,6 @@ class _ModeCard extends StatelessWidget {
     required this.accent,
     required this.gradient,
     this.onTap,
-    this.chip,
     this.badge,
   });
 
@@ -336,7 +335,6 @@ class _ModeCard extends StatelessWidget {
   final Color accent;
   final List<Color> gradient;
   final VoidCallback? onTap;
-  final String? chip;
   final String? badge;
 
   @override
@@ -372,12 +370,6 @@ class _ModeCard extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.18),
                     ),
                   ),
-                  if (chip != null)
-                    Positioned(
-                      top: AppSpacing.md,
-                      left: AppSpacing.md,
-                      child: _Chip(label: chip!, accent: accent),
-                    ),
                 ],
               ),
             ),
@@ -434,34 +426,6 @@ class _ModeCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.accent});
-
-  final String label;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xxs,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-      ),
-      child: Text(
-        label,
-        style: context.textTheme.labelSmall?.copyWith(
-          color: accent,
-          letterSpacing: 1.1,
         ),
       ),
     );
