@@ -7,7 +7,6 @@ import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/widgets/peruse_sheet_card.dart';
 import 'package:peruse/features/decks/domain/entities/deck.dart';
 import 'package:peruse/features/study/presentation/controller/study_focus_provider.dart';
-import 'package:peruse/features/flashcards/presentation/controller/study_session_notifier.dart';
 
 class StudyHubScreen extends ConsumerWidget {
   const StudyHubScreen({super.key});

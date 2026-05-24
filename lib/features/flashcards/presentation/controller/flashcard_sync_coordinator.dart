@@ -9,30 +9,57 @@ final connectivityProvider = StreamProvider<List<ConnectivityResult>>((ref) {
   return Connectivity().onConnectivityChanged;
 });
 
-final flashcardSyncCoordinatorProvider = Provider<void>((ref) {
-  Future<void> syncSilently() async {
-    await ref.read(flashcardRepositoryProvider).syncAll();
+final flashcardSyncCoordinatorProvider = Provider<FlashcardSyncCoordinator>((ref) {
+  return FlashcardSyncCoordinator(ref);
+});
+
+class FlashcardSyncCoordinator {
+  FlashcardSyncCoordinator(this._ref) {
+    _ref.listen(connectivityProvider, (previous, next) {
+      final wasConnected = _isConnected(previous?.value);
+      final nowConnected = _isConnected(next.value);
+
+      if (!wasConnected && nowConnected) {
+        _startRetryLoop();
+        unawaited(syncSilently());
+      }
+
+      if (wasConnected && !nowConnected) {
+        _stopRetryLoop();
+      }
+    });
+
+    Future.microtask(() async {
+      final current = await Connectivity().checkConnectivity();
+      if (_isConnected(current)) {
+        _startRetryLoop();
+        await syncSilently();
+      }
+    });
   }
 
-  bool isConnected(List<ConnectivityResult>? results) {
+  final Ref _ref;
+  Timer? _retryTimer;
+  static const Duration _retryInterval = Duration(seconds: 30);
+
+  Future<void> syncSilently() async {
+    await _ref.read(flashcardRepositoryProvider).syncAll();
+  }
+
+  bool _isConnected(List<ConnectivityResult>? results) {
     return results != null &&
         results.isNotEmpty &&
         !results.contains(ConnectivityResult.none);
   }
 
-  ref.listen(connectivityProvider, (previous, next) {
-    final wasConnected = isConnected(previous?.value);
-    final nowConnected = isConnected(next.value);
-
-    if (!wasConnected && nowConnected) {
+  void _startRetryLoop() {
+    _retryTimer ??= Timer.periodic(_retryInterval, (_) {
       unawaited(syncSilently());
-    }
-  });
+    });
+  }
 
-  Future.microtask(() async {
-    final current = await Connectivity().checkConnectivity();
-    if (isConnected(current)) {
-      await syncSilently();
-    }
-  });
-});
+  void _stopRetryLoop() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
+  }
+}

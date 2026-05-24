@@ -432,7 +432,7 @@ class _DeckProgressTile extends ConsumerWidget {
     return _DeckSummary(
       progress: hasData ? accuracy : 0,
       totalWords: totalWords,
-      difficultyLabel: hasData ? _difficultyLabel(accuracy) : 'Sem dados',
+      difficultyLabel: hasData ? _difficultyLabel(accuracy) : 'No data',
     );
   }
 
