@@ -34,6 +34,11 @@ class MainShellScreen extends StatelessWidget {
               label: 'Decks',
             ),
             NavigationDestination(
+              icon: Icon(Icons.school_outlined),
+              selectedIcon: Icon(Icons.school),
+              label: 'Study',
+            ),
+            NavigationDestination(
               icon: _CaptureIcon(isSelected: false),
               selectedIcon: _CaptureIcon(isSelected: true),
               label: 'Capture',

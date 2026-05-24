@@ -2,11 +2,16 @@ import 'package:drift/drift.dart';
 
 import 'package:peruse/data/local/daos/decks_dao.dart';
 import 'package:peruse/data/local/daos/flashcards_dao.dart';
+import 'package:peruse/data/local/daos/study_dao.dart';
 import 'package:peruse/data/local/daos/words_dao.dart';
 import 'package:peruse/data/local/database/connection/open_connection.dart';
+import 'package:peruse/data/local/tables/daily_progress_table.dart';
 import 'package:peruse/data/local/tables/deck_words_table.dart';
 import 'package:peruse/data/local/tables/decks_table.dart';
 import 'package:peruse/data/local/tables/flashcards_table.dart';
+import 'package:peruse/data/local/tables/study_results_table.dart';
+import 'package:peruse/data/local/tables/study_sessions_table.dart';
+import 'package:peruse/data/local/tables/user_progress_table.dart';
 import 'package:peruse/data/local/tables/word_details_table.dart';
 import 'package:peruse/data/local/tables/words_table.dart';
 
@@ -43,16 +48,20 @@ class LocalCaptureLabels extends Table {
     WordDetailsTable,
     DeckWordsTable,
     FlashcardsTable,
+    StudySessionsTable,
+    StudyResultsTable,
+    UserProgressTable,
+    DailyProgressTable,
     LocalCaptures,
     LocalCaptureLabels,
   ],
-  daos: [DecksDao, WordsDao, FlashcardsDao],
+  daos: [DecksDao, WordsDao, FlashcardsDao, StudyDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -74,6 +83,22 @@ class AppDatabase extends _$AppDatabase {
       if (from < 5) {
         await m.createTable(flashcardsTable);
       }
+      if (from < 6) {
+        await m.createTable(studySessionsTable);
+        await m.createTable(studyResultsTable);
+        await m.createTable(userProgressTable);
+        await m.createTable(dailyProgressTable);
+      }
+      if (from < 7) {
+        await m.database.customStatement('DROP TABLE IF EXISTS study_sessions;');
+        await m.database.customStatement('DROP TABLE IF EXISTS study_results;');
+        await m.database.customStatement('DROP TABLE IF EXISTS user_progress;');
+        await m.database.customStatement('DROP TABLE IF EXISTS daily_progress;');
+        await m.createTable(studySessionsTable);
+        await m.createTable(studyResultsTable);
+        await m.createTable(userProgressTable);
+        await m.createTable(dailyProgressTable);
+      }
     },
   );
 
@@ -84,6 +109,10 @@ class AppDatabase extends _$AppDatabase {
       await delete(wordsTable).go();
       await delete(decksTable).go();
       await delete(flashcardsTable).go();
+      await delete(studyResultsTable).go();
+      await delete(studySessionsTable).go();
+      await delete(userProgressTable).go();
+      await delete(dailyProgressTable).go();
       await delete(localCaptureLabels).go();
       await delete(localCaptures).go();
     });
