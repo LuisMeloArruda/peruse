@@ -8,6 +8,7 @@ import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/features/capture/domain/entities/label.dart';
 import 'package:peruse/features/capture/presentation/controller/capture_notifier.dart';
 import 'package:peruse/features/capture/presentation/controller/capture_screen_notifier.dart';
+import 'package:peruse/features/profile/presentation/controller/profile_notifier.dart';
 
 class CaptureResultScreen extends ConsumerStatefulWidget {
   const CaptureResultScreen({super.key, required this.reviewData});
@@ -123,6 +124,9 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
     final actionLabel = _returnsWordToCaller ? 'Use Word' : 'Save Word';
     final canSave =
         !_saving && selected != null && _textController.text.trim().isNotEmpty;
+    final preferredLanguage =
+        ref.watch(profileProvider).asData?.value?.preferredLanguage ?? 'en';
+    final showOnlyWord = preferredLanguage == 'en';
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -281,6 +285,7 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
 
                                   return _SuggestionCard(
                                     option: option,
+                                    showOnlyWord: showOnlyWord,
                                     isSelected: isSelected,
                                     rank: index + 1,
                                     onTap: _saving
@@ -354,12 +359,14 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
 class _SuggestionCard extends StatelessWidget {
   const _SuggestionCard({
     required this.option,
+    required this.showOnlyWord,
     required this.isSelected,
     required this.rank,
     required this.onTap,
   });
 
   final CaptureSuggestion option;
+  final bool showOnlyWord;
   final bool isSelected;
   final int rank;
   final VoidCallback? onTap;
@@ -409,7 +416,7 @@ class _SuggestionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      option.translatedText == option.englishText
+                      showOnlyWord || option.translatedText == option.englishText
                           ? option.englishText
                           : '${option.translatedText} -> ${option.englishText}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(

@@ -14,6 +14,7 @@ Stream<AppUser?> authState(Ref ref) async* {
   final database = ref.watch(appDatabaseProvider);
   final deckRepository = ref.read(deckRepositoryProvider);
   final flashcardRepository = ref.read(flashcardRepositoryProvider);
+  final profileRepository = ref.read(profileRepositoryProvider);
   final studySync = ref.read(studySyncCoordinatorProvider);
 
   final current = repository.currentUser;
@@ -22,6 +23,7 @@ Stream<AppUser?> authState(Ref ref) async* {
   } else {
     unawaited(deckRepository.fetchAndCacheUserData());
     unawaited(flashcardRepository.fetchAndCacheUserData());
+    unawaited(profileRepository.fetchAndCacheUserData());
     unawaited(studySync.hydrateFromRemote(current.id));
   }
   yield current;
@@ -32,6 +34,7 @@ Stream<AppUser?> authState(Ref ref) async* {
     } else {
       unawaited(deckRepository.fetchAndCacheUserData());
       unawaited(flashcardRepository.fetchAndCacheUserData());
+      unawaited(profileRepository.fetchAndCacheUserData());
       unawaited(studySync.hydrateFromRemote(user.id));
     }
     yield user;

@@ -4,6 +4,7 @@ import 'package:peruse/core/router/router.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/features/capture/presentation/controller/capture_sync_coordinator.dart';
 import 'package:peruse/features/flashcards/presentation/controller/flashcard_sync_coordinator.dart';
+import 'package:peruse/features/profile/presentation/controller/profile_sync_coordinator.dart';
 import 'package:peruse/features/study/presentation/controller/study_sync_coordinator.dart';
 
 class MyApp extends ConsumerWidget {
@@ -14,6 +15,7 @@ class MyApp extends ConsumerWidget {
     final goRouter = ref.watch(routerProvider);
     ref.watch(captureSyncCoordinatorProvider);
     ref.watch(flashcardSyncCoordinatorProvider);
+    ref.watch(profileSyncCoordinatorProvider);
     ref.watch(studySyncCoordinatorProvider);
 
     return MaterialApp.router(

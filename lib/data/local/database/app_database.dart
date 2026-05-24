@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import 'package:peruse/data/local/daos/decks_dao.dart';
 import 'package:peruse/data/local/daos/flashcards_dao.dart';
+import 'package:peruse/data/local/daos/profiles_dao.dart';
 import 'package:peruse/data/local/daos/study_dao.dart';
 import 'package:peruse/data/local/daos/words_dao.dart';
 import 'package:peruse/data/local/database/connection/open_connection.dart';
@@ -9,6 +10,7 @@ import 'package:peruse/data/local/tables/daily_progress_table.dart';
 import 'package:peruse/data/local/tables/deck_words_table.dart';
 import 'package:peruse/data/local/tables/decks_table.dart';
 import 'package:peruse/data/local/tables/flashcards_table.dart';
+import 'package:peruse/data/local/tables/profiles_table.dart';
 import 'package:peruse/data/local/tables/study_results_table.dart';
 import 'package:peruse/data/local/tables/study_sessions_table.dart';
 import 'package:peruse/data/local/tables/user_progress_table.dart';
@@ -54,14 +56,15 @@ class LocalCaptureLabels extends Table {
     DailyProgressTable,
     LocalCaptures,
     LocalCaptureLabels,
+    ProfilesTable,
   ],
-  daos: [DecksDao, WordsDao, FlashcardsDao, StudyDao],
+  daos: [DecksDao, WordsDao, FlashcardsDao, StudyDao, ProfilesDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -105,6 +108,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 10) {
         await m.addColumn(decksTable, decksTable.bio);
       }
+      if (from < 11) {
+        await m.createTable(profilesTable);
+      }
     },
   );
 
@@ -119,6 +125,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(studySessionsTable).go();
       await delete(userProgressTable).go();
       await delete(dailyProgressTable).go();
+      await delete(profilesTable).go();
       await delete(localCaptureLabels).go();
       await delete(localCaptures).go();
     });

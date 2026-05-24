@@ -13,6 +13,8 @@ import 'package:peruse/features/capture/data/repositories/local/local_capture_re
 import 'package:peruse/features/capture/domain/repositories/capture_repository.dart';
 import 'package:peruse/features/flashcards/data/repositories/local/local_flashcard_repository.dart';
 import 'package:peruse/features/flashcards/domain/repositories/flashcard_repository.dart';
+import 'package:peruse/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:peruse/features/profile/domain/repositories/profile_repository.dart';
 import 'package:peruse/features/study/data/repositories/local/local_study_repository.dart';
 import 'package:peruse/features/study/domain/repositories/study_repository.dart';
 
@@ -79,6 +81,13 @@ IFlashcardRepository flashcardRepository(Ref ref) {
   final client = ref.watch(supabaseClientProvider);
   final database = ref.watch(appDatabaseProvider);
   return LocalFlashcardRepository(database, client);
+}
+
+@Riverpod(keepAlive: true)
+IProfileRepository profileRepository(Ref ref) {
+  final client = ref.watch(supabaseClientProvider);
+  final database = ref.watch(appDatabaseProvider);
+  return ProfileRepositoryImpl(client, database);
 }
 
 final studyRepositoryProvider = Provider<IStudyRepository>((ref) {

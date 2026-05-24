@@ -7,10 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart'
     as mlkit;
 
+import 'package:peruse/core/di/providers.dart';
 import 'package:peruse/core/llm/models/llm_request.dart';
 import 'package:peruse/core/llm/provider/llm_providers.dart';
 import 'package:peruse/features/capture/domain/entities/label.dart';
 import 'package:peruse/features/capture/presentation/controller/capture_notifier.dart';
+import 'package:peruse/features/profile/domain/profile_languages.dart';
+import 'package:peruse/features/profile/presentation/controller/profile_notifier.dart';
 
 final captureScreenProvider =
     NotifierProvider.autoDispose<CaptureScreenNotifier, CaptureScreenState>(
@@ -233,6 +236,9 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
     final input = Map<String, double>.fromEntries(
       labels.map((entry) => MapEntry(entry.label, entry.confidence)),
     );
+    final preferredLanguageCode =
+        ref.read(profileProvider).asData?.value?.preferredLanguage ?? 'en';
+    final targetLanguage = profileLanguageLabel(preferredLanguageCode).toLowerCase();
 
     final fallbackSuggestions = [
       for (final entry in input.entries)
@@ -242,6 +248,10 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
           confidence: entry.value,
         ),
     ];
+
+    if (preferredLanguageCode == 'en') {
+      return fallbackSuggestions;
+    }
 
     try {
       final connectivity = await Connectivity().checkConnectivity();
@@ -254,7 +264,7 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
       final llmRequest = LlmRequest(
         input: input,
         sourceLanguage: 'english',
-        targetLanguage: 'portuguese',
+        targetLanguage: targetLanguage,
       );
       final translations = await ref
           .read(llmTranslateProvider(llmRequest).future)
