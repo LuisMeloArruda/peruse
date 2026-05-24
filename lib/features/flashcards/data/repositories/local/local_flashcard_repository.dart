@@ -154,13 +154,19 @@ class LocalFlashcardRepository implements IFlashcardRepository {
     try {
       final existingRows = await _localDb.flashcardsDao.getFlashcardsForDeck(deckId);
       final existingWordIds = existingRows.map((row) => row.wordId).toSet();
-      final deckWords = await _localDb.wordsDao.watchWordsForDeck(deckId).first;
+      final currentUserId = _supabase.auth.currentUser?.id;
+      if (currentUserId == null) {
+        return;
+      }
+
+      final deckWords = await _localDb.wordsDao
+          .watchWordsForDeck(deckId, currentUserId)
+          .first;
 
       if (deckWords.isEmpty) {
         return;
       }
 
-      final currentUserId = _supabase.auth.currentUser?.id;
       final now = DateTime.now().millisecondsSinceEpoch;
       final companions = <FlashcardsTableCompanion>[];
 

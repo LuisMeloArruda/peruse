@@ -8,18 +8,18 @@ part 'decks_dao.g.dart';
 class DecksDao extends DatabaseAccessor<AppDatabase> with _$DecksDaoMixin {
   DecksDao(super.db);
 
-  Stream<List<LocalDeck>> watchDecks() {
-    return select(decksTable).watch();
+  Stream<List<LocalDeck>> watchDecks(String userId) {
+    return (select(decksTable)..where((t) => t.userId.equals(userId))).watch();
   }
 
-  Stream<LocalDeck?> watchDeckById(String deckId) {
+  Stream<LocalDeck?> watchDeckById(String deckId, String userId) {
     return (select(
       decksTable,
-    )..where((t) => t.id.equals(deckId))).watchSingleOrNull();
+    )..where((t) => t.id.equals(deckId) & t.userId.equals(userId))).watchSingleOrNull();
   }
 
-  Future<List<LocalDeck>> getDecks() {
-    return select(decksTable).get();
+  Future<List<LocalDeck>> getDecks(String userId) {
+    return (select(decksTable)..where((t) => t.userId.equals(userId))).get();
   }
 
   Future<void> upsertDeck(DecksTableCompanion companion) async {

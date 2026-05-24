@@ -29,9 +29,14 @@ class DeckRepositoryImpl implements IDeckRepository {
 
   @override
   Stream<List<AppDeck>> watchDecks() {
+    final userId = _currentUserId();
+    if (userId == null) {
+      return Stream.value(const []);
+    }
+
     unawaited(_syncRemoteToLocal());
     unawaited(syncPendingWords());
-    return _localDb.decksDao.watchDecks().map((localDecks) {
+    return _localDb.decksDao.watchDecks(userId).map((localDecks) {
       return localDecks
           .map((local) => DeckModel.fromDrift(local).toEntity())
           .toList();
@@ -40,7 +45,12 @@ class DeckRepositoryImpl implements IDeckRepository {
 
   @override
   Future<List<AppDeck>> getDecks() async {
-    final localDecks = await _localDb.decksDao.getDecks();
+    final userId = _currentUserId();
+    if (userId == null) {
+      return const [];
+    }
+
+    final localDecks = await _localDb.decksDao.getDecks(userId);
     return localDecks
         .map((local) => DeckModel.fromDrift(local).toEntity())
         .toList();
@@ -48,13 +58,23 @@ class DeckRepositoryImpl implements IDeckRepository {
 
   @override
   Stream<AppDeck?> watchDeck(String deckId) {
-    return _localDb.decksDao.watchDeckById(deckId).map(_mapDeck);
+    final userId = _currentUserId();
+    if (userId == null) {
+      return Stream.value(null);
+    }
+
+    return _localDb.decksDao.watchDeckById(deckId, userId).map(_mapDeck);
   }
 
   @override
   Stream<List<AppWord>> watchDeckWords(String deckId) {
+    final userId = _currentUserId();
+    if (userId == null) {
+      return Stream.value(const []);
+    }
+
     return _localDb.wordsDao
-        .watchWordsForDeck(deckId)
+        .watchWordsForDeck(deckId, userId)
         .map((words) => words.map(_mapWord).toList());
   }
 
@@ -416,6 +436,10 @@ class DeckRepositoryImpl implements IDeckRepository {
   AppDeck? _mapDeck(LocalDeck? deck) {
     if (deck == null) return null;
     return DeckModel.fromDrift(deck).toEntity();
+  }
+
+  String? _currentUserId() {
+    return _supabase.auth.currentUser?.id;
   }
 
   Future<String?> _resolveDeckCoverUrl(AppDeck deck) async {

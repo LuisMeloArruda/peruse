@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:peruse/data/local/database/app_database.dart';
 import 'package:peruse/data/local/tables/deck_words_table.dart';
+import 'package:peruse/data/local/tables/decks_table.dart';
 import 'package:peruse/data/local/tables/word_details_table.dart';
 import 'package:peruse/data/local/tables/words_table.dart';
 
@@ -10,10 +11,13 @@ part 'words_dao.g.dart';
 class WordsDao extends DatabaseAccessor<AppDatabase> with _$WordsDaoMixin {
   WordsDao(super.db);
 
-  Stream<List<LocalWord>> watchWordsForDeck(String deckId) {
+  Stream<List<LocalWord>> watchWordsForDeck(String deckId, String userId) {
     final query = select(wordsTable).join([
       innerJoin(deckWordsTable, deckWordsTable.wordId.equalsExp(wordsTable.id)),
-    ])..where(deckWordsTable.deckId.equals(deckId));
+      innerJoin(decksTable, decksTable.id.equalsExp(deckWordsTable.deckId)),
+    ])..where(
+        deckWordsTable.deckId.equals(deckId) & decksTable.userId.equals(userId),
+      );
 
     return query.watch().map(
       (rows) => rows.map((row) => row.readTable(wordsTable)).toList(),

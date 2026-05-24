@@ -138,7 +138,7 @@ class StudySessionNotifier extends _$StudySessionNotifier {
 
     try {
       final db = ref.read(appDatabaseProvider);
-      final words = await db.wordsDao.watchWordsForDeck(deckId).first;
+      final words = await db.wordsDao.watchWordsForDeck(deckId, user.id).first;
       final wordIds = words.map((word) => word.id).toList();
       final now = DateTime.now().millisecondsSinceEpoch;
       final sessionId = _uuid.v4();
