@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:peruse/core/theme/theme.dart';
+import 'package:peruse/features/flashcards/presentation/controller/study_session_notifier.dart';
 
-class MainShellScreen extends StatelessWidget {
+class MainShellScreen extends ConsumerWidget {
   const MainShellScreen({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
-  void _onDestinationSelected(int index) {
+  void _onDestinationSelected(BuildContext context, WidgetRef ref, int index) {
+    final location = GoRouterState.of(context).uri.toString();
+    final leavingDeckStudy =
+        navigationShell.currentIndex == 0 && index != 0 && location.contains('/study');
+
+    if (leavingDeckStudy) {
+      ref.read(studySessionProvider.notifier).endSession();
+    }
+
     navigationShell.goBranch(
       index,
       initialLocation: index == navigationShell.currentIndex,
@@ -15,7 +25,7 @@ class MainShellScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: NavigationBarTheme(
@@ -26,12 +36,23 @@ class MainShellScreen extends StatelessWidget {
         child: NavigationBar(
           height: 72,
           selectedIndex: navigationShell.currentIndex,
-          onDestinationSelected: _onDestinationSelected,
+          onDestinationSelected: (index) =>
+              _onDestinationSelected(context, ref, index),
           destinations: const [
             NavigationDestination(
               icon: Icon(Icons.view_agenda_outlined),
               selectedIcon: Icon(Icons.view_agenda),
               label: 'Decks',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.school_outlined),
+              selectedIcon: Icon(Icons.school),
+              label: 'Study',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.insights_outlined),
+              selectedIcon: Icon(Icons.insights),
+              label: 'Growth',
             ),
             NavigationDestination(
               icon: _CaptureIcon(isSelected: false),

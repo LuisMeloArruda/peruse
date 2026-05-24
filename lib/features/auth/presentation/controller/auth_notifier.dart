@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:peruse/core/di/providers.dart';
 import 'package:peruse/features/auth/domain/entities/app_user.dart';
 import 'package:peruse/features/decks/data/repositories/deck_repository_impl.dart';
+import 'package:peruse/features/study/presentation/controller/study_sync_coordinator.dart';
 
 part 'auth_notifier.g.dart';
 
@@ -12,12 +13,16 @@ Stream<AppUser?> authState(Ref ref) async* {
   final repository = ref.watch(authRepositoryProvider);
   final database = ref.watch(appDatabaseProvider);
   final deckRepository = ref.read(deckRepositoryProvider);
+  final flashcardRepository = ref.read(flashcardRepositoryProvider);
+  final studySync = ref.read(studySyncCoordinatorProvider);
 
   final current = repository.currentUser;
   if (current == null) {
     await database.clearUserData();
   } else {
     unawaited(deckRepository.fetchAndCacheUserData());
+    unawaited(flashcardRepository.fetchAndCacheUserData());
+    unawaited(studySync.hydrateFromRemote(current.id));
   }
   yield current;
 
@@ -26,6 +31,8 @@ Stream<AppUser?> authState(Ref ref) async* {
       await database.clearUserData();
     } else {
       unawaited(deckRepository.fetchAndCacheUserData());
+      unawaited(flashcardRepository.fetchAndCacheUserData());
+      unawaited(studySync.hydrateFromRemote(user.id));
     }
     yield user;
   }

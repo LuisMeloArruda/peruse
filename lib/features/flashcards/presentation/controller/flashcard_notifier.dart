@@ -111,13 +111,6 @@ class FlashcardStudyNotifier extends _$FlashcardStudyNotifier {
     await _persistCard(currentCard);
   }
 
-  Future<void> saveCurrentCard() async {
-    final currentCard = state.currentCard;
-    if (currentCard == null) return;
-
-    await _persistCard(currentCard);
-  }
-
   Future<void> updateCurrentCard({
     String? frontText,
     String? backText,

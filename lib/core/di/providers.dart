@@ -1,5 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:camera/camera.dart' as camera;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:peruse/data/local/database/app_database.dart' as main_db;
@@ -12,6 +13,8 @@ import 'package:peruse/features/capture/data/repositories/local/local_capture_re
 import 'package:peruse/features/capture/domain/repositories/capture_repository.dart';
 import 'package:peruse/features/flashcards/data/repositories/local/local_flashcard_repository.dart';
 import 'package:peruse/features/flashcards/domain/repositories/flashcard_repository.dart';
+import 'package:peruse/features/study/data/repositories/local/local_study_repository.dart';
+import 'package:peruse/features/study/domain/repositories/study_repository.dart';
 
 part 'providers.g.dart';
 
@@ -77,3 +80,8 @@ IFlashcardRepository flashcardRepository(Ref ref) {
   final database = ref.watch(appDatabaseProvider);
   return LocalFlashcardRepository(database, client);
 }
+
+final studyRepositoryProvider = Provider<IStudyRepository>((ref) {
+  final database = ref.watch(appDatabaseProvider);
+  return LocalStudyRepository(database);
+});

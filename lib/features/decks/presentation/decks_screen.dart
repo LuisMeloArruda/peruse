@@ -139,22 +139,6 @@ class _DecksTopBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
           ),
-          GestureDetector(
-            onTap: onProfileTap,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceMuted,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-              child: const Icon(
-                Icons.person_rounded,
-                size: 20,
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
-          ),
         ],
       ),
     );

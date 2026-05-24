@@ -199,7 +199,7 @@ create index if not exists idx_flashcards_updated on public.flashcards (updated_
 create index if not exists idx_flashcards_revision on public.flashcards (revision);
 
 -- Trigger to update `updated_at` and bump `revision`
-create function public.touch_flashcards_updated_at() returns trigger as $$
+create or replace function public.touch_flashcards_updated_at() returns trigger as $$
 begin
   new.updated_at = now();
   if tg_op = 'INSERT' then
@@ -281,3 +281,121 @@ create policy "object_labels_delete_own" on public.object_labels for delete usin
     and captures.user_id = auth.uid()
   )
 );
+
+
+-- STUDY SESSIONS
+create table if not exists public.study_sessions (
+  id text primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  deck_id text not null references public.decks(id) on delete cascade,
+  mode text not null,
+  started_at timestamptz not null,
+  ended_at timestamptz,
+  is_synced boolean not null default false
+);
+
+alter table public.study_sessions enable row level security;
+
+drop policy if exists "study_sessions_select_own" on public.study_sessions;
+create policy "study_sessions_select_own" on public.study_sessions
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "study_sessions_insert_own" on public.study_sessions;
+create policy "study_sessions_insert_own" on public.study_sessions
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "study_sessions_update_own" on public.study_sessions;
+create policy "study_sessions_update_own" on public.study_sessions
+  for update using (auth.uid() = user_id);
+
+drop policy if exists "study_sessions_delete_own" on public.study_sessions;
+create policy "study_sessions_delete_own" on public.study_sessions
+  for delete using (auth.uid() = user_id);
+
+
+-- STUDY RESULTS
+create table if not exists public.study_results (
+  id text primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  session_id text not null references public.study_sessions(id) on delete cascade,
+  word_id text not null references public.words(id) on delete cascade,
+  is_correct boolean not null,
+  time_taken bigint not null,
+  is_synced boolean not null default false
+);
+
+alter table public.study_results enable row level security;
+
+drop policy if exists "study_results_select_own" on public.study_results;
+create policy "study_results_select_own" on public.study_results
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "study_results_insert_own" on public.study_results;
+create policy "study_results_insert_own" on public.study_results
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "study_results_update_own" on public.study_results;
+create policy "study_results_update_own" on public.study_results
+  for update using (auth.uid() = user_id);
+
+drop policy if exists "study_results_delete_own" on public.study_results;
+create policy "study_results_delete_own" on public.study_results
+  for delete using (auth.uid() = user_id);
+
+
+-- USER PROGRESS
+create table if not exists public.user_progress (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  total_words_mastered integer not null default 0,
+  current_streak integer not null default 0,
+  last_study_date timestamptz not null default now(),
+  lifetime_accuracy double precision not null default 0,
+  is_synced boolean not null default false
+);
+
+alter table public.user_progress enable row level security;
+
+drop policy if exists "user_progress_select_own" on public.user_progress;
+create policy "user_progress_select_own" on public.user_progress
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "user_progress_insert_own" on public.user_progress;
+create policy "user_progress_insert_own" on public.user_progress
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "user_progress_update_own" on public.user_progress;
+create policy "user_progress_update_own" on public.user_progress
+  for update using (auth.uid() = user_id);
+
+drop policy if exists "user_progress_delete_own" on public.user_progress;
+create policy "user_progress_delete_own" on public.user_progress
+  for delete using (auth.uid() = user_id);
+
+
+-- DAILY PROGRESS
+create table if not exists public.daily_progress (
+  id text primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  date text not null,
+  words_studied integer not null default 0,
+  correct_answers integer not null default 0,
+  is_synced boolean not null default false
+);
+
+alter table public.daily_progress enable row level security;
+
+drop policy if exists "daily_progress_select_own" on public.daily_progress;
+create policy "daily_progress_select_own" on public.daily_progress
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "daily_progress_insert_own" on public.daily_progress;
+create policy "daily_progress_insert_own" on public.daily_progress
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "daily_progress_update_own" on public.daily_progress;
+create policy "daily_progress_update_own" on public.daily_progress
+  for update using (auth.uid() = user_id);
+
+drop policy if exists "daily_progress_delete_own" on public.daily_progress;
+create policy "daily_progress_delete_own" on public.daily_progress
+  for delete using (auth.uid() = user_id);
