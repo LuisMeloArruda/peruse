@@ -89,6 +89,13 @@ final deckWordsProvider = StreamProvider.family<List<AppWord>, String>(
   },
 );
 
+final deckWordCountProvider = StreamProvider.family<int, String>(
+  (ref, deckId) {
+    final repository = ref.watch(deckRepositoryProvider);
+    return repository.watchDeckWords(deckId).map((words) => words.length);
+  },
+);
+
 final contributionGridProvider = StreamProvider.family<Map<DateTime, int>, String>(
   (ref, userId) {
     final db = ref.watch(appDatabaseProvider);

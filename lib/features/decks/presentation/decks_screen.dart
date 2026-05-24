@@ -9,6 +9,7 @@ import 'package:peruse/core/widgets/peruse_linear_progress.dart';
 import 'package:peruse/core/widgets/peruse_sheet_card.dart';
 import 'package:peruse/features/decks/domain/entities/deck.dart';
 import 'package:peruse/features/decks/presentation/controller/decks_notifier.dart';
+import 'package:peruse/features/study/presentation/controller/study_metrics_providers.dart';
 
 class DecksScreen extends ConsumerWidget {
   const DecksScreen({super.key});
@@ -108,20 +109,26 @@ class _DecksLoadedViewState extends State<_DecksLoadedView> {
                   itemBuilder: (context, index) {
                     final deck = decks[index];
                     final progress = _progressFor(deck);
-                    final wordCount = _wordCountFor(deck);
                     final progressColor = _colorFromString(deck.color);
                     final icon = _iconFor(deck.icon);
                     final createdLabel = _formatCreatedDate(deck.createdAt);
 
-                    return _DeckCard(
-                      title: deck.name,
-                      createdLabel: createdLabel,
-                      wordCount: wordCount,
-                      progress: progress,
-                      accentColor: progressColor,
-                      icon: icon,
-                      coverImageUrl: deck.coverImageUrl,
-                      onTap: () => context.push(AppRoutes.deckDetail(deck.id)),
+                    return Consumer(
+                      builder: (context, ref, child) {
+                        final wordCount =
+                            ref.watch(deckWordCountProvider(deck.id)).value ?? 0;
+
+                        return _DeckCard(
+                          title: deck.name,
+                          createdLabel: createdLabel,
+                          wordCount: wordCount,
+                          progress: progress,
+                          accentColor: progressColor,
+                          icon: icon,
+                          coverImageUrl: deck.coverImageUrl,
+                          onTap: () => context.push(AppRoutes.deckDetail(deck.id)),
+                        );
+                      },
                     );
                   },
                 ),
@@ -537,10 +544,6 @@ double _progressFor(AppDeck deck) {
   final seed = deck.id.hashCode.abs();
   final value = 0.2 + (seed % 70) / 100;
   return value.clamp(0.2, 0.9);
-}
-
-int _wordCountFor(AppDeck deck) {
-  return 10 + (deck.id.hashCode.abs() % 40);
 }
 
 Color _colorFromString(String value) {
