@@ -131,18 +131,6 @@ GoRouter router(Ref ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: AppRoutes.capture,
-                builder: (context, state) => const CaptureScreen(),
-              ),
-              GoRoute(
-                path: AppRoutes.captureList,
-                builder: (context, state) => const CaptureListScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
                 path: AppRoutes.profile,
                 builder: (context, state) => const ProfileScreen(),
               ),
@@ -157,6 +145,14 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: AppRoutes.register,
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.capture,
+        builder: (context, state) => const CaptureScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.captureList,
+        builder: (context, state) => const CaptureListScreen(),
       ),
       GoRoute(
         path: AppRoutes.captureResult,

@@ -55,11 +55,6 @@ class MainShellScreen extends ConsumerWidget {
               label: 'Growth',
             ),
             NavigationDestination(
-              icon: _CaptureIcon(isSelected: false),
-              selectedIcon: _CaptureIcon(isSelected: true),
-              label: 'Capture',
-            ),
-            NavigationDestination(
               icon: Icon(Icons.person_outline),
               selectedIcon: Icon(Icons.person),
               label: 'Profile',
@@ -67,43 +62,6 @@ class MainShellScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _CaptureIcon extends StatelessWidget {
-  const _CaptureIcon({required this.isSelected});
-
-  final bool isSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final background = isSelected
-        ? AppColors.primary
-        : AppColors.surfaceContainer;
-    final foreground = isSelected ? AppColors.onPrimary : AppColors.primary;
-    final border = isSelected
-        ? null
-        : Border.all(color: AppColors.primary, width: 1.5);
-
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: background,
-        shape: BoxShape.circle,
-        border: border,
-        boxShadow: isSelected
-            ? const [
-                BoxShadow(
-                  color: AppColors.primaryRing,
-                  blurRadius: 12,
-                  offset: Offset(0, 6),
-                ),
-              ]
-            : null,
-      ),
-      child: Icon(Icons.photo_camera_outlined, color: foreground),
     );
   }
 }
