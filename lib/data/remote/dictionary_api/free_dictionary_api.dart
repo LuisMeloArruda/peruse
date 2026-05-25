@@ -83,28 +83,47 @@ class FreeDictionaryApi {
 
   _Meaning _extractMeaning(Map<String, dynamic> entry) {
     final meanings = entry['meanings'];
+    final definitionParts = <String>[];
+    final exampleParts = <String>[];
+    String partOfSpeech = '';
+
     if (meanings is List) {
       for (final meaning in meanings) {
         if (meaning is Map<String, dynamic>) {
-          final partOfSpeech = meaning['partOfSpeech'];
+          final currentPartOfSpeech = meaning['partOfSpeech'];
+          if (partOfSpeech.isEmpty && currentPartOfSpeech is String) {
+            partOfSpeech = currentPartOfSpeech.trim();
+          }
+
           final definitions = meaning['definitions'];
           if (definitions is List && definitions.isNotEmpty) {
-            final firstDefinition = definitions.first;
-            if (firstDefinition is Map<String, dynamic>) {
-              final definition = firstDefinition['definition'];
-              final example = firstDefinition['example'];
-              return _Meaning(
-                definition: definition is String ? definition : '',
-                example: example is String ? example : '',
-                partOfSpeech: partOfSpeech is String ? partOfSpeech : '',
-              );
+            for (final definitionEntry in definitions) {
+              if (definitionEntry is Map<String, dynamic>) {
+                final definition = definitionEntry['definition'];
+                final definitionText =
+                    definition is String ? definition.trim() : '';
+                if (definitionText.isNotEmpty) {
+                  definitionParts.add(definitionText);
+                }
+
+                final exampleValue = definitionEntry['example'];
+                final exampleText =
+                    exampleValue is String ? exampleValue.trim() : '';
+                if (exampleText.isNotEmpty) {
+                  exampleParts.add(exampleText);
+                }
+              }
             }
           }
         }
       }
     }
 
-    return const _Meaning(definition: '', example: '', partOfSpeech: '');
+    return _Meaning(
+      definition: definitionParts.join('\n'),
+      example: exampleParts.join('\n'),
+      partOfSpeech: partOfSpeech,
+    );
   }
 }
 

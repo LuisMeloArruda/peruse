@@ -146,10 +146,10 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                           state.definitionText,
                           style: context.textTheme.bodyLarge,
                         ),
-                        if (details != null && details.example.isNotEmpty) ...[
+                        if (state.exampleText.trim().isNotEmpty) ...[
                           const SizedBox(height: AppSpacing.md),
                           Text(
-                            details.example,
+                            state.exampleText,
                             style: context.textTheme.bodyMedium?.copyWith(
                               fontStyle: FontStyle.italic,
                             ),

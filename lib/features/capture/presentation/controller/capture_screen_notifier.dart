@@ -235,8 +235,13 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
     final input = Map<String, double>.fromEntries(
       labels.map((entry) => MapEntry(entry.label, entry.confidence)),
     );
-    final preferredLanguageCode =
-        ref.read(profileProvider).asData?.value?.preferredLanguage ?? 'en';
+    String preferredLanguageCode = 'en';
+    try {
+      final profile = await ref.read(profileProvider.future);
+      preferredLanguageCode = profile?.preferredLanguage ?? 'en';
+    } catch (_) {
+      preferredLanguageCode = 'en';
+    }
     final targetLanguage = profileLanguageLabel(preferredLanguageCode).toLowerCase();
 
     final fallbackSuggestions = [

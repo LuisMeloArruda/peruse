@@ -20,11 +20,13 @@ class WordDetailState {
     required this.word,
     required this.details,
     required this.definitionText,
+    required this.exampleText,
   });
 
   final AppWord word;
   final AppWordDetails? details;
   final String definitionText;
+  final String exampleText;
 }
 
 @riverpod
@@ -51,11 +53,16 @@ class WordDetailNotifier extends _$WordDetailNotifier {
       details,
       preferredLanguageCode,
     );
+    final exampleText = await _resolveExampleText(
+      details,
+      preferredLanguageCode,
+    );
 
     return WordDetailState(
       word: word,
       details: details,
       definitionText: definitionText,
+      exampleText: exampleText,
     );
   }
 
@@ -93,12 +100,17 @@ class WordDetailNotifier extends _$WordDetailNotifier {
       details,
       preferredLanguageCode,
     );
+    final exampleText = await _resolveExampleText(
+      details,
+      preferredLanguageCode,
+    );
 
     state = AsyncValue.data(
       WordDetailState(
         word: current.word,
         details: details,
         definitionText: definitionText,
+        exampleText: exampleText,
       ),
     );
   }
@@ -145,6 +157,50 @@ class WordDetailNotifier extends _$WordDetailNotifier {
     }
   }
 
+  Future<String> _resolveExampleText(
+    AppWordDetails? details,
+    String preferredLanguageCode,
+  ) async {
+    if (details == null) {
+      return '';
+    }
+
+    final example = details.example.trim();
+    if (example.isEmpty || preferredLanguageCode == 'en') {
+      return example;
+    }
+
+    final targetLanguage = profileLanguageLabel(preferredLanguageCode).toLowerCase();
+    final cacheKey = llmCacheKey(targetLanguage, example);
+
+    final cache = ref.read(llmTranslationCacheProvider);
+    if (cache.containsKey(cacheKey)) {
+      return cache[cacheKey]!;
+    }
+
+    try {
+      final request = LlmRequest(
+        input: {example: 1},
+        sourceLanguage: 'english',
+        targetLanguage: targetLanguage,
+      );
+      final output = await ref
+          .read(llmTranslateProvider(request).future)
+          .timeout(const Duration(seconds: 8));
+
+      if (output.translatedTexts.isEmpty) {
+        return example;
+      }
+
+      final translated = output.translatedTexts.values.first;
+      ref.read(llmTranslationCacheProvider.notifier).put(cacheKey, translated);
+      return translated;
+    } catch (error) {
+      debugPrint('Example translation failed, using English example: $error');
+      return example;
+    }
+  }
+
   bool _needsDefinitionTranslation(
     WordDetailState current,
     String preferredLanguageCode,
@@ -158,6 +214,7 @@ class WordDetailNotifier extends _$WordDetailNotifier {
       return false;
     }
 
-    return current.definitionText.trim() == details.definition.trim();
+    return current.definitionText.trim() == details.definition.trim() &&
+        current.exampleText.trim() == details.example.trim();
   }
 }
