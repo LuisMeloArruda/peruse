@@ -5,9 +5,7 @@ abstract final class AppRoutes {
   static const String decks = '/decks';
   static const String addDeck = '/decks/add';
   static const String capture = '/capture';
-  static const String captureList = '/captures';
   static const String captureResult = '/capture-result';
-  static const String captureDetail = '/capture-detail';
   static const String study = '/study';
   static const String growth = '/growth';
   static const String profile = '/profile';

@@ -63,7 +63,6 @@ class CaptureScreen extends ConsumerWidget {
               bottom: 24,
               child: _CaptureControls(
                 takingPicture: screenState.takingPicture,
-                onLibraryTap: () => context.go(AppRoutes.captureList),
                 onCaptureTap: screenState.takingPicture
                     ? null
                     : () async {
@@ -270,13 +269,11 @@ class _CaptureHintCard extends StatelessWidget {
 class _CaptureControls extends StatelessWidget {
   const _CaptureControls({
     required this.takingPicture,
-    required this.onLibraryTap,
     required this.onCaptureTap,
     required this.onFlipTap,
   });
 
   final bool takingPicture;
-  final VoidCallback onLibraryTap;
   final VoidCallback? onCaptureTap;
   final VoidCallback? onFlipTap;
 
@@ -303,7 +300,7 @@ class _CaptureControls extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _LibraryButton(onTap: onLibraryTap),
+              const SizedBox(width: 58, height: 58),
               _ShutterButton(takingPicture: takingPicture, onTap: onCaptureTap),
               _FlipButton(onTap: onFlipTap),
             ],
@@ -338,45 +335,6 @@ class _ModeLabel extends StatelessWidget {
               : Colors.white.withValues(alpha: 0.9),
         ),
       ),
-    );
-  }
-}
-
-class _LibraryButton extends StatelessWidget {
-  const _LibraryButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            width: 58,
-            height: 58,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
-            ),
-            child: const Icon(
-              Icons.photo_library_outlined,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'LIBRARY',
-          style: Theme.of(
-            context,
-          ).textTheme.labelSmall?.copyWith(color: Colors.white),
-        ),
-      ],
     );
   }
 }

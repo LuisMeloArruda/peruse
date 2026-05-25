@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/features/capture/domain/entities/label.dart';
 import 'package:peruse/features/capture/presentation/controller/capture_notifier.dart';
@@ -98,7 +97,7 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
       }
 
       if (!mounted) return;
-      context.go(AppRoutes.captureList);
+      context.pop();
     } finally {
       if (mounted) {
         setState(() => _saving = false);

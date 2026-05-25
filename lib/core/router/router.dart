@@ -10,11 +10,8 @@ import 'package:peruse/features/decks/presentation/deck_detail_screen.dart';
 import 'package:peruse/features/decks/presentation/decks_screen.dart';
 import 'package:peruse/features/decks/presentation/study_session_screen.dart';
 import 'package:peruse/features/decks/presentation/word_detail_screen.dart';
-import 'package:peruse/features/capture/domain/entities/capture.dart';
 import 'package:peruse/features/capture/presentation/capture_screen.dart';
-import 'package:peruse/features/capture/presentation/capture_list_screen.dart';
 import 'package:peruse/features/capture/presentation/capture_result_screen.dart';
-import 'package:peruse/features/capture/presentation/capture_detail_screen.dart';
 import 'package:peruse/features/capture/presentation/controller/capture_screen_notifier.dart';
 import 'package:peruse/features/profile/presentation/profile_screen.dart';
 import 'package:peruse/features/study/presentation/growth_screen.dart';
@@ -151,28 +148,11 @@ GoRouter router(Ref ref) {
         builder: (context, state) => const CaptureScreen(),
       ),
       GoRoute(
-        path: AppRoutes.captureList,
-        builder: (context, state) => const CaptureListScreen(),
-      ),
-      GoRoute(
         path: AppRoutes.captureResult,
         builder: (context, state) {
           final capture = state.extra;
           if (capture is CaptureReviewData) {
             return CaptureResultScreen(reviewData: capture);
-          }
-
-          return const Scaffold(
-            body: Center(child: Text('No capture data available.')),
-          );
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.captureDetail,
-        builder: (context, state) {
-          final cap = state.extra;
-          if (cap is Capture) {
-            return CaptureDetailScreen(capture: cap);
           }
 
           return const Scaffold(
