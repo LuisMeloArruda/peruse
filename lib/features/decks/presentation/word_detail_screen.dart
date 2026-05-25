@@ -82,23 +82,6 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                           ),
                         ),
                       ),
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceMuted,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(
-                            color: AppColors.primary,
-                            width: 2,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.person_rounded,
-                          size: 20,
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -172,33 +155,6 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                             ),
                           ),
                         ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  PeruseSheetCard(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const _SectionTitle(title: 'Mastery'),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          '${(state.word.confidence.clamp(0, 1) * 100).round()}%',
-                          style: context.textTheme.headlineSmall?.copyWith(
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          child: LinearProgressIndicator(
-                            value: state.word.confidence.clamp(0, 1),
-                            minHeight: 8,
-                            backgroundColor: AppColors.neutralOutline,
-                            color: AppColors.primary,
-                          ),
-                        ),
                       ],
                     ),
                   ),

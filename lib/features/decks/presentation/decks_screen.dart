@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:peruse/core/di/providers.dart';
 import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/utils/assets.dart';
@@ -84,7 +85,6 @@ class _DecksLoadedViewState extends State<_DecksLoadedView> {
             .where((deck) => deck.name.toLowerCase().contains(normalizedQuery))
             .toList();
 
-
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -140,7 +140,6 @@ class _DecksLoadedViewState extends State<_DecksLoadedView> {
                   separatorBuilder: (_, _) => const SizedBox(height: 20),
                   itemBuilder: (context, index) {
                     final deck = decks[index];
-                    final progress = _progressFor(deck);
                     final progressColor = _colorFromString(deck.color);
                     final icon = _iconFor(deck.icon);
                     final createdLabel = _formatCreatedDate(deck.createdAt);
@@ -149,12 +148,23 @@ class _DecksLoadedViewState extends State<_DecksLoadedView> {
                       builder: (context, ref, child) {
                         final wordCount =
                             ref.watch(deckWordCountProvider(deck.id)).value ?? 0;
+                        final userId = ref.watch(authRepositoryProvider).currentUser?.id;
+
+                        double realAvgMastery = 0.0;
+                        if (userId != null) {
+                          final masteryState = ref.watch(
+                            deckMasteryProvider(
+                              DeckMasteryParams(userId: userId, deckId: deck.id),
+                            ),
+                          );
+                          realAvgMastery = masteryState.value?.accuracy ?? 0.0;
+                        }
 
                         return _DeckCard(
                           title: deck.name,
                           createdLabel: createdLabel,
                           wordCount: wordCount,
-                          progress: progress,
+                          progress: realAvgMastery,
                           accentColor: progressColor,
                           icon: icon,
                           coverImageUrl: deck.coverImageUrl,
@@ -357,7 +367,7 @@ class _DeckCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xxs),
                   Text(createdLabel, style: context.textTheme.bodyMedium),
                   const SizedBox(height: AppSpacing.md),
-                  Text('STUDY PROGRESS', style: context.textTheme.labelSmall),
+                  Text('AVG. MASTERY', style: context.textTheme.labelSmall),
                   const SizedBox(height: AppSpacing.xxs),
                   PeruseLinearProgress(progress: progress, color: accentColor),
                 ],
@@ -624,12 +634,6 @@ class _EmptyDeckSearchState extends StatelessWidget {
       ),
     );
   }
-}
-
-double _progressFor(AppDeck deck) {
-  final seed = deck.id.hashCode.abs();
-  final value = 0.2 + (seed % 70) / 100;
-  return value.clamp(0.2, 0.9);
 }
 
 Color _colorFromString(String value) {

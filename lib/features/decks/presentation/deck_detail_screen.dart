@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:peruse/core/di/providers.dart';
 import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/utils/assets.dart';
@@ -11,7 +12,7 @@ import 'package:peruse/core/widgets/peruse_stat_bento_card.dart';
 import 'package:peruse/core/widgets/peruse_text_field.dart';
 import 'package:peruse/features/decks/domain/entities/word.dart';
 import 'package:peruse/features/decks/presentation/controller/deck_detail_notifier.dart';
-import 'package:peruse/features/decks/presentation/controller/word_audio_provider.dart';
+import 'package:peruse/features/study/presentation/controller/study_metrics_providers.dart';
 
 class DeckDetailScreen extends ConsumerWidget {
   const DeckDetailScreen({super.key, required this.deckId});
@@ -21,6 +22,17 @@ class DeckDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(deckDetailProvider(deckId));
+    final userId = ref.watch(authRepositoryProvider).currentUser?.id;
+
+    double realAvgMastery = 0.0;
+    if (userId != null) {
+      final masteryState = ref.watch(
+        deckMasteryProvider(
+          DeckMasteryParams(userId: userId, deckId: deckId),
+        ),
+      );
+      realAvgMastery = masteryState.value?.accuracy ?? 0.0;
+    }
 
     return Scaffold(
       body: SafeArea(
@@ -46,7 +58,7 @@ class DeckDetailScreen extends ConsumerWidget {
                 child: _DeckSummary(
                   bio: state.deck?.bio,
                   wordCount: state.words.length,
-                  avgMastery: _averageMastery(state.words),
+                  avgMastery: realAvgMastery,
                   onStudyNow: () => context.push(AppRoutes.deckStudy(deckId)),
                   onAddWord: () => context.push(AppRoutes.deckAddWord(deckId)),
                 ),
@@ -161,26 +173,24 @@ class _DeckSummary extends StatelessWidget {
         children: [
           Text('Daily Vocabulary', style: context.textTheme.headlineSmall),
           const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: PeruseStatBentoCard(
-                  value: '$wordCount',
-                  label: 'Words',
-                  variant: PeruseStatBentoVariant.muted,
-                  minHeight: 96,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: PeruseStatBentoCard(
-                  value: '${(avgMastery * 100).round()}%',
-                  label: 'Avg. Mastery',
-                  variant: PeruseStatBentoVariant.primary,
-                  minHeight: 96,
-                ),
-              ),
-            ],
+          SizedBox(
+            width: double.infinity,
+            child: PeruseStatBentoCard(
+              value: '$wordCount',
+              label: 'Words',
+              variant: PeruseStatBentoVariant.muted,
+              minHeight: 96,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: PeruseStatBentoCard(
+              value: '${(avgMastery * 100).round()}%',
+              label: 'Avg. Mastery',
+              variant: PeruseStatBentoVariant.primary,
+              minHeight: 96,
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           if (bio != null && bio!.trim().isNotEmpty) ...[
@@ -201,10 +211,12 @@ class _DeckSummary extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
           ],
-          FilledButton.icon(
-            onPressed: onStudyNow,
-            icon: const Icon(Icons.play_arrow_rounded),
-            label: const Text('Study Now'),
+          Center(
+            child: FilledButton.icon(
+              onPressed: onStudyNow,
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Study Now'),
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           OutlinedButton.icon(
@@ -232,14 +244,6 @@ class _WordCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final audioUrl = ref.watch(wordAudioUrlProvider(word.id)).value;
-    final hasAudio = audioUrl != null && audioUrl.trim().isNotEmpty;
-    final confidence = word.confidence.clamp(0.0, 1.0).toDouble();
-    final badge = confidence >= 0.85 ? 'MASTERED' : 'LEARNING';
-    final badgeColor = confidence >= 0.85
-        ? AppColors.primary
-        : const Color(0xFF1E5EFF);
-
     return Material(
       color: AppColors.surfaceContainer,
       borderRadius: BorderRadius.circular(AppRadius.xxl),
@@ -249,11 +253,7 @@ class _WordCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _WordImageHeader(
-              imageUrl: word.imageUrl,
-              badge: badge,
-              badgeColor: badgeColor,
-            ),
+            _WordImageHeader(imageUrl: word.imageUrl),
             Padding(
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: Column(
@@ -262,52 +262,6 @@ class _WordCard extends ConsumerWidget {
                   Text(
                     _capitalize(word.text),
                     style: context.textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text('Confidence', style: context.textTheme.labelSmall),
-                  const SizedBox(height: AppSpacing.xxs),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          child: LinearProgressIndicator(
-                            value: confidence,
-                            minHeight: 6,
-                            backgroundColor: AppColors.neutralOutline,
-                            color: badgeColor,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text(
-                        '${(confidence * 100).round()}%',
-                        style: context.textTheme.labelLarge?.copyWith(
-                          color: badgeColor,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Tooltip(
-                        message: hasAudio ? 'Audio available' : 'No audio available',
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceMuted,
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                          child: Icon(
-                            hasAudio
-                                ? Icons.volume_up_rounded
-                                : Icons.volume_off_rounded,
-                            size: 18,
-                            color: hasAudio
-                                ? AppColors.onSurfaceVariant
-                                : AppColors.onSurfaceVariant.withValues(alpha: 0.45),
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -320,15 +274,9 @@ class _WordCard extends ConsumerWidget {
 }
 
 class _WordImageHeader extends StatelessWidget {
-  const _WordImageHeader({
-    required this.imageUrl,
-    required this.badge,
-    required this.badgeColor,
-  });
+  const _WordImageHeader({required this.imageUrl});
 
   final String? imageUrl;
-  final String badge;
-  final Color badgeColor;
 
   Widget _placeholder() {
     return Image.asset(
@@ -350,52 +298,29 @@ class _WordImageHeader extends StatelessWidget {
           top: Radius.circular(AppRadius.xxl),
         ),
       ),
-      child: Stack(
-        children: [
-          if (imageUrl != null && imageUrl!.isNotEmpty)
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppRadius.xxl),
-              ),
-              child: _isRemoteImage(imageUrl!)
-                  ? Image.network(
-                      imageUrl!,
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.contain,
-                      alignment: Alignment.center,
-                      errorBuilder: (_, _, _) => _placeholder(),
-                    )
-                  : Image.file(
-                      File(imageUrl!),
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.contain,
-                      alignment: Alignment.center,
-                      errorBuilder: (_, _, _) => _placeholder(),
-                    ),
-            ),
-          Positioned(
-            top: AppSpacing.md,
-            right: AppSpacing.md,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: AppSpacing.xxs,
-              ),
-              decoration: BoxDecoration(
-                color: badgeColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-              child: Text(
-                badge,
-                style: context.textTheme.labelSmall?.copyWith(
-                  color: badgeColor,
-                ),
-              ),
-            ),
-          ),
-        ],
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xxl),
+        ),
+        child: imageUrl != null && imageUrl!.isNotEmpty
+            ? (_isRemoteImage(imageUrl!)
+                ? Image.network(
+                    imageUrl!,
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.contain,
+                    alignment: Alignment.center,
+                    errorBuilder: (_, _, _) => _placeholder(),
+                  )
+                : Image.file(
+                    File(imageUrl!),
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.contain,
+                    alignment: Alignment.center,
+                    errorBuilder: (_, _, _) => _placeholder(),
+                  ))
+            : _placeholder(),
       ),
     );
   }
@@ -407,17 +332,6 @@ bool _isRemoteImage(String value) {
     return false;
   }
   return uri.scheme == 'http' || uri.scheme == 'https';
-}
-
-double _averageMastery(List<AppWord> words) {
-  if (words.isEmpty) {
-    return 0;
-  }
-  final total = words.fold<double>(
-    0,
-    (sum, word) => sum + word.confidence.clamp(0.0, 1.0).toDouble(),
-  );
-  return total / words.length;
 }
 
 String _capitalize(String text) {
