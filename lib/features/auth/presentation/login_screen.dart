@@ -63,74 +63,94 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            PeruseTextField(
-              controller: _emailController,
-              labelText: 'Email address',
-              hintText: 'you@example.com',
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              autofillHints: const [AutofillHints.email],
-              prefixIcon: Icon(
-                Icons.mail_outlined,
-                size: 20,
-                color: AppColors.onSurfaceVariant,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+            final minContentHeight =
+                constraints.maxHeight - (AppSpacing.md * 2) - bottomInset;
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.md + bottomInset,
               ),
-            ),
-            const SizedBox(height: AppSpacing.formFieldGap),
-            PeruseTextField(
-              controller: _passwordController,
-              labelText: 'Password',
-              hintText: '••••••••',
-              obscureText: true,
-              textInputAction: TextInputAction.done,
-              autofillHints: const [AutofillHints.password],
-              prefixIcon: Icon(
-                Icons.lock_outline_rounded,
-                size: 20,
-                color: AppColors.onSurfaceVariant,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: minContentHeight < 0 ? 0 : minContentHeight,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    PeruseTextField(
+                      controller: _emailController,
+                      labelText: 'Email address',
+                      hintText: 'you@example.com',
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.email],
+                      prefixIcon: Icon(
+                        Icons.mail_outlined,
+                        size: 20,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.formFieldGap),
+                    PeruseTextField(
+                      controller: _passwordController,
+                      labelText: 'Password',
+                      hintText: '••••••••',
+                      obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [AutofillHints.password],
+                      prefixIcon: Icon(
+                        Icons.lock_outline_rounded,
+                        size: 20,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Column(
+                      children: [
+                        ElevatedButton(
+                          onPressed: authAction.isLoading
+                              ? null
+                              : () {
+                                  ref
+                                      .read(authControllerProvider.notifier)
+                                      .login(
+                                        _emailController.text.trim(),
+                                        _passwordController.text.trim(),
+                                      );
+                                },
+                          child: const Text('Sign in'),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        ElevatedButton.icon(
+                          onPressed: authAction.isLoading
+                              ? null
+                              : () => ref
+                                    .read(authControllerProvider.notifier)
+                                    .loginWithGoogle(),
+                          icon: const Icon(Icons.login),
+                          label: const Text('Continue with Google'),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        TextButton(
+                          onPressed: authAction.isLoading
+                              ? null
+                              : () => context.push(AppRoutes.register),
+                          child: const Text('Sign up'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Column(
-              children: [
-                ElevatedButton(
-                  onPressed: authAction.isLoading
-                      ? null
-                      : () {
-                          ref
-                              .read(authControllerProvider.notifier)
-                              .login(
-                                _emailController.text.trim(),
-                                _passwordController.text.trim(),
-                              );
-                        },
-                  child: const Text('Sign in'),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                ElevatedButton.icon(
-                  onPressed: authAction.isLoading
-                      ? null
-                      : () => ref
-                            .read(authControllerProvider.notifier)
-                            .loginWithGoogle(),
-                  icon: const Icon(Icons.login),
-                  label: const Text('Continue with Google'),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                TextButton(
-                  onPressed: authAction.isLoading
-                      ? null
-                      : () => context.push(AppRoutes.register),
-                  child: const Text('Sign up'),
-                ),
-              ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

@@ -73,67 +73,87 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('New Account')),
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Join Peruse',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              'Create an account and start studying.',
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            PeruseTextField(
-              controller: _emailController,
-              labelText: 'Email address',
-              hintText: 'you@example.com',
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              autofillHints: const [AutofillHints.email],
-              prefixIcon: Icon(
-                Icons.mail_outlined,
-                size: 20,
-                color: AppColors.onSurfaceVariant,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+            final minContentHeight =
+                constraints.maxHeight - (AppSpacing.lg * 2) - bottomInset;
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg + bottomInset,
               ),
-            ),
-            const SizedBox(height: AppSpacing.formFieldGap),
-            PeruseTextField(
-              controller: _passwordController,
-              labelText: 'Password',
-              hintText: '••••••••',
-              obscureText: true,
-              textInputAction: TextInputAction.done,
-              autofillHints: const [AutofillHints.newPassword],
-              prefixIcon: Icon(
-                Icons.lock_outline_rounded,
-                size: 20,
-                color: AppColors.onSurfaceVariant,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: minContentHeight < 0 ? 0 : minContentHeight,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Join Peruse',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Create an account and start studying.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    PeruseTextField(
+                      controller: _emailController,
+                      labelText: 'Email address',
+                      hintText: 'you@example.com',
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.email],
+                      prefixIcon: Icon(
+                        Icons.mail_outlined,
+                        size: 20,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.formFieldGap),
+                    PeruseTextField(
+                      controller: _passwordController,
+                      labelText: 'Password',
+                      hintText: '••••••••',
+                      obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [AutofillHints.newPassword],
+                      prefixIcon: Icon(
+                        Icons.lock_outline_rounded,
+                        size: 20,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: authAction.isLoading
+                            ? null
+                            : () {
+                                ref
+                                    .read(authControllerProvider.notifier)
+                                    .register(
+                                      _emailController.text.trim(),
+                                      _passwordController.text.trim(),
+                                    );
+                              },
+                        child: const Text('Register'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: authAction.isLoading
-                    ? null
-                    : () {
-                        ref
-                            .read(authControllerProvider.notifier)
-                            .register(
-                              _emailController.text.trim(),
-                              _passwordController.text.trim(),
-                            );
-                      },
-                child: const Text('Register'),
-              ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
