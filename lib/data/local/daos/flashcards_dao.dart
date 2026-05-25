@@ -39,6 +39,22 @@ class FlashcardsDao extends DatabaseAccessor<AppDatabase>
         .getSingleOrNull();
   }
 
+  Future<List<LocalFlashcard>> getFlashcardsByWordId(String wordId) {
+    return (select(flashcardsTable)..where((t) => t.wordId.equals(wordId)))
+        .get();
+  }
+
+  Future<List<LocalFlashcard>> getFlashcardsForDeckAndWord(
+    String deckId,
+    String wordId,
+  ) {
+    return (select(flashcardsTable)
+          ..where(
+            (t) => t.deckId.equals(deckId) & t.wordId.equals(wordId),
+          ))
+        .get();
+  }
+
   Future<List<LocalFlashcard>> getUnsyncedFlashcards() {
     return (select(flashcardsTable)..where((t) => t.synced.equals(false))).get();
   }

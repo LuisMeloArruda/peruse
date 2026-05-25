@@ -11,6 +11,7 @@ class DeckModel {
   final String icon;
   final String? coverImageUrl;
   final int createdAt;
+  final bool isDeleted;
   final bool isSynced;
 
   const DeckModel({
@@ -22,6 +23,7 @@ class DeckModel {
     required this.icon,
     this.coverImageUrl,
     required this.createdAt,
+    this.isDeleted = false,
     this.isSynced = true,
   });
 
@@ -43,6 +45,7 @@ class DeckModel {
       icon: json['icon'] as String,
       coverImageUrl: json['cover_image_url'] as String?,
       createdAt: createdAtMillis,
+      isDeleted: json['is_deleted'] == true,
       isSynced: isSynced,
     );
   }
@@ -72,6 +75,7 @@ class DeckModel {
       icon: local.icon,
       coverImageUrl: local.coverImageUrl,
       createdAt: local.createdAt.toInt(),
+      isDeleted: local.isDeleted,
       isSynced: local.isSynced,
     );
   }
@@ -86,6 +90,7 @@ class DeckModel {
       icon: icon,
       coverImageUrl: coverImageUrl,
       createdAt: BigInt.from(createdAt),
+      isDeleted: isDeleted,
       isSynced: isSynced,
     );
   }
@@ -127,6 +132,7 @@ class DeckModel {
       icon: entity.icon,
       coverImageUrl: entity.coverImageUrl,
       createdAt: entity.createdAt,
+      isDeleted: false,
       isSynced: isSynced,
     );
   }

@@ -13,6 +13,7 @@ import 'package:peruse/core/widgets/peruse_text_field.dart';
 import 'package:peruse/features/decks/domain/entities/word.dart';
 import 'package:peruse/features/decks/presentation/controller/deck_detail_notifier.dart';
 import 'package:peruse/features/study/presentation/controller/study_metrics_providers.dart';
+import 'package:peruse/features/decks/data/repositories/deck_repository_impl.dart';
 
 class DeckDetailScreen extends ConsumerWidget {
   const DeckDetailScreen({super.key, required this.deckId});
@@ -59,6 +60,46 @@ class DeckDetailScreen extends ConsumerWidget {
                   bio: state.deck?.bio,
                   wordCount: state.words.length,
                   avgMastery: realAvgMastery,
+                  onEditDeck: state.deck == null
+                      ? null
+                      : () => context.push(
+                          AppRoutes.editDeck(deckId),
+                          extra: state.deck,
+                        ),
+                  onDeleteDeck: state.deck == null
+                      ? null
+                      : () async {
+                          final shouldDelete = await showDialog<bool>(
+                            context: context,
+                            builder: (dialogContext) {
+                              return AlertDialog(
+                                title: const Text('Delete deck?'),
+                                content: const Text(
+                                  'This will remove the deck and queue the delete for sync.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+
+                          if (shouldDelete != true) {
+                            return;
+                          }
+
+                          await ref.read(deckRepositoryProvider).deleteDeck(deckId);
+                          if (context.mounted) {
+                            context.go(AppRoutes.decks);
+                          }
+                        },
                   onStudyNow: () => context.push(AppRoutes.deckStudy(deckId)),
                   onAddWord: () => context.push(AppRoutes.deckAddWord(deckId)),
                 ),
@@ -143,6 +184,8 @@ class _DeckSummary extends StatelessWidget {
     required this.bio,
     required this.wordCount,
     required this.avgMastery,
+    required this.onEditDeck,
+    required this.onDeleteDeck,
     required this.onStudyNow,
     required this.onAddWord,
   });
@@ -150,6 +193,8 @@ class _DeckSummary extends StatelessWidget {
   final String? bio;
   final int wordCount;
   final double avgMastery;
+  final VoidCallback? onEditDeck;
+  final Future<void> Function()? onDeleteDeck;
   final VoidCallback onStudyNow;
   final VoidCallback onAddWord;
 
@@ -211,6 +256,26 @@ class _DeckSummary extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
           ],
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onEditDeck,
+                  icon: const Icon(Icons.edit_rounded),
+                  label: const Text('Edit'),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onDeleteDeck == null ? null : () => onDeleteDeck!(),
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  label: const Text('Delete'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
           Center(
             child: FilledButton.icon(
               onPressed: onStudyNow,

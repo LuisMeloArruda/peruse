@@ -5,14 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:peruse/core/di/providers.dart';
+import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/utils/assets.dart';
 import 'package:peruse/core/widgets/peruse_sheet_card.dart';
 import 'package:peruse/features/decks/presentation/controller/word_detail_notifier.dart';
+import 'package:peruse/features/decks/data/repositories/deck_repository_impl.dart';
 
 class WordDetailScreen extends ConsumerStatefulWidget {
-  const WordDetailScreen({super.key, required this.wordId});
+  const WordDetailScreen({super.key, required this.deckId, required this.wordId});
 
+  final String deckId;
   final String wordId;
 
   @override
@@ -134,6 +138,61 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                         ],
                       ),
                     ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.push(
+                            AppRoutes.editWord(widget.deckId, state.word.id),
+                          ),
+                          icon: const Icon(Icons.edit_rounded),
+                          label: const Text('Edit Word'),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final shouldDelete = await showDialog<bool>(
+                              context: context,
+                              builder: (dialogContext) {
+                                return AlertDialog(
+                                  title: const Text('Delete word?'),
+                                  content: const Text(
+                                    'This removes the word from the current deck and queues the delete for sync.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(dialogContext).pop(false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    FilledButton(
+                                      onPressed: () => Navigator.of(dialogContext).pop(true),
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+
+                            if (shouldDelete != true) {
+                              return;
+                            }
+
+                            await ref
+                                .read(deckRepositoryProvider)
+                                .removeWordFromDeck(widget.deckId, state.word.id);
+                            if (context.mounted) {
+                              context.go(AppRoutes.deckDetail(widget.deckId));
+                            }
+                          },
+                          icon: const Icon(Icons.delete_outline_rounded),
+                          label: const Text('Delete Word'),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: AppSpacing.lg),
                   PeruseSheetCard(
                     padding: const EdgeInsets.all(AppSpacing.lg),

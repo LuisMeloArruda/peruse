@@ -45,4 +45,36 @@ class DecksNotifier extends _$DecksNotifier {
     final repository = ref.read(deckRepositoryProvider);
     await repository.createDeck(deck);
   }
+  
+  Future<void> updateDeck({
+    required String id,
+    required String name,
+    String? bio,
+    required String color,
+    required String icon,
+    String? coverImageUrl,
+    required int createdAt,
+  }) async {
+    final authRepository = ref.read(authRepositoryProvider);
+    final user = authRepository.currentUser;
+    
+    if (user == null) {
+      debugPrint('Update deck aborted: no authenticated user.');
+      return;
+    }
+    
+    final deck = AppDeck(
+      id: id,
+      name: name.trim(),
+      bio: bio?.trim().isEmpty == true ? null : bio?.trim(),
+      userId: user.id,
+      color: color,
+      icon: icon,
+      coverImageUrl: coverImageUrl,
+      createdAt: createdAt,
+    );
+    
+    final repository = ref.read(deckRepositoryProvider);
+    await repository.updateDeck(deck);
+  }
 }

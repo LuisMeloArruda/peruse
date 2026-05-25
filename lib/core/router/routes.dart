@@ -13,8 +13,11 @@ abstract final class AppRoutes {
   static const String register = '/register';
 
   static String deckDetail(String deckId) => '/decks/$deckId';
+  static String editDeck(String deckId) => '/decks/$deckId/edit';
   static String wordDetail(String deckId, String wordId) =>
       '/decks/$deckId/words/$wordId';
+  static String editWord(String deckId, String wordId) =>
+      '/decks/$deckId/words/$wordId/edit';
   static String deckStudy(String deckId) => '/decks/$deckId/study';
   static String deckAddWord(String deckId) => '/decks/$deckId/add-word';
 }

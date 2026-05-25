@@ -18,6 +18,7 @@ abstract class IDeckRepository {
     required AppWord word,
     required String deckId,
   });
+  Future<void> updateWord(AppWord word);
   Future<void> syncPendingWords();
   Future<void> fetchAndCacheUserData();
 

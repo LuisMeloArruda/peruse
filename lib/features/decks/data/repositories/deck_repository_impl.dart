@@ -16,6 +16,7 @@ import 'package:peruse/features/decks/domain/entities/deck_word.dart';
 import 'package:peruse/features/decks/domain/entities/word.dart';
 import 'package:peruse/features/decks/domain/entities/word_details.dart';
 import 'package:peruse/features/decks/domain/repositories/deck_repository.dart';
+import 'package:peruse/features/flashcards/data/models/flashcard_model.dart';
 import 'package:peruse/features/decks/data/models/deck_model.dart';
 
 part 'deck_repository_impl.g.dart';
@@ -35,6 +36,7 @@ class DeckRepositoryImpl implements IDeckRepository {
     }
 
     unawaited(_syncRemoteToLocal());
+    unawaited(syncPendingDecks());
     unawaited(syncPendingWords());
     return _localDb.decksDao.watchDecks(userId).map((localDecks) {
       return localDecks
@@ -73,6 +75,7 @@ class DeckRepositoryImpl implements IDeckRepository {
       return Stream.value(const []);
     }
 
+    unawaited(syncPendingWords());
     return _localDb.wordsDao
         .watchWordsForDeck(deckId, userId)
         .map((words) => words.map(_mapWord).toList());
@@ -180,6 +183,41 @@ class DeckRepositoryImpl implements IDeckRepository {
   }
 
   @override
+  Future<void> updateWord(AppWord word) async {
+    final normalized = word.text.trim();
+    if (normalized.isEmpty) {
+      throw ArgumentError('Word text is required');
+    }
+
+    await _localDb.wordsDao.upsertWords([
+      WordsTableCompanion.insert(
+        id: word.id,
+        wordText: normalized,
+        imageUrl: Value(word.imageUrl),
+        confidence: Value(word.confidence),
+        sourceScanId: Value(word.sourceScanId),
+        createdAt: BigInt.from(word.createdAt),
+        synced: const Value(false),
+      ),
+    ]);
+
+    try {
+      final synced = await _uploadWord(word, normalized);
+      final storedWord = await _localDb.wordsDao.getWordById(word.id);
+      await _syncFlashcardsForWord(
+        wordId: word.id,
+        frontText: normalized,
+        mediaUrl: storedWord?.imageUrl,
+      );
+      if (synced) {
+        await _localDb.wordsDao.updateWordSyncStatus(word.id, true);
+      }
+    } catch (e) {
+      debugPrint('Word update failed: $e');
+    }
+  }
+
+  @override
   Future<void> createDeck(AppDeck deck) async {
     final model = DeckModel.fromEntity(deck, isSynced: false);
     await _localDb.decksDao.upsertDeck(model.toCompanion());
@@ -195,6 +233,7 @@ class DeckRepositoryImpl implements IDeckRepository {
         icon: deck.icon,
         coverImageUrl: coverImageUrl,
         createdAt: deck.createdAt,
+        isDeleted: false,
         isSynced: true,
       );
 
@@ -224,6 +263,7 @@ class DeckRepositoryImpl implements IDeckRepository {
         icon: deck.icon,
         coverImageUrl: coverImageUrl,
         createdAt: deck.createdAt,
+        isDeleted: false,
         isSynced: true,
       );
 
@@ -241,12 +281,54 @@ class DeckRepositoryImpl implements IDeckRepository {
 
   @override
   Future<void> deleteDeck(String id) async {
-    await _localDb.decksDao.deleteDeck(id);
+    await _localDb.decksDao.softDeleteDeck(id);
 
     try {
       await _supabase.from('decks').delete().eq('id', id);
+      await _localDb.decksDao.deleteDeck(id);
     } catch (e) {
       debugPrint('Remote delete failed. Will retry on next sync. Error: $e');
+    }
+  }
+
+  Future<void> syncPendingDecks() async {
+    try {
+      final pendingDecks = await _localDb.decksDao.getUnsyncedDecks();
+      for (final localDeck in pendingDecks) {
+        final model = DeckModel.fromDrift(localDeck);
+        if (model.isDeleted) {
+          try {
+            await _supabase.from('decks').delete().eq('id', model.id);
+            await _localDb.decksDao.deleteDeck(model.id);
+          } catch (e) {
+            debugPrint('Pending deck delete failed: $e');
+          }
+          continue;
+        }
+
+        final deckEntity = model.toEntity();
+        final coverImageUrl = await _resolveDeckCoverUrl(deckEntity);
+        final remoteModel = DeckModel(
+          id: deckEntity.id,
+          name: deckEntity.name,
+          bio: deckEntity.bio,
+          userId: deckEntity.userId,
+          color: deckEntity.color,
+          icon: deckEntity.icon,
+          coverImageUrl: coverImageUrl,
+          createdAt: deckEntity.createdAt,
+          isDeleted: false,
+          isSynced: true,
+        );
+
+        await _supabase.from('decks').upsert(remoteModel.toJson());
+        if (coverImageUrl != null && coverImageUrl != deckEntity.coverImageUrl) {
+          await _localDb.decksDao.updateCoverImageUrl(model.id, coverImageUrl);
+        }
+        await _localDb.decksDao.updateSyncStatus(model.id, true);
+      }
+    } catch (e) {
+      debugPrint('Pending deck sync failed: $e');
     }
   }
 
@@ -256,6 +338,16 @@ class DeckRepositoryImpl implements IDeckRepository {
 
       for (final localDeck in unsyncedDecks) {
         final model = DeckModel.fromDrift(localDeck);
+        if (model.isDeleted) {
+          try {
+            await _supabase.from('decks').delete().eq('id', model.id);
+            await _localDb.decksDao.deleteDeck(model.id);
+          } catch (e) {
+            debugPrint('Pending deck delete failed: $e');
+          }
+          continue;
+        }
+
         final deckEntity = model.toEntity();
         final coverImageUrl = await _resolveDeckCoverUrl(deckEntity);
         final remoteModel = DeckModel(
@@ -280,6 +372,7 @@ class DeckRepositoryImpl implements IDeckRepository {
       final remoteResponse = await _supabase.from('decks').select();
       final remoteModels = (remoteResponse as List)
           .map((json) => DeckModel.fromJson(json))
+          .where((model) => !model.isDeleted)
           .toList();
 
       await _localDb.decksDao.upsertDecks(
@@ -303,6 +396,7 @@ class DeckRepositoryImpl implements IDeckRepository {
             deckId: deckWord.deckId,
             wordId: deckWord.wordId,
             addedAt: BigInt.from(deckWord.addedAt),
+            isDeleted: const Value(false),
             synced: const Value(false),
           ),
           mode: InsertMode.insertOrReplace,
@@ -311,9 +405,18 @@ class DeckRepositoryImpl implements IDeckRepository {
 
   @override
   Future<void> removeWordFromDeck(String deckId, String wordId) async {
-    await (_localDb.delete(
-      _localDb.deckWordsTable,
-    )..where((t) => t.deckId.equals(deckId) & t.wordId.equals(wordId))).go();
+    await _localDb.wordsDao.markDeckWordDeleted(deckId, wordId);
+    await _softDeleteFlashcardsForWord(deckId: deckId, wordId: wordId);
+
+    try {
+      await _supabase.from('deck_words').delete().match({
+        'deck_id': deckId,
+        'word_id': wordId,
+      });
+      await _localDb.wordsDao.deleteDeckWord(deckId, wordId);
+    } catch (e) {
+      debugPrint('Remote deck word delete failed. Will retry on next sync. Error: $e');
+    }
   }
 
   @override
@@ -343,6 +446,22 @@ class DeckRepositoryImpl implements IDeckRepository {
       }
 
       for (final localDeckWord in pendingDeckWords) {
+        if (localDeckWord.isDeleted) {
+          try {
+            await _supabase.from('deck_words').delete().match({
+              'deck_id': localDeckWord.deckId,
+              'word_id': localDeckWord.wordId,
+            });
+            await _localDb.wordsDao.deleteDeckWord(
+              localDeckWord.deckId,
+              localDeckWord.wordId,
+            );
+          } catch (e) {
+            debugPrint('Pending deck word delete failed: $e');
+          }
+          continue;
+        }
+
         final ok = await _uploadDeckWord(
           deckId: localDeckWord.deckId,
           wordId: localDeckWord.wordId,
@@ -370,6 +489,13 @@ class DeckRepositoryImpl implements IDeckRepository {
     }
 
     try {
+      final pendingDeckIds = (await _localDb.decksDao.getUnsyncedDecks())
+          .map((deck) => deck.id)
+          .toSet();
+      final pendingWordIds = (await _localDb.wordsDao.getUnsyncedWords())
+          .map((word) => word.id)
+          .toSet();
+
       final decksResponse = await _supabase
           .from('decks')
           .select()
@@ -386,9 +512,13 @@ class DeckRepositoryImpl implements IDeckRepository {
               isSynced: true,
             ),
           )
+          .where((model) => !model.isDeleted && !pendingDeckIds.contains(model.id))
           .toList();
       final wordJson = (wordsResponse as List).cast<Map<String, dynamic>>();
-      final wordCompanions = wordJson.map(_wordCompanionFromJson).toList();
+      final wordCompanions = wordJson
+          .map(_wordCompanionFromJson)
+          .where((model) => !pendingWordIds.contains(model.id))
+          .toList();
 
       final deckIds = deckModels.map((deck) => deck.id).toList();
       final wordIds = wordJson.map((json) => json['id'] as String).toList();
@@ -410,6 +540,7 @@ class DeckRepositoryImpl implements IDeckRepository {
       }
 
       final deckWordCompanions = deckWordsJson
+          .where((json) => json['is_deleted'] != true)
           .map(_deckWordCompanionFromJson)
           .toList();
       final wordDetailsCompanions = wordDetailsJson
@@ -518,6 +649,7 @@ class DeckRepositoryImpl implements IDeckRepository {
       deckId: json['deck_id'] as String,
       wordId: json['word_id'] as String,
       addedAt: BigInt.from(_parseRemoteMillis(json['added_at'])),
+      isDeleted: Value(json['is_deleted'] == true),
       synced: const Value(true),
     );
   }
@@ -648,6 +780,7 @@ class DeckRepositoryImpl implements IDeckRepository {
         'added_at': DateTime.fromMillisecondsSinceEpoch(
           addedAt,
         ).toIso8601String(),
+        'is_deleted': false,
       });
       return true;
     } catch (e) {
@@ -676,6 +809,112 @@ class DeckRepositoryImpl implements IDeckRepository {
       });
     } catch (e) {
       debugPrint('Word details upload failed: $e');
+    }
+  }
+
+  Future<String?> _syncFlashcardsForWord({
+    required String wordId,
+    required String frontText,
+    required String? mediaUrl,
+  }) async {
+    final flashcards = await _localDb.flashcardsDao.getFlashcardsByWordId(wordId);
+    if (flashcards.isEmpty) {
+      return null;
+    }
+
+    final userId = _supabase.auth.currentUser?.id;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    String? latestMediaUrl;
+
+    for (final local in flashcards) {
+      final model = FlashcardModel.fromDrift(local);
+      final updatedMediaUrl = mediaUrl ?? model.mediaUrl;
+      final updatedModel = FlashcardModel(
+        id: model.id,
+        deckId: model.deckId,
+        wordId: model.wordId,
+        frontText: frontText,
+        backText: model.backText,
+        mediaUrl: updatedMediaUrl,
+        mediaType: updatedMediaUrl == null || updatedMediaUrl.isEmpty ? null : 'image',
+        position: model.position,
+        isDeleted: model.isDeleted,
+        revision: model.revision + 1,
+        modifiedBy: userId ?? model.modifiedBy,
+        createdAt: model.createdAt,
+        updatedAt: now,
+        isSynced: false,
+      );
+
+      await _localDb.flashcardsDao.upsertFlashcards([
+        updatedModel.toCompanion(isSyncedOverride: false),
+      ]);
+
+      latestMediaUrl = updatedMediaUrl;
+
+      try {
+        if (userId == null) {
+          continue;
+        }
+
+        await _supabase.from('flashcards').upsert({
+          ...updatedModel.toJson(),
+          'modified_by': userId,
+        });
+        await _localDb.flashcardsDao.updateSyncStatus(updatedModel.id, true);
+      } catch (e) {
+        debugPrint('Flashcard sync after word update failed: $e');
+      }
+    }
+
+    return latestMediaUrl;
+  }
+
+  Future<void> _softDeleteFlashcardsForWord({
+    required String deckId,
+    required String wordId,
+  }) async {
+    final flashcards = await _localDb.flashcardsDao.getFlashcardsForDeckAndWord(
+      deckId,
+      wordId,
+    );
+    if (flashcards.isEmpty) {
+      return;
+    }
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    for (final local in flashcards) {
+      final model = FlashcardModel.fromDrift(local);
+      final deletedModel = FlashcardModel(
+        id: model.id,
+        deckId: model.deckId,
+        wordId: model.wordId,
+        frontText: model.frontText,
+        backText: model.backText,
+        mediaUrl: model.mediaUrl,
+        mediaType: model.mediaType,
+        position: model.position,
+        isDeleted: true,
+        revision: model.revision + 1,
+        modifiedBy: model.modifiedBy,
+        createdAt: model.createdAt,
+        updatedAt: now,
+        isSynced: false,
+      );
+
+      await _localDb.flashcardsDao.upsertFlashcards([
+        deletedModel.toCompanion(isSyncedOverride: false),
+      ]);
+
+      try {
+        await _supabase.from('flashcards').upsert({
+          'id': deletedModel.id,
+          'is_deleted': true,
+        });
+        await _localDb.flashcardsDao.updateSyncStatus(deletedModel.id, true);
+      } catch (e) {
+        debugPrint('Flashcard delete sync failed: $e');
+      }
     }
   }
 }

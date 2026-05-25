@@ -8,10 +8,13 @@ import 'package:permission_handler/permission_handler.dart';
 
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/widgets/peruse_text_field.dart';
+import 'package:peruse/features/decks/domain/entities/deck.dart';
 import 'package:peruse/features/decks/presentation/controller/decks_notifier.dart';
 
 class AddDeckScreen extends ConsumerStatefulWidget {
-  const AddDeckScreen({super.key});
+  const AddDeckScreen({super.key, this.deck});
+
+  final AppDeck? deck;
 
   @override
   ConsumerState<AddDeckScreen> createState() => _AddDeckScreenState();
@@ -25,6 +28,27 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
   String? _coverImagePath;
   int _selectedColorIndex = 0;
   int _selectedIconIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    final deck = widget.deck;
+    if (deck == null) {
+      return;
+    }
+
+    _nameController.text = deck.name;
+    _bioController.text = deck.bio ?? '';
+    _coverImagePath = deck.coverImageUrl;
+    _selectedColorIndex = _colorOptions.indexWhere((option) => option.value == deck.color);
+    if (_selectedColorIndex < 0) {
+      _selectedColorIndex = 0;
+    }
+    _selectedIconIndex = _iconOptions.indexWhere((option) => option.key == deck.icon);
+    if (_selectedIconIndex < 0) {
+      _selectedIconIndex = 0;
+    }
+  }
 
   @override
   void dispose() {
@@ -74,15 +98,26 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
     final color = _colorOptions[_selectedColorIndex].value;
     final icon = _iconOptions[_selectedIconIndex].key;
 
-    await ref
-        .read(decksProvider.notifier)
-        .createDeck(
-          name: name,
-          bio: _bioController.text.trim(),
-          color: color,
-          icon: icon,
-          coverImageUrl: _coverImagePath,
-        );
+    final notifier = ref.read(decksProvider.notifier);
+    if (widget.deck == null) {
+      await notifier.createDeck(
+        name: name,
+        bio: _bioController.text.trim(),
+        color: color,
+        icon: icon,
+        coverImageUrl: _coverImagePath,
+      );
+    } else {
+      await notifier.updateDeck(
+        id: widget.deck!.id,
+        name: name,
+        bio: _bioController.text.trim(),
+        color: color,
+        icon: icon,
+        coverImageUrl: _coverImagePath,
+        createdAt: widget.deck!.createdAt,
+      );
+    }
 
     if (mounted) {
       context.pop();
@@ -111,7 +146,7 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
             children: [
               _TopBar(onBack: () => context.pop()),
               const SizedBox(height: AppSpacing.lg),
-              _HeaderTitle(),
+              _HeaderTitle(isEditing: widget.deck != null),
               const SizedBox(height: AppSpacing.xl),
               _SectionCard(
                 child: Column(
@@ -212,7 +247,7 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
                   textStyle: context.textTheme.titleMedium,
                 ),
                 icon: const Icon(Icons.check_circle_rounded),
-                label: const Text('Save Deck'),
+                label: Text(widget.deck == null ? 'Save Deck' : 'Update Deck'),
               ),
               const SizedBox(height: AppSpacing.md),
               Center(
@@ -276,6 +311,10 @@ class _TopBar extends StatelessWidget {
 }
 
 class _HeaderTitle extends StatelessWidget {
+  const _HeaderTitle({required this.isEditing});
+
+  final bool isEditing;
+
   @override
   Widget build(BuildContext context) {
     final titleStyle = context.textTheme.headlineSmall?.copyWith(
@@ -297,12 +336,12 @@ class _HeaderTitle extends StatelessWidget {
           text: TextSpan(
             style: titleStyle,
             children: [
-              const TextSpan(text: 'Create your\n'),
+              TextSpan(text: isEditing ? 'Edit your\n' : 'Create your\n'),
               TextSpan(
                 text: 'knowledge\n',
                 style: titleStyle?.copyWith(color: AppColors.link),
               ),
-              const TextSpan(text: 'deck.'),
+              TextSpan(text: isEditing ? 'deck.' : 'deck.'),
             ],
           ),
         ),
@@ -417,7 +456,7 @@ class _CoverImageCard extends StatelessWidget {
           color: AppColors.surfaceContainer,
           image: hasImage
               ? DecorationImage(
-                  image: FileImage(File(imagePath!)),
+                  image: _imageProvider(imagePath!),
                   fit: BoxFit.contain,
                   alignment: Alignment.center,
                 )
@@ -471,6 +510,15 @@ class _CoverImageCard extends StatelessWidget {
       ),
     );
   }
+}
+
+ImageProvider _imageProvider(String path) {
+  final uri = Uri.tryParse(path);
+  if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+    return NetworkImage(path);
+  }
+
+  return FileImage(File(path));
 }
 
 class _ColorOption {

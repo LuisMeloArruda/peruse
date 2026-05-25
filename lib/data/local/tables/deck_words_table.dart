@@ -7,6 +7,7 @@ class DeckWordsTable extends Table {
   TextColumn get deckId => text().references(DecksTable, #id)();
   TextColumn get wordId => text().references(WordsTable, #id)();
   Int64Column get addedAt => int64()();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
   BoolColumn get synced => boolean().withDefault(const Constant(false))();
 
   @override

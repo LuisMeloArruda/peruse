@@ -64,7 +64,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -110,6 +110,12 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 11) {
         await m.createTable(profilesTable);
+      }
+      if (from < 12) {
+        await m.addColumn(decksTable, decksTable.isDeleted);
+      }
+      if (from < 13) {
+        await m.addColumn(deckWordsTable, deckWordsTable.isDeleted);
       }
     },
   );

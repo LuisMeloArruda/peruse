@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:peruse/core/router/router.dart';
+import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/utils/assets.dart';
 import 'package:peruse/features/decks/data/repositories/deck_repository_impl.dart';
@@ -173,82 +174,40 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
   }
 
   Future<void> _editCurrentCard(AppFlashcard card) async {
-    final frontController = TextEditingController(text: card.frontText ?? '');
-    final backController = TextEditingController(text: card.backText ?? '');
+    await context.push(AppRoutes.editWord(widget.deckId, card.wordId));
+  }
 
-    final shouldSave = await showModalBottomSheet<bool>(
+  Future<void> _deleteCurrentCard(AppFlashcard card) async {
+    final shouldDelete = await showDialog<bool>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: Container(
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-            ),
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Edit flashcard', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: AppSpacing.md),
-                TextField(
-                  controller: frontController,
-                  decoration: const InputDecoration(labelText: 'Front text'),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                TextField(
-                  controller: backController,
-                  maxLines: 4,
-                  decoration: const InputDecoration(labelText: 'Back text'),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('Cancel'),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        child: const Text('Save'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete word?'),
+          content: const Text(
+            'This removes the word from the current deck and queues the delete for sync.',
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
         );
       },
     );
 
-    if (shouldSave != true || !mounted) {
-      frontController.dispose();
-      backController.dispose();
+    if (shouldDelete != true) {
       return;
     }
 
-    await ref
-      .read(flashcardStudyProvider(widget.deckId).notifier)
-        .updateCurrentCard(
-          frontText: frontController.text.trim().isEmpty
-              ? null
-              : frontController.text.trim(),
-          backText: backController.text.trim().isEmpty
-              ? null
-              : backController.text.trim(),
-        );
-
-    frontController.dispose();
-    backController.dispose();
+    await ref.read(deckRepositoryProvider).removeWordFromDeck(widget.deckId, card.wordId);
+    if (mounted) {
+      context.go(AppRoutes.deckDetail(widget.deckId));
+    }
   }
 
   @override
@@ -436,6 +395,12 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
                                       label: 'Edit',
                                       enabled: true,
                                       onTap: () => _editCurrentCard(currentCard),
+                                    ),
+                                    _MiniAction(
+                                      icon: Icons.delete_outline_rounded,
+                                      label: 'Delete',
+                                      enabled: true,
+                                      onTap: () => _deleteCurrentCard(currentCard),
                                     ),
                                   ],
                                 ),

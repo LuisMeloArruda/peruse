@@ -9,17 +9,31 @@ class DecksDao extends DatabaseAccessor<AppDatabase> with _$DecksDaoMixin {
   DecksDao(super.db);
 
   Stream<List<LocalDeck>> watchDecks(String userId) {
-    return (select(decksTable)..where((t) => t.userId.equals(userId))).watch();
+    return (select(decksTable)
+          ..where(
+            (t) => t.userId.equals(userId) & t.isDeleted.equals(false),
+          ))
+        .watch();
   }
 
   Stream<LocalDeck?> watchDeckById(String deckId, String userId) {
     return (select(
       decksTable,
-    )..where((t) => t.id.equals(deckId) & t.userId.equals(userId))).watchSingleOrNull();
+    )..where(
+            (t) =>
+                t.id.equals(deckId) &
+                t.userId.equals(userId) &
+                t.isDeleted.equals(false),
+          ))
+        .watchSingleOrNull();
   }
 
   Future<List<LocalDeck>> getDecks(String userId) {
-    return (select(decksTable)..where((t) => t.userId.equals(userId))).get();
+    return (select(decksTable)
+          ..where(
+            (t) => t.userId.equals(userId) & t.isDeleted.equals(false),
+          ))
+        .get();
   }
 
   Future<void> upsertDeck(DecksTableCompanion companion) async {
@@ -41,6 +55,15 @@ class DecksDao extends DatabaseAccessor<AppDatabase> with _$DecksDaoMixin {
   Future<void> updateBio(String id, String? bio) async {
     await (update(decksTable)..where((t) => t.id.equals(id))).write(
       DecksTableCompanion(bio: Value(bio)),
+    );
+  }
+
+  Future<void> softDeleteDeck(String id) async {
+    await (update(decksTable)..where((t) => t.id.equals(id))).write(
+      DecksTableCompanion(
+        isDeleted: const Value(true),
+        isSynced: const Value(false),
+      ),
     );
   }
 

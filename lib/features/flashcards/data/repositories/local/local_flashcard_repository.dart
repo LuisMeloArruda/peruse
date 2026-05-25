@@ -104,6 +104,10 @@ class LocalFlashcardRepository implements IFlashcardRepository {
     }
 
     try {
+      final pendingFlashcardIds = (await _localDb.flashcardsDao.getUnsyncedFlashcards())
+          .map((flashcard) => flashcard.id)
+          .toSet();
+
       final deckIdsResponse = await _supabase
           .from('decks')
           .select('id')
@@ -123,6 +127,7 @@ class LocalFlashcardRepository implements IFlashcardRepository {
 
       final flashcardCompanions = (flashcardsResponse as List)
           .map((json) => FlashcardModel.fromJson(json as Map<String, dynamic>))
+          .where((model) => !pendingFlashcardIds.contains(model.id))
           .map((model) => model.toCompanion(isSyncedOverride: true))
           .toList();
 
