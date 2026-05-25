@@ -257,7 +257,7 @@ class _WordHeroImage extends StatelessWidget {
                       width: double.infinity,
                       height: double.infinity,
                       alignment: Alignment.center,
-                      errorBuilder: (_, __, ___) => _placeholder(),
+                      errorBuilder: (_, _, _) => _placeholder(),
                     )
                   : Image.file(
                       File(imageUrl!),
@@ -265,7 +265,7 @@ class _WordHeroImage extends StatelessWidget {
                       width: double.infinity,
                       height: double.infinity,
                       alignment: Alignment.center,
-                      errorBuilder: (_, __, ___) => _placeholder(),
+                      errorBuilder: (_, _, _) => _placeholder(),
                     ),
             ),
     );

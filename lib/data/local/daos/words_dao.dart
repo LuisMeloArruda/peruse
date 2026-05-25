@@ -1,7 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:peruse/data/local/database/app_database.dart';
 import 'package:peruse/data/local/tables/deck_words_table.dart';
-import 'package:peruse/data/local/tables/decks_table.dart';
 import 'package:peruse/data/local/tables/word_details_table.dart';
 import 'package:peruse/data/local/tables/words_table.dart';
 

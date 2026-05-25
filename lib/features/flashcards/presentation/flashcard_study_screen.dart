@@ -510,7 +510,6 @@ class _FlashcardCard extends ConsumerWidget {
             : mediaHeight * 0.62;
         final cardHeight = availableHeight.clamp(360.0, 520.0).toDouble();
         final imageHeight = (cardHeight * 0.42).clamp(160.0, 220.0).toDouble();
-        final maxBackTextHeight = math.max(80.0, cardHeight * 0.22);
 
         return SizedBox(
           width: double.infinity,
@@ -622,7 +621,7 @@ class _FlashcardCard extends ConsumerWidget {
                                 return buildScrollableText(translated);
                               },
                               loading: () => buildScrollableText(fallbackText),
-                              error: (_, __) {
+                              error: (_, _) {
                                 if (cache[cacheKey] == null) {
                                   Future.microtask(
                                     () => ref
@@ -736,7 +735,7 @@ class _CardImage extends StatelessWidget {
                 height: double.infinity,
                 fit: BoxFit.contain,
                 alignment: Alignment.center,
-                errorBuilder: (_, __, ___) => _placeholder(),
+                errorBuilder: (_, _, _) => _placeholder(),
               ),
       ),
     );
@@ -854,40 +853,6 @@ class _MiniAction extends StatelessWidget {
                 ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CardIconButton extends StatelessWidget {
-  const _CardIconButton({
-    required this.icon,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkResponse(
-      onTap: enabled ? onTap : null,
-      radius: 26,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF3F3F1),
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Icon(
-          icon,
-          color: enabled
-              ? AppColors.onSurfaceVariant
-              : AppColors.onSurfaceVariant.withValues(alpha: 0.45),
-        ),
       ),
     );
   }

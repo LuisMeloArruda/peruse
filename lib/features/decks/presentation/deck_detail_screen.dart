@@ -121,19 +121,6 @@ class _DeckHeader extends StatelessWidget {
           color: AppColors.brandTitle,
         ),
         Expanded(child: Text(title, style: context.textTheme.headlineSmall)),
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceMuted,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-          ),
-          child: const Icon(
-            Icons.person_rounded,
-            size: 20,
-            color: AppColors.onSurfaceVariant,
-          ),
-        ),
       ],
     );
   }
@@ -377,7 +364,7 @@ class _WordImageHeader extends StatelessWidget {
                       height: double.infinity,
                       fit: BoxFit.contain,
                       alignment: Alignment.center,
-                      errorBuilder: (_, __, ___) => _placeholder(),
+                      errorBuilder: (_, _, _) => _placeholder(),
                     )
                   : Image.file(
                       File(imageUrl!),
@@ -385,7 +372,7 @@ class _WordImageHeader extends StatelessWidget {
                       height: double.infinity,
                       fit: BoxFit.contain,
                       alignment: Alignment.center,
-                      errorBuilder: (_, __, ___) => _placeholder(),
+                      errorBuilder: (_, _, _) => _placeholder(),
                     ),
             ),
           Positioned(

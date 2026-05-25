@@ -28,10 +28,7 @@ class StudyHubScreen extends ConsumerWidget {
                   AppSpacing.lg,
                   AppSpacing.sm,
                 ),
-                child: _StudyHeader(
-                  onMenuTap: () {},
-                  onProfileTap: () {},
-                ),
+                child: const _StudyHeader(),
               ),
             ),
             SliverToBoxAdapter(
@@ -175,45 +172,15 @@ Future<void> _startFlashcards(
 }
 
 class _StudyHeader extends StatelessWidget {
-  const _StudyHeader({required this.onMenuTap, required this.onProfileTap});
-
-  final VoidCallback onMenuTap;
-  final VoidCallback onProfileTap;
+  const _StudyHeader();
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        IconButton(
-          onPressed: onMenuTap,
-          icon: const Icon(Icons.menu_rounded),
-          color: AppColors.brandTitle,
-        ),
-        Expanded(
-          child: Text(
-            'Study',
-            style: context.textTheme.titleLarge?.copyWith(
-              color: AppColors.brandTitle,
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: onProfileTap,
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceMuted,
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-            ),
-            child: const Icon(
-              Icons.person_rounded,
-              size: 20,
-              color: AppColors.onSurfaceVariant,
-            ),
-          ),
-        ),
-      ],
+    return Text(
+      'Study',
+      style: context.textTheme.titleLarge?.copyWith(
+        color: AppColors.brandTitle,
+      ),
     );
   }
 }

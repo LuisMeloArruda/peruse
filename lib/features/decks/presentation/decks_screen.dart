@@ -471,7 +471,7 @@ class _DeckCoverImage extends StatelessWidget {
             width: double.infinity,
             height: double.infinity,
             alignment: Alignment.center,
-            errorBuilder: (_, __, ___) => _placeholder(),
+            errorBuilder: (_, _, _) => _placeholder(),
           )
         : Image.network(
             imageUrl,
@@ -479,7 +479,7 @@ class _DeckCoverImage extends StatelessWidget {
             width: double.infinity,
             height: double.infinity,
             alignment: Alignment.center,
-            errorBuilder: (_, __, ___) => _placeholder(),
+            errorBuilder: (_, _, _) => _placeholder(),
           );
   }
 }

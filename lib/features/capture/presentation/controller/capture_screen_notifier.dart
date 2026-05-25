@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart'
     as mlkit;
 
-import 'package:peruse/core/di/providers.dart';
 import 'package:peruse/core/llm/models/llm_request.dart';
 import 'package:peruse/core/llm/provider/llm_providers.dart';
 import 'package:peruse/features/capture/domain/entities/label.dart';

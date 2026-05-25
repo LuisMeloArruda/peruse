@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:peruse/core/di/providers.dart';
 import 'package:peruse/features/decks/data/repositories/deck_repository_impl.dart';
 
 final wordAudioUrlProvider = FutureProvider.family<String?, String>(
