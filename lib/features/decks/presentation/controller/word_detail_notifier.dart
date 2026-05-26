@@ -1,17 +1,14 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:peruse/core/di/providers.dart';
-import 'package:peruse/core/localization/app_base_translations.dart';
-import 'package:peruse/core/llm/models/llm_request.dart';
-import 'package:peruse/core/llm/provider/llm_providers.dart';
 import 'package:peruse/features/decks/domain/entities/word.dart';
 import 'package:peruse/features/decks/domain/entities/word_details.dart';
 import 'package:peruse/features/decks/data/repositories/deck_repository_impl.dart';
-import 'package:peruse/features/profile/domain/profile_languages.dart';
 import 'package:peruse/features/profile/presentation/controller/profile_notifier.dart';
 
 part 'word_detail_notifier.g.dart';
@@ -35,7 +32,6 @@ class WordDetailNotifier extends _$WordDetailNotifier {
   @override
   Future<WordDetailState> build(String wordId) async {
     final repository = ref.watch(deckRepositoryProvider);
-    final profileState = ref.watch(profileProvider);
     _listenForConnectivity(wordId);
 
     final word = await repository.getWordById(wordId);
@@ -48,22 +44,11 @@ class WordDetailNotifier extends _$WordDetailNotifier {
       debugPrint('No dictionary details found for ${word.text}.');
     }
 
-    final preferredLanguageCode =
-        profileState.asData?.value?.preferredLanguage ?? 'en';
-    final definitionText = await _resolveDefinitionText(
-      details,
-      preferredLanguageCode,
-    );
-    final exampleText = await _resolveExampleText(
-      details,
-      preferredLanguageCode,
-    );
-
     return WordDetailState(
       word: word,
       details: details,
-      definitionText: definitionText,
-      exampleText: exampleText,
+      definitionText: details?.definition ?? '',
+      exampleText: details?.example ?? '',
     );
   }
 
@@ -97,116 +82,107 @@ class WordDetailNotifier extends _$WordDetailNotifier {
     final details = await repository.getWordDetails(current.word);
     if (details == null) return;
 
-    final definitionText = await _resolveDefinitionText(
-      details,
-      preferredLanguageCode,
-    );
-    final exampleText = await _resolveExampleText(
-      details,
-      preferredLanguageCode,
-    );
-
     state = AsyncValue.data(
       WordDetailState(
         word: current.word,
         details: details,
-        definitionText: definitionText,
-        exampleText: exampleText,
+        definitionText: details.definition,
+        exampleText: details.example,
       ),
     );
   }
 
-  Future<String> _resolveDefinitionText(
-    AppWordDetails? details,
-    String preferredLanguageCode,
-  ) async {
-    if (details == null) {
-      return appBaseTranslations['no_definition_available_yet']!;
-    }
+  // Future<String> _resolveDefinitionText(
+  //   AppWordDetails? details,
+  //   String preferredLanguageCode,
+  // ) async {
+  //   if (details == null) {
+  //     return appBaseTranslations['no_definition_available_yet']!;
+  //   }
 
-    if (preferredLanguageCode == 'en') {
-      return details.definition;
-    }
-    final targetLanguage = profileLanguageLabel(
-      preferredLanguageCode,
-    ).toLowerCase();
-    final cacheKey = llmCacheKey(targetLanguage, details.definition);
+  //   if (preferredLanguageCode == 'en') {
+  //     return details.definition;
+  //   }
+  //   final targetLanguage = profileLanguageLabel(
+  //     preferredLanguageCode,
+  //   ).toLowerCase();
+  //   final cacheKey = llmCacheKey(targetLanguage, details.definition);
 
-    final cache = ref.read(llmTranslationCacheProvider);
-    if (cache.containsKey(cacheKey)) {
-      return cache[cacheKey]!;
-    }
+  //   final cache = ref.read(llmTranslationCacheProvider);
+  //   if (cache.containsKey(cacheKey)) {
+  //     return cache[cacheKey]!;
+  //   }
 
-    try {
-      final request = LlmRequest(
-        input: {details.definition: 1},
-        sourceLanguage: 'english',
-        targetLanguage: targetLanguage,
-      );
-      final output = await ref
-          .read(llmTranslateProvider(request).future)
-          .timeout(const Duration(seconds: 8));
+  //   try {
+  //     final request = LlmRequest(
+  //       input: {details.definition: 1},
+  //       sourceLanguage: 'english',
+  //       targetLanguage: targetLanguage,
+  //     );
+  //     final output = await ref
+  //         .read(llmTranslateProvider(request).future)
+  //         .timeout(const Duration(seconds: 10));
 
-      if (output.translatedTexts.isEmpty) {
-        return details.definition;
-      }
+  //     if (output.translatedTexts.isEmpty) {
+  //       return details.definition;
+  //     }
 
-      final translated = output.translatedTexts.values.first;
-      ref.read(llmTranslationCacheProvider.notifier).put(cacheKey, translated);
-      return translated;
-    } catch (error) {
-      debugPrint(
-        'Definition translation failed, using English definition: $error',
-      );
-      return details.definition;
-    }
-  }
+  //     final translated = output.translatedTexts.values.first;
+  //     ref.read(llmTranslationCacheProvider.notifier).put(cacheKey, translated);
+  //     return translated;
+  //   } catch (error) {
+  //     debugPrint(
+  //       'Definition translation failed, using English definition: $error',
+  //     );
+  //     return details.definition;
+  //   }
+  // }
 
-  Future<String> _resolveExampleText(
-    AppWordDetails? details,
-    String preferredLanguageCode,
-  ) async {
-    if (details == null) {
-      return '';
-    }
+  // Future<String> _resolveExampleText(
+  //   AppWordDetails? details,
+  //   String preferredLanguageCode,
+  // ) async {
+  //   if (details == null) {
+  //     return '';
+  //   }
 
-    final example = details.example.trim();
-    if (example.isEmpty || preferredLanguageCode == 'en') {
-      return example;
-    }
+  //   final example = details.example.trim();
+  //   if (example.isEmpty || preferredLanguageCode == 'en') {
+  //     return example;
+  //   }
 
-    final targetLanguage = profileLanguageLabel(
-      preferredLanguageCode,
-    ).toLowerCase();
-    final cacheKey = llmCacheKey(targetLanguage, example);
+  //   final targetLanguage = profileLanguageLabel(
+  //     preferredLanguageCode,
+  //   ).toLowerCase();
+  //   final cacheKey = llmCacheKey(targetLanguage, example);
 
-    final cache = ref.read(llmTranslationCacheProvider);
-    if (cache.containsKey(cacheKey)) {
-      return cache[cacheKey]!;
-    }
+  //   final cache = ref.read(llmTranslationCacheProvider);
+  //   if (cache.containsKey(cacheKey)) {
+  //     return cache[cacheKey]!;
+  //   }
 
-    try {
-      final request = LlmRequest(
-        input: {example: 1},
-        sourceLanguage: 'english',
-        targetLanguage: targetLanguage,
-      );
-      final output = await ref
-          .read(llmTranslateProvider(request).future)
-          .timeout(const Duration(seconds: 8));
+  //   try {
+  //     final request = LlmRequest(
+  //       input: {example: 1},
+  //       sourceLanguage: 'english',
+  //       targetLanguage: targetLanguage,
+  //     );
+  //     final output = await ref
+  //         .read(llmTranslateProvider(request).future)
+  //         .timeout(const Duration(seconds: 8));
 
-      if (output.translatedTexts.isEmpty) {
-        return example;
-      }
+  //     if (output.translatedTexts.isEmpty) {
+  //       return example;
+  //     }
 
-      final translated = output.translatedTexts.values.first;
-      ref.read(llmTranslationCacheProvider.notifier).put(cacheKey, translated);
-      return translated;
-    } catch (error) {
-      debugPrint('Example translation failed, using English example: $error');
-      return example;
-    }
-  }
+  //     final translated = output.translatedTexts.values.first;
+  //     ref.read(llmTranslationCacheProvider.notifier).put(cacheKey, translated);
+  //     return translated;
+  //   } catch (error) {
+  //     debugPrint('Example translation failed, using English example: $error');
+  //     return example;
+  //   }
+  // }
 
   bool _needsDefinitionTranslation(
     WordDetailState current,

@@ -19,7 +19,7 @@ class ProfileScreen extends HookConsumerWidget {
     final profileState = ref.watch(profileProvider);
     final user = ref.watch(authStateProvider).asData?.value;
     final profile = profileState.asData?.value;
-    final chanagingLang = useState<bool>(true);
+    final chanagingLang = useState<bool>(false);
     final isBusy =
         authAction.isLoading || profileState.isLoading || chanagingLang.value;
 
