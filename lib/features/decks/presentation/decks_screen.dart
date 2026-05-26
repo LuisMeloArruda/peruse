@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:peruse/core/di/providers.dart';
+import 'package:peruse/core/localization/locale_ext.dart';
 import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/utils/assets.dart';
@@ -46,7 +47,7 @@ class DecksScreen extends ConsumerWidget {
             debugPrint('Decks load failed: $error');
             return Center(
               child: Text(
-                'We could not load your decks right now.',
+                context.translate('decks_load_error'),
                 style: context.textTheme.titleMedium,
                 textAlign: TextAlign.center,
               ),
@@ -99,7 +100,7 @@ class _DecksLoadedViewState extends State<_DecksLoadedView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 PeruseTextField(
-                  hintText: 'Search decks',
+                  hintText: context.translate('search_decks_hint'),
                   prefixIcon: const Icon(Icons.search_rounded),
                   onChanged: (value) {
                     setState(() {
@@ -142,7 +143,8 @@ class _DecksLoadedViewState extends State<_DecksLoadedView> {
                     final deck = decks[index];
                     final progressColor = _colorFromString(deck.color);
                     final icon = _iconFor(deck.icon);
-                    final createdLabel = _formatCreatedDate(deck.createdAt);
+                    final createdLabel =
+                        _formatCreatedDate(context, deck.createdAt);
 
                     return Consumer(
                       builder: (context, ref, child) {
@@ -208,7 +210,7 @@ class _DecksTopBar extends StatelessWidget implements PreferredSizeWidget {
         children: [
           Expanded(
             child: Text(
-              'Peruse',
+              context.translate('app_title'),
               style: context.textTheme.titleLarge?.copyWith(
                 color: AppColors.brandTitle,
               ),
@@ -232,7 +234,7 @@ class _DecksHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'VOCABULARY MASTERY',
+          context.translate('vocabulary_mastery'),
           style: context.textTheme.labelSmall?.copyWith(
             letterSpacing: 1.2,
             color: AppColors.primary,
@@ -240,14 +242,16 @@ class _DecksHeader extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          'My Decks',
+          context.translate('my_decks'),
           style: context.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w800,
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
         _SortChip(
-          label: sortByRecent ? 'Sorted by recent' : 'Sort by recent',
+          label: sortByRecent
+              ? context.translate('sorted_by_recent')
+              : context.translate('sort_by_recent'),
           onTap: onSortTap,
           isActive: sortByRecent,
         ),
@@ -367,7 +371,10 @@ class _DeckCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xxs),
                   Text(createdLabel, style: context.textTheme.bodyMedium),
                   const SizedBox(height: AppSpacing.md),
-                  Text('AVG. MASTERY', style: context.textTheme.labelSmall),
+                  Text(
+                    context.translate('avg_mastery'),
+                    style: context.textTheme.labelSmall,
+                  ),
                   const SizedBox(height: AppSpacing.xxs),
                   PeruseLinearProgress(progress: progress, color: accentColor),
                 ],
@@ -517,7 +524,7 @@ class _WordCountPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
-        '$count words',
+        context.translate('deck_word_count', args: {'count': '$count'}),
         style: context.textTheme.labelSmall?.copyWith(color: AppColors.primary),
       ),
     );
@@ -562,10 +569,13 @@ class _CreateDeckCard extends StatelessWidget {
                 child: const Icon(Icons.add_rounded, color: AppColors.primary),
               ),
               const SizedBox(height: AppSpacing.sm),
-              Text('New Vocabulary Set', style: context.textTheme.titleMedium),
+              Text(
+                context.translate('new_vocabulary_set'),
+                style: context.textTheme.titleMedium,
+              ),
               const SizedBox(height: AppSpacing.xxs),
               Text(
-                'Start your next linguistic journey',
+                context.translate('new_vocabulary_set_subtitle'),
                 style: context.textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
@@ -589,16 +599,19 @@ class _EmptyDeckState extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('No decks yet', style: context.textTheme.titleMedium),
+          Text(
+            context.translate('no_decks_yet'),
+            style: context.textTheme.titleMedium,
+          ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Create your first vocabulary set and start building momentum.',
+            context.translate('no_decks_yet_subtitle'),
             style: context.textTheme.bodyMedium,
           ),
           const SizedBox(height: AppSpacing.md),
           FilledButton(
             onPressed: onCreateDeck,
-            child: const Text('Create deck'),
+            child: Text(context.translate('create_deck')),
           ),
         ],
       ),
@@ -619,16 +632,19 @@ class _EmptyDeckSearchState extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('No matching decks', style: context.textTheme.titleMedium),
+          Text(
+            context.translate('no_matching_decks'),
+            style: context.textTheme.titleMedium,
+          ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'No collections match "$query".',
+            context.translate('no_matching_decks_message', args: {'query': query}),
             style: context.textTheme.bodyMedium,
           ),
           const SizedBox(height: AppSpacing.md),
           OutlinedButton(
             onPressed: onClear,
-            child: const Text('Clear search'),
+            child: Text(context.translate('clear_search')),
           ),
         ],
       ),
@@ -701,23 +717,29 @@ IconData _iconFor(String raw) {
   };
 }
 
-String _formatCreatedDate(int timestamp) {
+String _formatCreatedDate(BuildContext context, int timestamp) {
   final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
-  final month = _monthNames[date.month - 1];
-  return 'Created $month ${date.day}, ${date.year}';
+  const monthKeys = [
+    'month_jan',
+    'month_feb',
+    'month_mar',
+    'month_apr',
+    'month_may',
+    'month_jun',
+    'month_jul',
+    'month_aug',
+    'month_sep',
+    'month_oct',
+    'month_nov',
+    'month_dec',
+  ];
+  final month = context.translate(monthKeys[date.month - 1]);
+  return context.translate(
+    'deck_created_date',
+    args: {
+      'month': month,
+      'day': '${date.day}',
+      'year': '${date.year}',
+    },
+  );
 }
-
-const List<String> _monthNames = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];

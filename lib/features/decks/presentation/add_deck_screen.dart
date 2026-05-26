@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import 'package:peruse/core/localization/locale_ext.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/widgets/peruse_text_field.dart';
 import 'package:peruse/features/decks/domain/entities/deck.dart';
@@ -62,8 +63,8 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
     if (!permission.isGranted) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Allow photo library access to choose a deck cover.'),
+          SnackBar(
+            content: Text(context.translate('photo_library_permission')),
           ),
         );
       }
@@ -90,7 +91,7 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
     if (name.isEmpty) {
       debugPrint('Deck name is required.');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a deck name.')),
+        SnackBar(content: Text(context.translate('deck_name_required'))),
       );
       return;
     }
@@ -154,13 +155,13 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
                   children: [
                     PeruseTextField(
                       controller: _nameController,
-                      labelText: 'Deck name',
-                      hintText: 'e.g. Italian Gastronomy',
+                      labelText: context.translate('deck_name_label'),
+                      hintText: context.translate('deck_name_hint'),
                       textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     Text(
-                      'VISUAL ANCHOR',
+                      context.translate('visual_anchor'),
                       style: context.textTheme.labelSmall?.copyWith(
                         letterSpacing: 1.2,
                       ),
@@ -212,8 +213,8 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
               _SectionCard(
                 child: PeruseTextField(
                   controller: _bioController,
-                  labelText: 'Short bio',
-                  hintText: 'What will you master today?',
+                  labelText: context.translate('short_bio_label'),
+                  hintText: context.translate('short_bio_hint'),
                   maxLines: 3,
                 ),
               ),
@@ -223,7 +224,7 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Deck cover',
+                      context.translate('deck_cover_label'),
                       style: context.textTheme.labelSmall?.copyWith(
                         letterSpacing: 1.2,
                       ),
@@ -247,14 +248,18 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
                   textStyle: context.textTheme.titleMedium,
                 ),
                 icon: const Icon(Icons.check_circle_rounded),
-                label: Text(widget.deck == null ? 'Save Deck' : 'Update Deck'),
+                label: Text(
+                  widget.deck == null
+                      ? context.translate('save_deck')
+                      : context.translate('update_deck'),
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
               Center(
                 child: TextButton(
                   onPressed: _discardDraft,
                   child: Text(
-                    'Discard draft'.toUpperCase(),
+                    context.translate('discard_draft').toUpperCase(),
                     style: context.textTheme.labelSmall?.copyWith(
                       letterSpacing: 1.2,
                     ),
@@ -285,7 +290,7 @@ class _TopBar extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            'Peruse',
+            context.translate('app_title'),
             style: context.textTheme.titleLarge?.copyWith(
               color: AppColors.brandTitle,
             ),
@@ -325,7 +330,7 @@ class _HeaderTitle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'CURATION',
+          context.translate('curation'),
           style: context.textTheme.labelSmall?.copyWith(
             letterSpacing: 1.8,
             color: AppColors.primary,
@@ -336,12 +341,20 @@ class _HeaderTitle extends StatelessWidget {
           text: TextSpan(
             style: titleStyle,
             children: [
-              TextSpan(text: isEditing ? 'Edit your\n' : 'Create your\n'),
               TextSpan(
-                text: 'knowledge\n',
+                text: isEditing
+                    ? context.translate('edit_deck_headline_prefix')
+                    : context.translate('create_deck_headline_prefix'),
+              ),
+              TextSpan(
+                text: context.translate('deck_headline_highlight'),
                 style: titleStyle?.copyWith(color: AppColors.link),
               ),
-              TextSpan(text: isEditing ? 'deck.' : 'deck.'),
+              TextSpan(
+                text: isEditing
+                    ? context.translate('edit_deck_headline_suffix')
+                    : context.translate('create_deck_headline_suffix'),
+              ),
             ],
           ),
         ),
@@ -496,7 +509,9 @@ class _CoverImageCard extends StatelessWidget {
                   const Icon(Icons.photo_camera_rounded, color: AppColors.link),
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
-                    hasImage ? 'CHANGE COVER IMAGE' : 'ADD COVER IMAGE',
+                    hasImage
+                        ? context.translate('change_cover_image')
+                        : context.translate('add_cover_image'),
                     style: context.textTheme.labelSmall?.copyWith(
                       letterSpacing: 1.2,
                       color: AppColors.link,

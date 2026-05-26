@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:peruse/core/di/providers.dart';
+import 'package:peruse/core/localization/locale_ext.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/widgets/peruse_deck_list_tile.dart';
 import 'package:peruse/core/widgets/peruse_hero_heading.dart';
@@ -50,23 +51,26 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
           child: userId == null
               ? Center(
                   child: Text(
-                    'Sign in to view growth insights.',
+                    context.translate('sign_in_for_growth'),
                     style: context.textTheme.bodyMedium,
                   ),
                 )
               : ListView(
                   children: [
-                    const PeruseHeroHeading(
-                      title: 'Growth',
-                      subtitle: 'Your linguistic evolution, quantified.',
+                    PeruseHeroHeading(
+                      title: context.translate('growth_title'),
+                      subtitle: context.translate('growth_subtitle'),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     ref.watch(userGlobalStatsProvider(userId)).when(
                           data: (stats) => Column(
                             children: [
                               PeruseStatBentoCard(
-                                value: '${stats.currentStreak} Days',
-                                label: 'Daily Streak',
+                                value: context.translate(
+                                  'daily_streak_days',
+                                  args: {'days': '${stats.currentStreak}'},
+                                ),
+                                label: context.translate('daily_streak'),
                                 variant: PeruseStatBentoVariant.primary,
                                 leading: const Icon(
                                   Icons.local_fire_department,
@@ -79,7 +83,7 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
                                 value: _formatAccuracy(
                                   stats.lifetimeAccuracy,
                                 ),
-                                label: 'Avg. Accuracy',
+                                label: context.translate('avg_accuracy'),
                                 variant: PeruseStatBentoVariant.elevated,
                                 leading: const Icon(
                                   Icons.verified_rounded,
@@ -91,16 +95,19 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
                           ),
                           loading: () => const _StatsSkeletonRow(),
                           error: (error, stackTrace) => Text(
-                            'Stats unavailable: $error',
+                            context.translate(
+                              'stats_unavailable',
+                              args: {'error': '$error'},
+                            ),
                             style: context.textTheme.bodyMedium,
                           ),
                         ),
                     const SizedBox(height: AppSpacing.xl),
                     PeruseSectionHeader(
-                      title: 'Learning Velocity',
+                      title: context.translate('learning_velocity'),
                       trailing: PerusePillToggle(
-                        leftLabel: 'Week',
-                        rightLabel: 'Month',
+                        leftLabel: context.translate('week'),
+                        rightLabel: context.translate('month'),
                         leftSelected: _isWeekly,
                         onChanged: (value) {
                           setState(() {
@@ -120,7 +127,9 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    const PeruseSectionHeader(title: 'Curated Decks'),
+                    PeruseSectionHeader(
+                      title: context.translate('curated_decks'),
+                    ),
                     const SizedBox(height: AppSpacing.md),
                       ref.watch(studyDecksProvider).when(
                         data: (decks) => _DeckProgressList(
@@ -129,7 +138,10 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
                         ),
                           loading: () => const _DecksSkeleton(),
                           error: (error, stackTrace) => Text(
-                            'Decks unavailable: $error',
+                            context.translate(
+                              'decks_unavailable',
+                              args: {'message': '$error'},
+                            ),
                             style: context.textTheme.bodyMedium,
                           ),
                         ),
@@ -138,7 +150,7 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            'Learning Consistency',
+                            context.translate('learning_consistency'),
                             style: context.textTheme.headlineMedium,
                           ),
                         ),
@@ -154,7 +166,7 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Activity over the last 12 weeks',
+                                  context.translate('activity_last_12_weeks'),
                                   style: context.textTheme.labelSmall?.copyWith(
                                     color: AppColors.onSurfaceVariant,
                                   ),
@@ -165,7 +177,10 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
                             ),
                             loading: () => const _GridSkeleton(),
                             error: (error, stackTrace) => Text(
-                              'Grid unavailable: $error',
+                              context.translate(
+                                'grid_unavailable',
+                                args: {'error': '$error'},
+                              ),
                               style: context.textTheme.bodyMedium,
                             ),
                           ),
@@ -189,8 +204,17 @@ class _VelocityChart extends StatelessWidget {
   final AsyncValue<List<LocalDailyProgress>> weekly;
   final AsyncValue<List<LocalDailyProgress>> monthly;
 
-  static const _weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   static const double _yAxisWidth = 36;
+
+  static const _weekdayKeys = [
+    'weekday_mon',
+    'weekday_tue',
+    'weekday_wed',
+    'weekday_thu',
+    'weekday_fri',
+    'weekday_sat',
+    'weekday_sun',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -207,7 +231,9 @@ class _VelocityChart extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isWeekly ? 'This week' : 'Last 30 days',
+              isWeekly
+                  ? context.translate('this_week')
+                  : context.translate('last_30_days'),
               style: context.textTheme.labelSmall?.copyWith(
                 color: AppColors.onSurfaceVariant,
               ),
@@ -217,11 +243,14 @@ class _VelocityChart extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Words studied per day',
+                  context.translate('words_studied_per_day'),
                   style: context.textTheme.titleSmall,
                 ),
                 Text(
-                  '${_average(points).toStringAsFixed(1)} avg/day',
+                  context.translate(
+                    'avg_per_day',
+                    args: {'average': _average(points).toStringAsFixed(1)},
+                  ),
                   style: context.textTheme.labelSmall?.copyWith(
                     color: AppColors.onSurfaceVariant,
                   ),
@@ -257,7 +286,7 @@ class _VelocityChart extends StatelessWidget {
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: _labelsForRange(isWeekly)
+                children: _labelsForRange(context, isWeekly)
                     .map(
                       (label) => Text(
                         label,
@@ -274,14 +303,19 @@ class _VelocityChart extends StatelessWidget {
       },
       loading: () => const _ChartSkeleton(),
       error: (error, stackTrace) => Text(
-        'Velocity unavailable: $error',
+        context.translate(
+          'velocity_unavailable',
+          args: {'error': '$error'},
+        ),
         style: context.textTheme.bodyMedium,
       ),
     );
   }
 
-  List<String> _labelsForRange(bool weekly) {
-    if (weekly) return _weekLabels;
+  List<String> _labelsForRange(BuildContext context, bool weekly) {
+    if (weekly) {
+      return _weekdayKeys.map(context.translate).toList();
+    }
 
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, now.day).subtract(
@@ -456,7 +490,7 @@ class _DeckProgressList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (decks.isEmpty) {
       return Text(
-        'No decks yet. Create one to start tracking progress.',
+        context.translate('no_decks_track_progress'),
         style: context.textTheme.bodyMedium,
       );
     }
@@ -490,29 +524,41 @@ class _DeckProgressTile extends ConsumerWidget {
     return wordsState.when(
       data: (words) => masteryState.when(
         data: (mastery) {
-          final summary = _summarizeDeck(words, mastery);
+          final summary = _summarizeDeck(context, words, mastery);
           return PeruseDeckListTile(
             title: deck.name,
-            subtitle:
-                '${summary.totalWords} Words • ${summary.difficultyLabel}',
+            subtitle: context.translate(
+              'deck_progress_subtitle',
+              args: {
+                'wordCount': '${summary.totalWords}',
+                'level': summary.difficultyLabel,
+              },
+            ),
             progress: summary.progress,
           );
         },
         loading: () => const _SkeletonBlock(height: 90),
         error: (error, stackTrace) => Text(
-          'Deck unavailable: $error',
+          context.translate(
+            'deck_unavailable',
+            args: {'error': '$error'},
+          ),
           style: context.textTheme.bodyMedium,
         ),
       ),
       loading: () => const _SkeletonBlock(height: 90),
       error: (error, stackTrace) => Text(
-        'Deck unavailable: $error',
+        context.translate(
+          'deck_unavailable',
+          args: {'error': '$error'},
+        ),
         style: context.textTheme.bodyMedium,
       ),
     );
   }
 
   _DeckSummary _summarizeDeck(
+    BuildContext context,
     List<AppWord> words,
     DeckMasteryStats mastery,
   ) {
@@ -523,17 +569,19 @@ class _DeckProgressTile extends ConsumerWidget {
     return _DeckSummary(
       progress: hasData ? accuracy : 0,
       totalWords: totalWords,
-      difficultyLabel: hasData ? _difficultyLabel(accuracy) : 'No data',
+      difficultyLabel: hasData
+          ? _difficultyLabel(context, accuracy)
+          : context.translate('no_data'),
     );
   }
 
-  String _difficultyLabel(double accuracy) {
-    if (accuracy < 0.2) return 'Level A1';
-    if (accuracy < 0.4) return 'Level A2';
-    if (accuracy < 0.65) return 'Level B1';
-    if (accuracy < 0.85) return 'Level B2';
-    if (accuracy < 0.95) return 'Level C1';
-    return 'Level C2';
+  String _difficultyLabel(BuildContext context, double accuracy) {
+    if (accuracy < 0.2) return context.translate('level_a1');
+    if (accuracy < 0.4) return context.translate('level_a2');
+    if (accuracy < 0.65) return context.translate('level_b1');
+    if (accuracy < 0.85) return context.translate('level_b2');
+    if (accuracy < 0.95) return context.translate('level_c1');
+    return context.translate('level_c2');
   }
 }
 
@@ -618,21 +666,30 @@ class _HeatmapLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final entries = [
-      _HeatmapLegendEntry(AppColors.heatmapEmpty, '0'),
+      _HeatmapLegendEntry(
+        AppColors.heatmapEmpty,
+        context.translate('heatmap_0'),
+      ),
       _HeatmapLegendEntry(
         AppColors.primary.withValues(alpha: 0.25),
-        '1-5',
+        context.translate('heatmap_1_5'),
       ),
       _HeatmapLegendEntry(
         AppColors.primary.withValues(alpha: 0.6),
-        '6-10',
+        context.translate('heatmap_6_10'),
       ),
-      _HeatmapLegendEntry(AppColors.primary, '11+'),
+      _HeatmapLegendEntry(
+        AppColors.primary,
+        context.translate('heatmap_11_plus'),
+      ),
     ];
 
     return Row(
       children: [
-        Text('Less', style: context.textTheme.labelSmall),
+        Text(
+          context.translate('heatmap_less'),
+          style: context.textTheme.labelSmall,
+        ),
         const SizedBox(width: AppSpacing.xs),
         for (final entry in entries) ...[
           Column(
@@ -657,7 +714,10 @@ class _HeatmapLegend extends StatelessWidget {
           ),
           const SizedBox(width: 6),
         ],
-        Text('More', style: context.textTheme.labelSmall),
+        Text(
+          context.translate('heatmap_more'),
+          style: context.textTheme.labelSmall,
+        ),
       ],
     );
   }

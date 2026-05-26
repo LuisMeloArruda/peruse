@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:peruse/core/di/providers.dart';
+import 'package:peruse/core/localization/locale_ext.dart';
 import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'controller/capture_screen_notifier.dart';
@@ -123,7 +124,10 @@ class CaptureScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Camera error\n\n${state.cameraError}',
+                context.translate(
+                  'camera_error',
+                  args: {'cameraError': '${state.cameraError}'},
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -133,7 +137,7 @@ class CaptureScreen extends ConsumerWidget {
                   ref.read(captureScreenProvider.notifier).resetCameraSetup();
                 },
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry camera'),
+                label: Text(context.translate('retry_camera')),
               ),
             ],
           ),
@@ -156,8 +160,11 @@ class CaptureScreen extends ConsumerWidget {
             children: [
               Text(
                 camerasAsync.hasError
-                    ? 'Unable to load cameras: ${camerasAsync.error}'
-                    : 'No camera available',
+                    ? context.translate(
+                        'unable_load_cameras',
+                        args: {'error': '${camerasAsync.error}'},
+                      )
+                    : context.translate('no_camera_available'),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -167,7 +174,7 @@ class CaptureScreen extends ConsumerWidget {
                   ref.read(captureScreenProvider.notifier).resetCameraSetup();
                 },
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry camera'),
+                label: Text(context.translate('retry_camera')),
               ),
             ],
           ),
@@ -223,7 +230,7 @@ class _CaptureStatusPill extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'ANALYZING OBJECT',
+                context.translate('analyzing_object'),
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: AppColors.onSurface,
                   fontWeight: FontWeight.w700,
@@ -254,7 +261,7 @@ class _CaptureHintCard extends StatelessWidget {
         child: _SurfaceCard(
           color: Colors.black.withValues(alpha: 0.5),
           child: Text(
-            'Center the text or object within the frame for best results.',
+            context.translate('capture_hint'),
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
@@ -293,7 +300,11 @@ class _CaptureControls extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _ModeLabel(label: 'PHOTO', isActive: true, style: labelStyle),
+              _ModeLabel(
+                label: context.translate('photo_mode'),
+                isActive: true,
+                style: labelStyle,
+              ),
             ],
           ),
           const SizedBox(height: 18),
@@ -368,7 +379,7 @@ class _FlipButton extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'FLIP',
+          context.translate('flip'),
           style: Theme.of(
             context,
           ).textTheme.labelSmall?.copyWith(color: Colors.white),

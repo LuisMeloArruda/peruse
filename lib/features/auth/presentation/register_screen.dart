@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:peruse/core/localization/locale_ext.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/widgets/widgets.dart';
 import 'controller/auth_notifier.dart';
@@ -52,7 +53,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         final session = ref.read(authStateProvider).value;
         if (session == null && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Confirm email to activate account')),
+            SnackBar(
+              content: Text(context.translate('confirm_email_activate')),
+            ),
           );
         }
       }
@@ -72,27 +75,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final authAction = ref.watch(authControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New Account')),
+      appBar: AppBar(title: Text(context.translate('register_title'))),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Join Peruse',
+              context.translate('join_peruse'),
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Create an account and start studying.',
+              context.translate('register_subtitle'),
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.xl),
             PeruseTextField(
               controller: _emailController,
-              labelText: 'Email address',
-              hintText: 'you@example.com',
+              labelText: context.translate('email_address_label'),
+              hintText: context.translate('email_hint'),
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
               autofillHints: const [AutofillHints.email],
@@ -105,8 +108,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             const SizedBox(height: AppSpacing.formFieldGap),
             PeruseTextField(
               controller: _passwordController,
-              labelText: 'Password',
-              hintText: '••••••••',
+              labelText: context.translate('password_label'),
+              hintText: context.translate('password_hint'),
               obscureText: true,
               textInputAction: TextInputAction.done,
               autofillHints: const [AutofillHints.newPassword],
@@ -130,7 +133,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               _passwordController.text.trim(),
                             );
                       },
-                child: const Text('Register'),
+                child: Text(context.translate('register')),
               ),
             ),
           ],

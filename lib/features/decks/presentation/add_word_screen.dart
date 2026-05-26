@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:peruse/core/localization/locale_ext.dart';
 import 'package:peruse/core/router/routes.dart';
-import 'package:peruse/core/di/providers.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/widgets/peruse_text_field.dart';
 import 'package:peruse/features/decks/domain/entities/word.dart';
@@ -101,7 +101,9 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
     if (widget.wordId != null && _existingWord == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please wait for the word to finish loading.')),
+          SnackBar(
+            content: Text(context.translate('word_loading_wait')),
+          ),
         );
       }
       return;
@@ -110,9 +112,13 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
     final word = _wordController.text.trim();
     if (word.isEmpty) {
       debugPrint('Word text is required.');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter a word.')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(
+          SnackBar(content: Text(context.translate('word_required'))),
+        );
+      }
       return;
     }
 
@@ -164,7 +170,9 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                     color: AppColors.brandTitle,
                   ),
                   Text(
-                    widget.wordId == null ? 'Add Word' : 'Edit Word',
+                    widget.wordId == null
+                        ? context.translate('add_word_title')
+                        : context.translate('edit_word_title'),
                     style: context.textTheme.headlineSmall,
                   ),
                 ],
@@ -172,15 +180,15 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
               const SizedBox(height: AppSpacing.lg),
               PeruseTextField(
                 controller: _wordController,
-                labelText: 'Word',
-                hintText: 'e.g. Flight',
+                labelText: context.translate('word_label'),
+                hintText: context.translate('word_hint'),
                 textInputAction: TextInputAction.done,
                 onFieldSubmitted: (_) => _saveWord(),
                 suffixIcon: IconButton(
                   onPressed: _captureWord,
                   icon: const Icon(Icons.photo_camera_outlined),
                   color: AppColors.onSurfaceVariant,
-                  tooltip: 'Capture word',
+                  tooltip: context.translate('capture_word_tooltip'),
                 ),
               ),
               const Spacer(),
@@ -190,7 +198,11 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                   minimumSize: const Size.fromHeight(56),
                   shape: const StadiumBorder(),
                 ),
-                child: Text(widget.wordId == null ? 'Save Word' : 'Update Word'),
+                child: Text(
+                  widget.wordId == null
+                      ? context.translate('save_word')
+                      : context.translate('update_word'),
+                ),
               ),
             ],
           ),

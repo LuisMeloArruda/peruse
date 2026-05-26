@@ -1,6 +1,11 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:camera/camera.dart' as camera;
+import 'package:flutter_localization_agent/flutter_localization_agent.dart';
+import 'package:flutter_localization_agent/models/transalator_agent.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:peruse/core/localization/app_base_translations.dart';
+import 'package:peruse/core/localization/supported_languages.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:peruse/data/local/database/app_database.dart' as main_db;
@@ -94,3 +99,21 @@ final studyRepositoryProvider = Provider<IStudyRepository>((ref) {
   final database = ref.watch(appDatabaseProvider);
   return LocalStudyRepository(database);
 });
+
+@Riverpod(keepAlive: true)
+Future<TranslationService> translationService(Ref ref) async {
+  final translator = LLMTranslatorFactory.createTranslator(
+    GeminiTranslatorAgent(geminiApiKey: dotenv.get('GEMINI_API_KEY')),
+  );
+
+  final service = TranslationService(
+    translator: translator,
+    supportedLanguages: appSupportedLanguages,
+    initialLanguage: appInitialLanguage,
+  );
+
+  ref.onDispose(service.dispose);
+
+  await service.loadBaseTranslations(appBaseTranslations);
+  return service;
+}

@@ -79,7 +79,7 @@ class PeruseStatBentoCard extends StatelessWidget {
           ? Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                if (leading != null) leading!,
+                ?leading,
                 if (leading != null) const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Column(

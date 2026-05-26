@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_localization_agent/flutter_localization_agent.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:peruse/core/localization/locale_ext.dart';
 import 'package:peruse/core/theme/theme.dart';
-import 'package:peruse/core/theme/app_radius.dart';
 import 'package:peruse/features/auth/presentation/controller/auth_notifier.dart';
 import 'package:peruse/features/auth/domain/entities/app_user.dart';
 import 'package:peruse/features/profile/domain/entities/user_profile.dart';
 import 'package:peruse/features/profile/domain/profile_languages.dart';
 import 'package:peruse/features/profile/presentation/controller/profile_notifier.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends HookConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
@@ -17,10 +19,12 @@ class ProfileScreen extends ConsumerWidget {
     final profileState = ref.watch(profileProvider);
     final user = ref.watch(authStateProvider).asData?.value;
     final profile = profileState.asData?.value;
-    final isBusy = authAction.isLoading || profileState.isLoading;
+    final chanagingLang = useState<bool>(true);
+    final isBusy =
+        authAction.isLoading || profileState.isLoading || chanagingLang.value;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: Text(context.translate('profile_title'))),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -33,12 +37,19 @@ class ProfileScreen extends ConsumerWidget {
                 profile: profile,
                 isBusy: isBusy,
                 onLanguageChanged: (value) {
-                  if (value == null || value == profile?.preferredLanguage) {
+                  if (value == null ||
+                      value == context.translationService.currentLanguage) {
                     return;
                   }
-                  ref
-                      .read(profileProvider.notifier)
-                      .updatePreferredLanguage(value);
+                  chanagingLang.value = true;
+                  context.translationService
+                      .changeLanguage(value)
+                      .then((_) {
+                        ref
+                            .read(profileProvider.notifier)
+                            .updatePreferredLanguage(value.code);
+                      })
+                      .whenComplete(() => chanagingLang.value = false);
                 },
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -65,12 +76,19 @@ class _ProfileHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayName = user?.displayName ?? 'User';
-    final email = user?.email ?? 'No email available';
+    final displayName = user?.displayName ?? context.translate('user_fallback');
+    final email =
+        user?.email ?? context.translate('no_email_available');
     final languageLabel = profile == null
-        ? 'Loading language preference...'
-        : profileLanguageLabel(profile!.preferredLanguage);
-    final initials = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'P';
+        ? context.translate('loading_language_preference')
+        : context.translate(
+            profileLanguageTranslationKey(
+              context.translationService.currentLanguage.code,
+            ),
+          );
+    final initials = displayName.isNotEmpty
+        ? displayName[0].toUpperCase()
+        : 'P';
 
     return Card(
       child: Padding(
@@ -82,13 +100,15 @@ class _ProfileHeaderCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer,
                   child: Text(
                     initials,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),
@@ -99,11 +119,14 @@ class _ProfileHeaderCard extends StatelessWidget {
                       Text(
                         displayName,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: 4),
-                      Text(email, style: Theme.of(context).textTheme.bodyMedium),
+                      Text(
+                        email,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
                     ],
                   ),
                 ),
@@ -121,17 +144,17 @@ class _ProfileHeaderCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Preferred language',
+                    context.translate('preferred_language'),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     languageLabel,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -152,12 +175,11 @@ class _LanguageCard extends StatelessWidget {
 
   final AppUserProfile? profile;
   final bool isBusy;
-  final ValueChanged<String?> onLanguageChanged;
+  final ValueChanged<Language?> onLanguageChanged;
 
   @override
   Widget build(BuildContext context) {
-    final selectedLanguage = profile?.preferredLanguage ?? 'en';
-
+    final selectedLanguage = context.translationService.currentLanguage;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -165,40 +187,48 @@ class _LanguageCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Language preference',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              context.translate('language_preference_title'),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
-              'Choose the interface language you want to use in the app.',
+              context.translate('language_preference_description'),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
-            DropdownButtonFormField<String>(
-              value: selectedLanguage,
-              onChanged: isBusy ? null : onLanguageChanged,
-              decoration: const InputDecoration(
-                labelText: 'Preferred language',
+            if (isBusy)
+              Center(child: CircularProgressIndicator())
+            else
+              DropdownButtonFormField<Language>(
+                initialValue: selectedLanguage,
+
+                onChanged: isBusy ? null : onLanguageChanged,
+                decoration: InputDecoration(
+                  labelText: context.translate('preferred_language'),
+                ),
+                items: context.translationService.supportedLanguages
+                    .map(
+                      (entry) => DropdownMenuItem(
+                        value: entry,
+                        child: Text(
+                          context.translate(
+                            profileLanguageTranslationKey(entry.code),
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
               ),
-              items: supportedProfileLanguageCodes
-                  .map(
-                    (code) => DropdownMenuItem(
-                      value: code,
-                      child: Text(profileLanguageLabel(code)),
-                    ),
-                  )
-                  .toList(),
-            ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'This preference is stored locally and synced to your account.',
+              context.translate('language_preference_sync_note'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -221,8 +251,8 @@ class _AccountCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subtitle = user == null
-        ? 'Signed in account details will appear here.'
-        : 'Manage your session and leave the account when you are done.';
+        ? context.translate('account_signed_out_subtitle')
+        : context.translate('account_signed_in_subtitle');
 
     return Card(
       child: Padding(
@@ -231,10 +261,10 @@ class _AccountCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Account',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              context.translate('account_title'),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
@@ -243,7 +273,7 @@ class _AccountCard extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: isBusy ? null : onLogout,
-                child: const Text('Logout'),
+                child: Text(context.translate('logout')),
               ),
             ),
           ],

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:peruse/core/localization/locale_ext.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/features/capture/domain/entities/label.dart';
 import 'package:peruse/features/capture/presentation/controller/capture_notifier.dart';
@@ -120,7 +121,9 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
   Widget build(BuildContext context) {
     final options = _options;
     final selected = _selectedOption;
-    final actionLabel = _returnsWordToCaller ? 'Use Word' : 'Save Word';
+    final actionLabel = _returnsWordToCaller
+        ? context.translate('use_word')
+        : context.translate('save_word');
     final canSave =
         !_saving && selected != null && _textController.text.trim().isNotEmpty;
     final preferredLanguage =
@@ -202,7 +205,7 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'DETECTED OBJECT',
+                                context.translate('detected_object'),
                                 style: Theme.of(context).textTheme.labelLarge
                                     ?.copyWith(
                                       color: AppColors.onSurfaceVariant,
@@ -257,19 +260,23 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                           Row(
                             children: [
                               Text(
-                                'Suggestions',
+                                context.translate('suggestions'),
                                 style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(fontWeight: FontWeight.w700),
                               ),
                               const SizedBox(width: 12),
-                              const _PoweredChip(label: 'ML KIT POWERED'),
+                              _PoweredChip(
+                                label: context.translate('ai_powered'),
+                              ),
                             ],
                           ),
                           const SizedBox(height: AppSpacing.md),
                           if (options.isEmpty)
-                            const Expanded(
+                            Expanded(
                               child: Center(
-                                child: Text('No suggestions available.'),
+                                child: Text(
+                                  context.translate('no_suggestions'),
+                                ),
                               ),
                             )
                           else
@@ -309,7 +316,9 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                                     ),
                                   ),
                                   child: Text(
-                                    _returnsWordToCaller ? 'Cancel' : 'Discard',
+                                    _returnsWordToCaller
+                                        ? context.translate('cancel')
+                                        : context.translate('discard'),
                                   ),
                                 ),
                               ),
@@ -417,7 +426,13 @@ class _SuggestionCard extends StatelessWidget {
                     Text(
                       showOnlyWord || option.translatedText == option.englishText
                           ? option.englishText
-                          : '${option.translatedText} -> ${option.englishText}',
+                          : context.translate(
+                              'suggestion_translation_pair',
+                              args: {
+                                'translated': option.translatedText,
+                                'english': option.englishText,
+                              },
+                            ),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -425,8 +440,8 @@ class _SuggestionCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       rank == 1
-                          ? 'Primary classification'
-                          : 'Alternative suggestion',
+                          ? context.translate('primary_classification')
+                          : context.translate('alternative_suggestion'),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.onSurfaceVariant,
                       ),
@@ -448,7 +463,7 @@ class _SuggestionCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Confidence',
+                    context.translate('confidence'),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: AppColors.onSurfaceVariant,
                     ),
@@ -513,7 +528,7 @@ class _ConfidenceBadge extends StatelessWidget {
             ),
           ),
           Text(
-            'Selected confidence',
+            context.translate('selected_confidence'),
             style: Theme.of(
               context,
             ).textTheme.labelSmall?.copyWith(color: AppColors.onSurfaceVariant),
