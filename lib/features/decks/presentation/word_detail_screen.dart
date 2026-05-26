@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:peruse/core/di/providers.dart';
+import 'package:peruse/core/localization/locale_ext.dart';
 import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/utils/assets.dart';
@@ -80,7 +80,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                       ),
                       Expanded(
                         child: Text(
-                          'Lumina Lexicon',
+                          context.translate('lumina_lexicon'),
                           style: context.textTheme.titleLarge?.copyWith(
                             color: AppColors.brandTitle,
                           ),
@@ -92,7 +92,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                   _WordHeroImage(imageUrl: state.word.imageUrl),
                   const SizedBox(height: AppSpacing.lg),
                   Text(
-                    'VOCABULARY ENTRY',
+                    context.translate('vocabulary_entry'),
                     style: context.textTheme.labelSmall?.copyWith(
                       letterSpacing: 1.4,
                       color: AppColors.primary,
@@ -122,8 +122,8 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                             ? AppColors.primary
                             : AppColors.onSurfaceVariant.withValues(alpha: 0.45),
                         tooltip: details?.audioUrl.trim().isNotEmpty == true
-                            ? 'Play audio'
-                            : 'No audio available',
+                            ? context.translate('play_audio')
+                            : context.translate('no_audio_available'),
                       ),
                     ],
                   ),
@@ -147,7 +147,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                             AppRoutes.editWord(widget.deckId, state.word.id),
                           ),
                           icon: const Icon(Icons.edit_rounded),
-                          label: const Text('Edit Word'),
+                          label: Text(context.translate('edit_word')),
                         ),
                       ),
                       const SizedBox(width: AppSpacing.sm),
@@ -158,18 +158,20 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                               context: context,
                               builder: (dialogContext) {
                                 return AlertDialog(
-                                  title: const Text('Delete word?'),
-                                  content: const Text(
-                                    'This removes the word from the current deck and queues the delete for sync.',
+                                  title: Text(
+                                    dialogContext.translate('delete_word_title'),
+                                  ),
+                                  content: Text(
+                                    dialogContext.translate('delete_word_message'),
                                   ),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.of(dialogContext).pop(false),
-                                      child: const Text('Cancel'),
+                                      child: Text(dialogContext.translate('cancel')),
                                     ),
                                     FilledButton(
                                       onPressed: () => Navigator.of(dialogContext).pop(true),
-                                      child: const Text('Delete'),
+                                      child: Text(dialogContext.translate('delete')),
                                     ),
                                   ],
                                 );
@@ -188,7 +190,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                             }
                           },
                           icon: const Icon(Icons.delete_outline_rounded),
-                          label: const Text('Delete Word'),
+                          label: Text(context.translate('delete_word')),
                         ),
                       ),
                     ],
@@ -199,7 +201,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const _SectionTitle(title: 'Definition'),
+                        _SectionTitle(title: context.translate('definition')),
                         const SizedBox(height: AppSpacing.sm),
                         Text(
                           state.definitionText,
@@ -226,7 +228,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
             debugPrint('Word detail load failed: $error');
             return Center(
               child: Text(
-                'We could not load this word right now.',
+                context.translate('word_load_error'),
                 style: context.textTheme.titleMedium,
                 textAlign: TextAlign.center,
               ),

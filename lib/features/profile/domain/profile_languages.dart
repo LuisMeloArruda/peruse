@@ -1,12 +1,21 @@
-const supportedProfileLanguageCodes = <String>['en', 'pt', 'es', 'fr'];
+import 'package:peruse/core/localization/app_base_translations.dart';
 
-const profileLanguageLabels = <String, String>{
-  'en': 'English',
-  'pt': 'Portuguese',
-  'es': 'Spanish',
-  'fr': 'French',
+const profileLanguageTranslationKeys = <String, String>{
+  'en': 'language_en',
+  'pt': 'language_pt',
+  'es': 'language_es',
+  'fr': 'language_fr',
 };
 
+String profileLanguageTranslationKey(String languageCode) {
+  return profileLanguageTranslationKeys[languageCode] ?? languageCode;
+}
+
+/// English display name for LLM prompts (not localized UI).
 String profileLanguageLabel(String languageCode) {
-  return profileLanguageLabels[languageCode] ?? languageCode.toUpperCase();
+  final key = profileLanguageTranslationKeys[languageCode];
+  if (key == null) {
+    return languageCode.toUpperCase();
+  }
+  return appBaseTranslations[key]!;
 }

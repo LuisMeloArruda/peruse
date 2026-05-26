@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:peruse/core/localization/locale_ext.dart';
 import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/widgets/peruse_sheet_card.dart';
@@ -28,7 +29,7 @@ class StudyHubScreen extends ConsumerWidget {
                   AppSpacing.lg,
                   AppSpacing.sm,
                 ),
-                child: const _StudyHeader(),
+                child: _StudyHeader(),
               ),
             ),
             SliverToBoxAdapter(
@@ -75,7 +76,7 @@ class StudyHubScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'How do you want to study?'.toUpperCase(),
+                      context.translate('how_to_study').toUpperCase(),
                       style: context.textTheme.labelSmall?.copyWith(
                         letterSpacing: 1.1,
                         color: AppColors.onSurfaceVariant,
@@ -83,7 +84,7 @@ class StudyHubScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      'Choose a mode',
+                      context.translate('choose_mode'),
                       style: context.textTheme.headlineSmall,
                     ),
                   ],
@@ -96,9 +97,8 @@ class StudyHubScreen extends ConsumerWidget {
                 delegate: SliverChildListDelegate(
                   [
                     _ModeCard(
-                      title: 'Flashcards',
-                      subtitle:
-                          'Visual association training. See the image, recall the word.',
+                      title: context.translate('flashcards_title'),
+                      subtitle: context.translate('flashcards_subtitle'),
                       icon: Icons.auto_awesome,
                       onTap: () => _startFlashcards(
                         context,
@@ -110,8 +110,8 @@ class StudyHubScreen extends ConsumerWidget {
                     ),
                     SizedBox(height: AppSpacing.md),
                     _ModeCard(
-                      title: 'Quiz',
-                      subtitle: 'Multiple choice to test recognition speed.',
+                      title: context.translate('quiz_title'),
+                      subtitle: context.translate('quiz_subtitle'),
                       icon: Icons.quiz_outlined,
                       onTap: () => _showModeComingSoon(context),
                       accent: Color(0xFF1E5EFF),
@@ -119,10 +119,10 @@ class StudyHubScreen extends ConsumerWidget {
                     ),
                     SizedBox(height: AppSpacing.md),
                     _ModeCard(
-                      title: 'Write It',
-                      subtitle: 'Type the translation from memory.',
+                      title: context.translate('write_it_title'),
+                      subtitle: context.translate('write_it_subtitle'),
                       icon: Icons.edit_note,
-                      badge: 'EXPERT MODE',
+                      badge: context.translate('expert_mode_badge'),
                       onTap: () => _showModeComingSoon(context),
                       accent: Color(0xFFF9B233),
                       gradient: [Color(0xFFFFF3D6), Color(0xFFFFFFFF)],
@@ -150,7 +150,7 @@ class StudyHubScreen extends ConsumerWidget {
 
 void _showModeComingSoon(BuildContext context) {
   ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Coming soon.')),
+    SnackBar(content: Text(context.translate('coming_soon'))),
   );
 }
 
@@ -161,7 +161,7 @@ Future<void> _startFlashcards(
 ) async {
   if (deckId == null || deckId.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Select a deck to start.')),
+      SnackBar(content: Text(context.translate('select_deck_to_start'))),
     );
     return;
   }
@@ -172,12 +172,10 @@ Future<void> _startFlashcards(
 }
 
 class _StudyHeader extends StatelessWidget {
-  const _StudyHeader();
-
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Study',
+      context.translate('study_title'),
       style: context.textTheme.titleLarge?.copyWith(
         color: AppColors.brandTitle,
       ),
@@ -202,7 +200,7 @@ class _FocusDropdown extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Current Focus'.toUpperCase(),
+          context.translate('current_focus').toUpperCase(),
           style: context.textTheme.labelSmall?.copyWith(
             letterSpacing: 1.1,
             color: AppColors.onSurfaceVariant,
@@ -220,7 +218,7 @@ class _FocusDropdown extends StatelessWidget {
               isExpanded: true,
               value: activeDeckId,
               hint: Text(
-                'Select a deck',
+                context.translate('select_deck_hint'),
                 style: context.textTheme.bodyMedium,
               ),
               icon: const Icon(Icons.keyboard_arrow_down_rounded),
@@ -260,7 +258,10 @@ class _FocusLoading extends StatelessWidget {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
           const SizedBox(width: AppSpacing.sm),
-          Text('Loading decks...', style: context.textTheme.bodyMedium),
+          Text(
+            context.translate('loading_decks'),
+            style: context.textTheme.bodyMedium,
+          ),
         ],
       ),
     );
@@ -278,7 +279,7 @@ class _FocusError extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       radius: AppRadius.xl,
       child: Text(
-        'Decks unavailable: $message',
+        context.translate('decks_unavailable', args: {'message': message}),
         style: context.textTheme.bodyMedium,
       ),
     );

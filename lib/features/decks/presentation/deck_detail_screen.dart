@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:peruse/core/di/providers.dart';
+import 'package:peruse/core/localization/locale_ext.dart';
 import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/utils/assets.dart';
@@ -48,7 +49,7 @@ class DeckDetailScreen extends ConsumerWidget {
                   AppSpacing.lg,
                 ),
                 child: _DeckHeader(
-                  title: state.deck?.name ?? 'Deck',
+                  title: state.deck?.name ?? context.translate('deck_fallback_title'),
                   onBack: () => context.pop(),
                 ),
               ),
@@ -73,18 +74,20 @@ class DeckDetailScreen extends ConsumerWidget {
                             context: context,
                             builder: (dialogContext) {
                               return AlertDialog(
-                                title: const Text('Delete deck?'),
-                                content: const Text(
-                                  'This will remove the deck and queue the delete for sync.',
+                                title: Text(
+                                  dialogContext.translate('delete_deck_title'),
+                                ),
+                                content: Text(
+                                  dialogContext.translate('delete_deck_message'),
                                 ),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.of(dialogContext).pop(false),
-                                    child: const Text('Cancel'),
+                                    child: Text(dialogContext.translate('cancel')),
                                   ),
                                   FilledButton(
                                     onPressed: () => Navigator.of(dialogContext).pop(true),
-                                    child: const Text('Delete'),
+                                    child: Text(dialogContext.translate('delete')),
                                   ),
                                 ],
                               );
@@ -114,7 +117,7 @@ class DeckDetailScreen extends ConsumerWidget {
                   AppSpacing.sm,
                 ),
                 child: Text(
-                  'Word Library',
+                  context.translate('word_library'),
                   style: context.textTheme.headlineMedium,
                 ),
               ),
@@ -123,7 +126,7 @@ class DeckDetailScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: PeruseTextField(
-                  hintText: 'Search in deck...',
+                  hintText: context.translate('search_in_deck_hint'),
                   prefixIcon: const Icon(Icons.search),
                   onChanged: (value) => ref
                       .read(deckDetailProvider(deckId).notifier)
@@ -216,13 +219,16 @@ class _DeckSummary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Daily Vocabulary', style: context.textTheme.headlineSmall),
+          Text(
+            context.translate('daily_vocabulary'),
+            style: context.textTheme.headlineSmall,
+          ),
           const SizedBox(height: AppSpacing.md),
           SizedBox(
             width: double.infinity,
             child: PeruseStatBentoCard(
               value: '$wordCount',
-              label: 'Words',
+              label: context.translate('words_label'),
               variant: PeruseStatBentoVariant.muted,
               minHeight: 96,
             ),
@@ -232,7 +238,7 @@ class _DeckSummary extends StatelessWidget {
             width: double.infinity,
             child: PeruseStatBentoCard(
               value: '${(avgMastery * 100).round()}%',
-              label: 'Avg. Mastery',
+              label: context.translate('avg_mastery_label'),
               variant: PeruseStatBentoVariant.primary,
               minHeight: 96,
             ),
@@ -240,7 +246,7 @@ class _DeckSummary extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           if (bio != null && bio!.trim().isNotEmpty) ...[
             Text(
-              'About this deck',
+              context.translate('about_this_deck'),
               style: context.textTheme.labelMedium?.copyWith(
                 color: AppColors.onSurfaceVariant,
                 letterSpacing: 0.3,
@@ -262,7 +268,7 @@ class _DeckSummary extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onEditDeck,
                   icon: const Icon(Icons.edit_rounded),
-                  label: const Text('Edit'),
+                  label: Text(context.translate('edit')),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -270,7 +276,7 @@ class _DeckSummary extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onDeleteDeck == null ? null : () => onDeleteDeck!(),
                   icon: const Icon(Icons.delete_outline_rounded),
-                  label: const Text('Delete'),
+                  label: Text(context.translate('delete')),
                 ),
               ),
             ],
@@ -280,14 +286,14 @@ class _DeckSummary extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: onStudyNow,
               icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Study Now'),
+              label: Text(context.translate('study_now')),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
           OutlinedButton.icon(
             onPressed: onAddWord,
             icon: const Icon(Icons.add_circle_outline),
-            label: const Text('Add Word'),
+            label: Text(context.translate('add_word')),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.onSurface,
               minimumSize: const Size.fromHeight(48),

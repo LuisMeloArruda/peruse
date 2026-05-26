@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:peruse/core/localization/locale_ext.dart';
 import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/features/auth/presentation/controller/auth_notifier.dart';
 import 'package:peruse/features/auth/presentation/login_screen.dart';
@@ -189,8 +190,10 @@ GoRouter router(Ref ref) {
             return CaptureResultScreen(reviewData: capture);
           }
 
-          return const Scaffold(
-            body: Center(child: Text('No capture data available.')),
+          return Scaffold(
+            body: Center(
+              child: Text(context.translate('no_capture_data')),
+            ),
           );
         },
       ),

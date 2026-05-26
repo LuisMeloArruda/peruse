@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:peruse/core/localization/locale_ext.dart';
 import 'package:peruse/core/router/router.dart';
 import 'package:peruse/core/router/routes.dart';
 import 'package:peruse/core/theme/theme.dart';
@@ -158,7 +159,9 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
       if (audioUrl.isEmpty) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No audio is available for this card.')),
+          SnackBar(
+            content: Text(context.translate('no_audio_for_card')),
+          ),
         );
         return;
       }
@@ -168,7 +171,11 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Audio playback failed: $error')),
+        SnackBar(
+          content: Text(
+            context.translate('audio_playback_failed', args: {'error': '$error'}),
+          ),
+        ),
       );
     }
   }
@@ -182,18 +189,16 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Delete word?'),
-          content: const Text(
-            'This removes the word from the current deck and queues the delete for sync.',
-          ),
+          title: Text(dialogContext.translate('delete_word_title')),
+          content: Text(dialogContext.translate('delete_word_message')),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: Text(dialogContext.translate('cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Delete'),
+              child: Text(dialogContext.translate('delete')),
             ),
           ],
         );
@@ -217,7 +222,8 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
     final sessionState = ref.watch(studySessionProvider);
     final flashcardNotifier = ref.read(flashcardStudyProvider(widget.deckId).notifier);
 
-    final deckName = deckState.deck?.name ?? 'Study Session';
+    final deckName =
+        deckState.deck?.name ?? context.translate('study_session_fallback');
     final currentCard = flashcardState.currentCard;
     final currentAudioUrl = currentCard == null
       ? null
@@ -228,10 +234,9 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
     final currentCount = totalCount == 0 ? 0 : math.min(sessionState.currentIndex + 1, totalCount);
     final progressValue = totalCount == 0 ? 0.0 : currentCount / totalCount;
 
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      onPopInvokedWithResult: (_,_) async {
         _requestEndSession();
-        return true;
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFF6F4EF),
@@ -275,7 +280,7 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'CURRENT DECK',
+                                          context.translate('current_deck'),
                                           style: Theme.of(context)
                                               .textTheme
                                               .labelSmall
@@ -386,19 +391,21 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
                                       icon: hasAudio
                                           ? Icons.volume_up_rounded
                                           : Icons.volume_off_rounded,
-                                      label: hasAudio ? 'Audio' : 'No Audio',
+                                      label: hasAudio
+                                          ? context.translate('audio')
+                                          : context.translate('no_audio'),
                                       enabled: hasAudio,
                                       onTap: () => _playAudio(currentCard),
                                     ),
                                     _MiniAction(
                                       icon: Icons.edit_rounded,
-                                      label: 'Edit',
+                                      label: context.translate('edit'),
                                       enabled: true,
                                       onTap: () => _editCurrentCard(currentCard),
                                     ),
                                     _MiniAction(
                                       icon: Icons.delete_outline_rounded,
-                                      label: 'Delete',
+                                      label: context.translate('delete'),
                                       enabled: true,
                                       onTap: () => _deleteCurrentCard(currentCard),
                                     ),
@@ -413,7 +420,7 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
                             children: [
                               Expanded(
                                 child: _ActionButton(
-                                  label: 'TRY AGAIN',
+                                  label: context.translate('try_again_action'),
                                   icon: Icons.close_rounded,
                                   backgroundColor: const Color(0xFFE2E6E4),
                                   foregroundColor: const Color(0xFFC7351D),
@@ -426,7 +433,7 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
                               const SizedBox(width: AppSpacing.md),
                               Expanded(
                                 child: _ActionButton(
-                                  label: 'GOT IT',
+                                  label: context.translate('got_it'),
                                   icon: Icons.check_rounded,
                                   backgroundColor: const Color(0xFF53D769),
                                   foregroundColor: Colors.white,
@@ -507,7 +514,7 @@ class _FlashcardCard extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.max,
                       children: [
                         Text(
-                          'ANSWER',
+                          context.translate('answer'),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.labelLarge?.copyWith(
                                 letterSpacing: 1.6,
@@ -525,7 +532,9 @@ class _FlashcardCard extends ConsumerWidget {
                             final originalBackText = card.backText?.trim();
                             final hasBackText = originalBackText?.isNotEmpty == true;
                             final fallbackText =
-                                hasBackText ? originalBackText! : 'No back text yet.';
+                                hasBackText
+                                    ? originalBackText!
+                                    : context.translate('no_back_text_yet');
 
                             final textStyle = Theme.of(context)
                                 .textTheme
@@ -617,7 +626,7 @@ class _FlashcardCard extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.max,
                       children: [
                         Text(
-                          'VISUAL PROMPT',
+                          context.translate('visual_prompt'),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.labelLarge?.copyWith(
                                 letterSpacing: 1.6,
@@ -631,7 +640,7 @@ class _FlashcardCard extends ConsumerWidget {
                               child: Text(
                                 card.frontText?.isNotEmpty == true
                                     ? card.frontText!
-                                    : 'Untitled card',
+                                    : context.translate('untitled_card'),
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.displaySmall?.copyWith(
                                       fontSize: 34,
@@ -644,7 +653,7 @@ class _FlashcardCard extends ConsumerWidget {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Tap to flip',
+                          context.translate('tap_to_flip'),
                           style: Theme.of(context).textTheme.labelMedium?.copyWith(
                                 color: AppColors.onSurfaceVariant,
                               ),
@@ -765,13 +774,15 @@ class _ActionButton extends StatelessWidget {
             children: [
               Icon(icon, color: foregroundColor),
               const SizedBox(width: 10),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: foregroundColor,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.1,
-                    ),
+              Flexible(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: foregroundColor,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
+                      ),
+                ),
               ),
             ],
           ),
@@ -847,12 +858,15 @@ class _CompletionState extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'You finished this round. Congratulations!',
+            context.translate('round_complete'),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: AppSpacing.lg),
-          OutlinedButton(onPressed: onBack, child: const Text('Back')),
+          OutlinedButton(
+            onPressed: onBack,
+            child: Text(context.translate('back')),
+          ),
         ],
       ),
     );

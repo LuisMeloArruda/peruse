@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:peruse/core/di/providers.dart';
+import 'package:peruse/core/localization/app_base_translations.dart';
 import 'package:peruse/core/llm/models/llm_request.dart';
 import 'package:peruse/core/llm/provider/llm_providers.dart';
 import 'package:peruse/features/decks/domain/entities/word.dart';
@@ -120,7 +121,7 @@ class WordDetailNotifier extends _$WordDetailNotifier {
     String preferredLanguageCode,
   ) async {
     if (details == null) {
-      return 'No definition available yet.';
+      return appBaseTranslations['no_definition_available_yet']!;
     }
 
     if (preferredLanguageCode == 'en') {

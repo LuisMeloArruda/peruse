@@ -17,18 +17,29 @@ class LlmTranslationService {
 
   Future<TranslationOutput> translate(LlmRequest request) async {
     try {
+      log("LOG::${request.input.toString()}\n${request.sourceLanguage}\n${request.targetLanguage}",name: "request data");
       final response = await _ai.generate(
-        model: googleAI.gemini('gemini-2.5-flash'),
+        model: googleAI.gemini('gemini-3.5-flash'),
         messages: [
           Message(
             role: Role.system,
             content: [
               TextPart(
                 text:
-                    'You are a professional translator. '
-                    'Translate the user\'s text into ${request.targetLanguage}. '
-                    'Always detect the source language and set targetLanguage to "${request.targetLanguage}". '
-                    'Respond only with the structured JSON — no explanations.',
+                    'You are a professional translator for a language-learning app.\n\n'
+                    'Translate each term in the user message from ${request.sourceLanguage} '
+                    'into ${request.targetLanguage}.\n\n'
+                    'Output rules:\n'
+                    '- translatedTexts: map every input term to its translation. '
+                    'Keys must match the original term exactly (same spelling and casing). '
+                    'Do not omit, merge, split, or invent keys.\n'
+                    '- sourceLanguage: detected input language (use "${request.sourceLanguage}" '
+                    'when the input is in that language).\n'
+                    '- targetLanguage: always "${request.targetLanguage}".\n\n'
+                    'Quality:\n'
+                    '- Use natural, concise wording suitable for vocabulary flashcards.\n'
+                    '- For ambiguous labels (e.g. image tags), prefer the most common everyday meaning.\n'
+                    '- Preserve proper nouns and untranslatable terms when appropriate.',
               ),
             ],
           ),
@@ -50,7 +61,7 @@ class LlmTranslationService {
       }
 
       log(
-        'Translated "${request.input}" → "${output.translatedTexts.values.join(', ')}"',
+        'Translated "${request.input}" → "${output.toString()}"',
         name: 'LlmTranslationService',
       );
 
