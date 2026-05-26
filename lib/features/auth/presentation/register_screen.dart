@@ -76,67 +76,87 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(context.translate('register_title'))),
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+            final minContentHeight =
+                constraints.maxHeight - (AppSpacing.lg * 2) - bottomInset;
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg + bottomInset,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: minContentHeight < 0 ? 0 : minContentHeight,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
               context.translate('join_peruse'),
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
               context.translate('register_subtitle'),
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            PeruseTextField(
-              controller: _emailController,
-              labelText: context.translate('email_address_label'),
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    PeruseTextField(
+                      controller: _emailController,
+                        labelText: context.translate('email_address_label'),
               hintText: context.translate('email_hint'),
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              autofillHints: const [AutofillHints.email],
-              prefixIcon: Icon(
-                Icons.mail_outlined,
-                size: 20,
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.formFieldGap),
-            PeruseTextField(
-              controller: _passwordController,
-              labelText: context.translate('password_label'),
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.email],
+                      prefixIcon: Icon(
+                        Icons.mail_outlined,
+                        size: 20,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.formFieldGap),
+                    PeruseTextField(
+                      controller: _passwordController,
+               labelText: context.translate('password_label'),
               hintText: context.translate('password_hint'),
-              obscureText: true,
-              textInputAction: TextInputAction.done,
-              autofillHints: const [AutofillHints.newPassword],
-              prefixIcon: Icon(
-                Icons.lock_outline_rounded,
-                size: 20,
-                color: AppColors.onSurfaceVariant,
+                      obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [AutofillHints.newPassword],
+                      prefixIcon: Icon(
+                        Icons.lock_outline_rounded,
+                        size: 20,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: authAction.isLoading
+                            ? null
+                            : () {
+                                ref
+                                    .read(authControllerProvider.notifier)
+                                    .register(
+                                      _emailController.text.trim(),
+                                      _passwordController.text.trim(),
+                                    );
+                              },
+                        child: Text(context.translate('register'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: authAction.isLoading
-                    ? null
-                    : () {
-                        ref
-                            .read(authControllerProvider.notifier)
-                            .register(
-                              _emailController.text.trim(),
-                              _passwordController.text.trim(),
-                            );
-                      },
-                child: Text(context.translate('register')),
-              ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
