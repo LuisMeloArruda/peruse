@@ -144,6 +144,7 @@ const Map<String, String> appBaseTranslations = {
   'word_label': 'Word',
   'word_hint': 'e.g. Flight',
   'capture_word_tooltip': 'Capture word',
+    'pick_word_image': 'Choose from gallery',
   'save_word': 'Save Word',
   'update_word': 'Update Word',
 

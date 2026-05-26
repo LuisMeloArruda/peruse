@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:peruse/core/localization/locale_ext.dart';
 import 'package:peruse/core/router/routes.dart';
@@ -10,6 +12,7 @@ import 'package:peruse/features/decks/domain/entities/word.dart';
 import 'package:peruse/features/decks/data/repositories/deck_repository_impl.dart';
 import 'package:peruse/features/capture/presentation/controller/capture_screen_notifier.dart';
 import 'package:peruse/features/decks/presentation/controller/deck_detail_notifier.dart';
+import 'package:peruse/features/decks/presentation/controller/word_detail_notifier.dart';
 
 class AddWordScreen extends ConsumerStatefulWidget {
   const AddWordScreen({super.key, required this.deckId, this.wordId});
@@ -23,6 +26,7 @@ class AddWordScreen extends ConsumerStatefulWidget {
 
 class _AddWordScreenState extends ConsumerState<AddWordScreen> {
   final _wordController = TextEditingController();
+  final _imagePicker = ImagePicker();
   String? _imagePath;
   AppWord? _existingWord;
   bool _isLoadingWord = false;
@@ -55,6 +59,34 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
     _wordController.selection = TextSelection.collapsed(
       offset: _wordController.text.length,
     );
+  }
+
+  Future<void> _pickWordImage() async {
+    final permission = await Permission.photos.request();
+    if (!permission.isGranted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.translate('photo_library_permission')),
+          ),
+        );
+      }
+      return;
+    }
+
+    final image = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1600,
+    );
+
+    if (!mounted || image == null) {
+      return;
+    }
+
+    setState(() {
+      _imagePath = image.path;
+    });
   }
 
   @override
@@ -120,6 +152,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
 
     try {
       final repository = ref.read(deckRepositoryProvider);
+      final isUpdate = _existingWord != null;
       if (_existingWord == null) {
         await ref
             .read(deckDetailProvider(widget.deckId).notifier)
@@ -135,9 +168,17 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
             createdAt: _existingWord!.createdAt,
           ),
         );
+        ref.invalidate(wordDetailProvider(_existingWord!.id));
+        ref.invalidate(deckDetailProvider(widget.deckId));
       }
       if (mounted) {
-        context.pop();
+        if (isUpdate) {
+          context.go(
+            AppRoutes.wordDetail(widget.deckId, _existingWord!.id),
+          );
+        } else {
+          context.pop();
+        }
       }
     } catch (e) {
       debugPrint('Add word failed: $e');
@@ -180,11 +221,22 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
                 hintText: context.translate('word_hint'),
                 textInputAction: TextInputAction.done,
                 onFieldSubmitted: (_) => _saveWord(),
-                suffixIcon: IconButton(
-                  onPressed: _captureWord,
-                  icon: const Icon(Icons.photo_camera_outlined),
-                  color: AppColors.onSurfaceVariant,
-                  tooltip: context.translate('capture_word_tooltip'),
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: _captureWord,
+                      icon: const Icon(Icons.photo_camera_outlined),
+                      color: AppColors.onSurfaceVariant,
+                      tooltip: context.translate('capture_word_tooltip'),
+                    ),
+                    IconButton(
+                      onPressed: _pickWordImage,
+                      icon: const Icon(Icons.photo_library_outlined),
+                      color: AppColors.onSurfaceVariant,
+                      tooltip: context.translate('pick_word_image'),
+                    ),
+                  ],
                 ),
               ),
               const Spacer(),

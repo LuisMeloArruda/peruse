@@ -188,43 +188,6 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
     }
   }
 
-  Future<void> _editCurrentCard(AppFlashcard card) async {
-    await context.push(AppRoutes.editWord(widget.deckId, card.wordId));
-  }
-
-  Future<void> _deleteCurrentCard(AppFlashcard card) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(dialogContext.translate('delete_word_title')),
-          content: Text(dialogContext.translate('delete_word_message')),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(dialogContext.translate('cancel')),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(dialogContext.translate('delete')),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldDelete != true) {
-      return;
-    }
-
-    await ref
-        .read(deckRepositoryProvider)
-        .removeWordFromDeck(widget.deckId, card.wordId);
-    if (mounted) {
-      context.go(AppRoutes.deckDetail(widget.deckId));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final deckState = ref.watch(deckDetailProvider(widget.deckId));
@@ -400,8 +363,6 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
                                         hasAudio: hasAudio,
                                         onAudioTap: () =>
                                             _playAudio(currentCard),
-                                        onEditTap: () =>
-                                            _editCurrentCard(currentCard),
                                       ),
                                     ),
                                   ),
@@ -424,19 +385,6 @@ class _FlashcardStudyScreenState extends ConsumerState<FlashcardStudyScreen>
                                         : context.translate('no_audio'),
                                     enabled: hasAudio,
                                     onTap: () => _playAudio(currentCard),
-                                  ),
-                                  _MiniAction(
-                                    icon: Icons.edit_rounded,
-                                    label: context.translate('edit'),
-                                    enabled: true,
-                                    onTap: () => _editCurrentCard(currentCard),
-                                  ),
-                                  _MiniAction(
-                                    icon: Icons.delete_outline_rounded,
-                                    label: context.translate('delete'),
-                                    enabled: true,
-                                    onTap: () =>
-                                        _deleteCurrentCard(currentCard),
                                   ),
                                 ],
                               ),
@@ -491,14 +439,12 @@ class _FlashcardCard extends ConsumerWidget {
     required this.isFlipped,
     required this.hasAudio,
     required this.onAudioTap,
-    required this.onEditTap,
   });
 
   final AppFlashcard card;
   final bool isFlipped;
   final bool hasAudio;
   final VoidCallback onAudioTap;
-  final VoidCallback onEditTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
