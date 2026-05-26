@@ -10,6 +10,7 @@ import 'package:peruse/core/presentation/splash_screen.dart';
 import 'package:peruse/core/router/router.dart';
 import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/features/capture/presentation/controller/capture_sync_coordinator.dart';
+import 'package:peruse/features/decks/presentation/controller/deck_sync_coordinator.dart';
 import 'package:peruse/features/flashcards/presentation/controller/flashcard_sync_coordinator.dart';
 import 'package:peruse/features/profile/presentation/controller/profile_notifier.dart';
 import 'package:peruse/features/profile/presentation/controller/profile_sync_coordinator.dart';
@@ -65,6 +66,7 @@ class _PeruseApp extends ConsumerWidget {
     });
 
     ref.watch(captureSyncCoordinatorProvider);
+    ref.watch(deckSyncCoordinatorProvider);
     ref.watch(flashcardSyncCoordinatorProvider);
     ref.watch(profileSyncCoordinatorProvider);
     ref.watch(studySyncCoordinatorProvider);
