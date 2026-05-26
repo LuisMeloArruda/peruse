@@ -69,6 +69,17 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   @override
+  Future<void> deleteAccount() async {
+    final response = await _client.functions.invoke('delete-account');
+    final data = response.data;
+    if (data is Map && data['error'] != null) {
+      throw Exception(data['error']);
+    }
+
+    await signOut();
+  }
+
+  @override
   Stream<AppUser?> get authStateChanges =>
       _client.auth.onAuthStateChange.map((data) {
         final user = data.session?.user;

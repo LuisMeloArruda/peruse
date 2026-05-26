@@ -73,6 +73,15 @@ class AuthController extends _$AuthController {
     });
   }
 
+  Future<void> deleteAccount() async {
+    state = const AsyncValue.loading();
+
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(authRepositoryProvider);
+      await repository.deleteAccount();
+    });
+  }
+
   Future<void> loginWithGoogle() async {
     state = const AsyncValue.loading();
 

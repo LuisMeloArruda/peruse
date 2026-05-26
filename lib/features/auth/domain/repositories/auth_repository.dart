@@ -9,6 +9,8 @@ abstract interface class IAuthRepository {
 
   Future<void> signOut();
 
+  Future<void> deleteAccount();
+
   Stream<AppUser?> get authStateChanges;
 
   AppUser? get currentUser;

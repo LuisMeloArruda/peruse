@@ -47,6 +47,20 @@ const Map<String, String> appBaseTranslations = {
   'account_signed_in_subtitle':
       'Manage your session and leave the account when you are done.',
   'logout': 'Logout',
+  'delete_account': 'Delete account',
+  'delete_account_title': 'Delete account?',
+  'delete_account_message':
+      'This permanently removes your account and all associated data.',
+  'data_collection_title': 'Data collection',
+  'data_collection_description':
+      'We collect and process the following categories to provide the service:',
+  'data_collection_item_flashcards':
+      'Flashcard activity (answers, accuracy, timing).',
+  'data_collection_item_decks':
+      'Deck management activity (creation, edits, organization).',
+  'data_collection_item_words': 'Word entries, edits, and study metadata.',
+  'data_collection_item_user_details':
+      'Account profile information and language preferences.',
   'language_en': 'English',
   'language_pt': 'Portuguese',
   'language_es': 'Spanish',

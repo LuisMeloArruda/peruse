@@ -59,7 +59,57 @@ class ProfileScreen extends HookConsumerWidget {
                 onLogout: authAction.isLoading
                     ? null
                     : () => ref.read(authControllerProvider.notifier).logout(),
+                onDeleteAccount: authAction.isLoading || user == null
+                    ? null
+                    : () async {
+                        final shouldDelete = await showDialog<bool>(
+                          context: context,
+                          builder: (dialogContext) {
+                            return AlertDialog(
+                              title: Text(
+                                dialogContext.translate('delete_account_title'),
+                              ),
+                              content: Text(
+                                dialogContext.translate(
+                                  'delete_account_message',
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(dialogContext).pop(false),
+                                  child: Text(
+                                    dialogContext.translate('cancel'),
+                                  ),
+                                ),
+                                FilledButton(
+                                  onPressed: () =>
+                                      Navigator.of(dialogContext).pop(true),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: Theme.of(
+                                      dialogContext,
+                                    ).colorScheme.error,
+                                  ),
+                                  child: Text(
+                                    dialogContext.translate('delete_account'),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                        if (shouldDelete != true) {
+                          return;
+                        }
+
+                        await ref
+                            .read(authControllerProvider.notifier)
+                            .deleteAccount();
+                      },
               ),
+              const SizedBox(height: AppSpacing.lg),
+              const _DataCollectionCard(),
             ],
           ),
         ),
@@ -236,16 +286,77 @@ class _LanguageCard extends StatelessWidget {
   }
 }
 
+class _DataCollectionCard extends StatelessWidget {
+  const _DataCollectionCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      context.translate('data_collection_item_flashcards'),
+      context.translate('data_collection_item_decks'),
+      context.translate('data_collection_item_words'),
+      context.translate('data_collection_item_user_details'),
+    ];
+
+    return Card(
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm,
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          0,
+          AppSpacing.lg,
+          AppSpacing.lg,
+        ),
+        title: Text(
+          context.translate('data_collection_title'),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Text(
+          context.translate('data_collection_description'),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+        children: [
+          for (final item in items)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('- ', style: Theme.of(context).textTheme.bodyMedium),
+                  Expanded(
+                    child: Text(
+                      item,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _AccountCard extends StatelessWidget {
   const _AccountCard({
     required this.user,
     required this.isBusy,
     required this.onLogout,
+    required this.onDeleteAccount,
   });
 
   final AppUser? user;
   final bool isBusy;
   final VoidCallback? onLogout;
+  final VoidCallback? onDeleteAccount;
 
   @override
   Widget build(BuildContext context) {
@@ -273,6 +384,17 @@ class _AccountCard extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: isBusy ? null : onLogout,
                 child: Text(context.translate('logout')),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: isBusy ? null : onDeleteAccount,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
+                child: Text(context.translate('delete_account')),
               ),
             ),
           ],
