@@ -12,9 +12,7 @@ class FlashcardsDao extends DatabaseAccessor<AppDatabase>
 
   Stream<List<LocalFlashcard>> watchFlashcardsForDeck(String deckId) {
     return (select(flashcardsTable)
-          ..where(
-            (t) => t.deckId.equals(deckId) & t.isDeleted.equals(false),
-          )
+          ..where((t) => t.deckId.equals(deckId) & t.isDeleted.equals(false))
           ..orderBy([
             (t) => OrderingTerm.asc(t.position),
             (t) => OrderingTerm.asc(t.createdAt),
@@ -24,9 +22,7 @@ class FlashcardsDao extends DatabaseAccessor<AppDatabase>
 
   Future<List<LocalFlashcard>> getFlashcardsForDeck(String deckId) {
     return (select(flashcardsTable)
-          ..where(
-            (t) => t.deckId.equals(deckId) & t.isDeleted.equals(false),
-          )
+          ..where((t) => t.deckId.equals(deckId) & t.isDeleted.equals(false))
           ..orderBy([
             (t) => OrderingTerm.asc(t.position),
             (t) => OrderingTerm.asc(t.createdAt),
@@ -35,28 +31,30 @@ class FlashcardsDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<LocalFlashcard?> getFlashcardById(String id) {
-    return (select(flashcardsTable)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (select(
+      flashcardsTable,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   Future<List<LocalFlashcard>> getFlashcardsByWordId(String wordId) {
-    return (select(flashcardsTable)..where((t) => t.wordId.equals(wordId)))
-        .get();
+    return (select(
+      flashcardsTable,
+    )..where((t) => t.wordId.equals(wordId))).get();
   }
 
   Future<List<LocalFlashcard>> getFlashcardsForDeckAndWord(
     String deckId,
     String wordId,
   ) {
-    return (select(flashcardsTable)
-          ..where(
-            (t) => t.deckId.equals(deckId) & t.wordId.equals(wordId),
-          ))
-        .get();
+    return (select(
+      flashcardsTable,
+    )..where((t) => t.deckId.equals(deckId) & t.wordId.equals(wordId))).get();
   }
 
   Future<List<LocalFlashcard>> getUnsyncedFlashcards() {
-    return (select(flashcardsTable)..where((t) => t.synced.equals(false))).get();
+    return (select(
+      flashcardsTable,
+    )..where((t) => t.synced.equals(false))).get();
   }
 
   Future<void> upsertFlashcards(

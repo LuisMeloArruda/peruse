@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:peruse/core/theme/theme.dart';
 
 class StudyContributionGrid extends StatelessWidget {
-  const StudyContributionGrid({
-    super.key,
-    required this.contributions,
-  });
+  const StudyContributionGrid({super.key, required this.contributions});
 
   final Map<DateTime, int> contributions;
 
@@ -18,8 +15,11 @@ class StudyContributionGrid extends StatelessWidget {
     const spacing = 6.0;
 
     final today = DateTime.now();
-    final start = DateTime(today.year, today.month, today.day)
-        .subtract(const Duration(days: 83));
+    final start = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).subtract(const Duration(days: 83));
     final dates = List<DateTime>.generate(
       columns * rows,
       (index) => start.add(Duration(days: index)),

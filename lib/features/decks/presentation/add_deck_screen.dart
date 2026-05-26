@@ -41,11 +41,15 @@ class _AddDeckScreenState extends ConsumerState<AddDeckScreen> {
     _nameController.text = deck.name;
     _bioController.text = deck.bio ?? '';
     _coverImagePath = deck.coverImageUrl;
-    _selectedColorIndex = _colorOptions.indexWhere((option) => option.value == deck.color);
+    _selectedColorIndex = _colorOptions.indexWhere(
+      (option) => option.value == deck.color,
+    );
     if (_selectedColorIndex < 0) {
       _selectedColorIndex = 0;
     }
-    _selectedIconIndex = _iconOptions.indexWhere((option) => option.key == deck.icon);
+    _selectedIconIndex = _iconOptions.indexWhere(
+      (option) => option.key == deck.icon,
+    );
     if (_selectedIconIndex < 0) {
       _selectedIconIndex = 0;
     }

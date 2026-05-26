@@ -45,7 +45,7 @@ class DecksNotifier extends _$DecksNotifier {
     final repository = ref.read(deckRepositoryProvider);
     await repository.createDeck(deck);
   }
-  
+
   Future<void> updateDeck({
     required String id,
     required String name,
@@ -57,12 +57,12 @@ class DecksNotifier extends _$DecksNotifier {
   }) async {
     final authRepository = ref.read(authRepositoryProvider);
     final user = authRepository.currentUser;
-    
+
     if (user == null) {
       debugPrint('Update deck aborted: no authenticated user.');
       return;
     }
-    
+
     final deck = AppDeck(
       id: id,
       name: name.trim(),
@@ -73,7 +73,7 @@ class DecksNotifier extends _$DecksNotifier {
       coverImageUrl: coverImageUrl,
       createdAt: createdAt,
     );
-    
+
     final repository = ref.read(deckRepositoryProvider);
     await repository.updateDeck(deck);
   }

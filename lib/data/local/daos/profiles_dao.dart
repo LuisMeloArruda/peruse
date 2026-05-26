@@ -6,24 +6,26 @@ import 'package:peruse/data/local/tables/profiles_table.dart';
 part 'profiles_dao.g.dart';
 
 @DriftAccessor(tables: [ProfilesTable])
-class ProfilesDao extends DatabaseAccessor<AppDatabase> with _$ProfilesDaoMixin {
+class ProfilesDao extends DatabaseAccessor<AppDatabase>
+    with _$ProfilesDaoMixin {
   ProfilesDao(super.db);
 
   Stream<LocalProfile?> watchProfileByUserId(String userId) {
-    return (select(profilesTable)..where((t) => t.userId.equals(userId)))
-        .watchSingleOrNull();
+    return (select(
+      profilesTable,
+    )..where((t) => t.userId.equals(userId))).watchSingleOrNull();
   }
 
   Future<LocalProfile?> getProfileByUserId(String userId) {
-    return (select(profilesTable)..where((t) => t.userId.equals(userId)))
-        .getSingleOrNull();
+    return (select(
+      profilesTable,
+    )..where((t) => t.userId.equals(userId))).getSingleOrNull();
   }
 
   Future<void> upsertProfile(ProfilesTableCompanion companion) async {
-    await into(profilesTable).insert(
-      companion,
-      mode: InsertMode.insertOrReplace,
-    );
+    await into(
+      profilesTable,
+    ).insert(companion, mode: InsertMode.insertOrReplace);
   }
 
   Future<void> updateLanguage(String userId, String preferredLanguage) async {
@@ -43,7 +45,8 @@ class ProfilesDao extends DatabaseAccessor<AppDatabase> with _$ProfilesDaoMixin 
   }
 
   Future<List<LocalProfile>> getUnsyncedProfiles() {
-    return (select(profilesTable)..where((t) => t.isSynced.equals(false)))
-        .get();
+    return (select(
+      profilesTable,
+    )..where((t) => t.isSynced.equals(false))).get();
   }
 }

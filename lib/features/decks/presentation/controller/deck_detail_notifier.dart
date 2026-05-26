@@ -76,10 +76,7 @@ class DeckDetailNotifier extends _$DeckDetailNotifier {
     return DeckDetailState.initial;
   }
 
-  Future<void> _refreshRemoteBio(
-    SupabaseClient supabase,
-    String deckId,
-  ) async {
+  Future<void> _refreshRemoteBio(SupabaseClient supabase, String deckId) async {
     try {
       final response = await supabase
           .from('decks')
@@ -95,10 +92,10 @@ class DeckDetailNotifier extends _$DeckDetailNotifier {
       ).toEntity();
 
       if (remoteDeck.bio != null && remoteDeck.bio!.trim().isNotEmpty) {
-        await ref.read(appDatabaseProvider).decksDao.updateBio(
-          deckId,
-          remoteDeck.bio,
-        );
+        await ref
+            .read(appDatabaseProvider)
+            .decksDao
+            .updateBio(deckId, remoteDeck.bio);
       }
 
       state = state.copyWith(deck: remoteDeck);

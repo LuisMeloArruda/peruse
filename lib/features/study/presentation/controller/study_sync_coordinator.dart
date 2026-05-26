@@ -80,17 +80,21 @@ class StudySyncCoordinator {
 
       final sessionRows = (sessionsResponse as List)
           .cast<Map<String, dynamic>>();
-      final resultRows = (resultsResponse as List)
-          .cast<Map<String, dynamic>>();
-      final dailyRows = (dailyResponse as List)
-          .cast<Map<String, dynamic>>();
+      final resultRows = (resultsResponse as List).cast<Map<String, dynamic>>();
+      final dailyRows = (dailyResponse as List).cast<Map<String, dynamic>>();
       final progressRows = (progressResponse as List)
           .cast<Map<String, dynamic>>();
 
-      final sessionCompanions = sessionRows.map(_sessionCompanionFromJson).toList();
-      final resultCompanions = resultRows.map(_resultCompanionFromJson).toList();
+      final sessionCompanions = sessionRows
+          .map(_sessionCompanionFromJson)
+          .toList();
+      final resultCompanions = resultRows
+          .map(_resultCompanionFromJson)
+          .toList();
       final dailyCompanions = dailyRows.map(_dailyCompanionFromJson).toList();
-      final progressCompanions = progressRows.map(_progressCompanionFromJson).toList();
+      final progressCompanions = progressRows
+          .map(_progressCompanionFromJson)
+          .toList();
 
       await db.transaction(() async {
         if (sessionCompanions.isNotEmpty) {
@@ -308,7 +312,9 @@ class StudySyncCoordinator {
       userId: json['user_id'] as String,
       totalWordsMastered: Value(_parseRemoteInt(json['total_words_mastered'])),
       currentStreak: Value(_parseRemoteInt(json['current_streak'])),
-      lastStudyDate: Value(BigInt.from(_parseRemoteMillis(json['last_study_date']))),
+      lastStudyDate: Value(
+        BigInt.from(_parseRemoteMillis(json['last_study_date'])),
+      ),
       lifetimeAccuracy: Value(_parseRemoteDouble(json['lifetime_accuracy'])),
       isSynced: const Value(true),
     );

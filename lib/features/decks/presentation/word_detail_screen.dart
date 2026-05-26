@@ -14,7 +14,11 @@ import 'package:peruse/features/decks/presentation/controller/word_detail_notifi
 import 'package:peruse/features/decks/data/repositories/deck_repository_impl.dart';
 
 class WordDetailScreen extends ConsumerStatefulWidget {
-  const WordDetailScreen({super.key, required this.deckId, required this.wordId});
+  const WordDetailScreen({
+    super.key,
+    required this.deckId,
+    required this.wordId,
+  });
 
   final String deckId;
   final String wordId;
@@ -120,7 +124,9 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                         ),
                         color: details?.audioUrl.trim().isNotEmpty == true
                             ? AppColors.primary
-                            : AppColors.onSurfaceVariant.withValues(alpha: 0.45),
+                            : AppColors.onSurfaceVariant.withValues(
+                                alpha: 0.45,
+                              ),
                         tooltip: details?.audioUrl.trim().isNotEmpty == true
                             ? context.translate('play_audio')
                             : context.translate('no_audio_available'),
@@ -159,19 +165,30 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                               builder: (dialogContext) {
                                 return AlertDialog(
                                   title: Text(
-                                    dialogContext.translate('delete_word_title'),
+                                    dialogContext.translate(
+                                      'delete_word_title',
+                                    ),
                                   ),
                                   content: Text(
-                                    dialogContext.translate('delete_word_message'),
+                                    dialogContext.translate(
+                                      'delete_word_message',
+                                    ),
                                   ),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.of(dialogContext).pop(false),
-                                      child: Text(dialogContext.translate('cancel')),
+                                      onPressed: () => Navigator.of(
+                                        dialogContext,
+                                      ).pop(false),
+                                      child: Text(
+                                        dialogContext.translate('cancel'),
+                                      ),
                                     ),
                                     FilledButton(
-                                      onPressed: () => Navigator.of(dialogContext).pop(true),
-                                      child: Text(dialogContext.translate('delete')),
+                                      onPressed: () =>
+                                          Navigator.of(dialogContext).pop(true),
+                                      child: Text(
+                                        dialogContext.translate('delete'),
+                                      ),
                                     ),
                                   ],
                                 );
@@ -184,7 +201,10 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
 
                             await ref
                                 .read(deckRepositoryProvider)
-                                .removeWordFromDeck(widget.deckId, state.word.id);
+                                .removeWordFromDeck(
+                                  widget.deckId,
+                                  state.word.id,
+                                );
                             if (context.mounted) {
                               context.go(AppRoutes.deckDetail(widget.deckId));
                             }

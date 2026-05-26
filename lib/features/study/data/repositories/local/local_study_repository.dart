@@ -14,9 +14,9 @@ class LocalStudyRepository implements IStudyRepository {
     required String userId,
   }) async {
     await _localDb.transaction(() async {
-      final results = await (_localDb.select(_localDb.studyResultsTable)
-            ..where((t) => t.sessionId.equals(sessionId)))
-          .get();
+      final results = await (_localDb.select(
+        _localDb.studyResultsTable,
+      )..where((t) => t.sessionId.equals(sessionId))).get();
 
       final totalStudied = results.length;
       final totalCorrect = results.where((row) => row.isCorrect).length;
@@ -25,13 +25,16 @@ class LocalStudyRepository implements IStudyRepository {
       final today = DateTime(now.year, now.month, now.day);
       final todayKey = _formatDateKey(today);
 
-      final existingDaily = await (_localDb.select(_localDb.dailyProgressTable)
-            ..where((t) =>
-                t.userId.equals(userId) & t.date.equals(todayKey)))
-          .getSingleOrNull();
+      final existingDaily =
+          await (_localDb.select(_localDb.dailyProgressTable)..where(
+                (t) => t.userId.equals(userId) & t.date.equals(todayKey),
+              ))
+              .getSingleOrNull();
 
       if (existingDaily == null) {
-        await _localDb.into(_localDb.dailyProgressTable).insert(
+        await _localDb
+            .into(_localDb.dailyProgressTable)
+            .insert(
               DailyProgressTableCompanion.insert(
                 id: '$userId-$todayKey',
                 userId: userId,
@@ -43,14 +46,12 @@ class LocalStudyRepository implements IStudyRepository {
               mode: InsertMode.insertOrReplace,
             );
       } else {
-        await (_localDb.update(_localDb.dailyProgressTable)
-              ..where((t) => t.id.equals(existingDaily.id)))
-            .write(
+        await (_localDb.update(
+          _localDb.dailyProgressTable,
+        )..where((t) => t.id.equals(existingDaily.id))).write(
           DailyProgressTableCompanion(
-            wordsStudied:
-                Value(existingDaily.wordsStudied + totalStudied),
-            correctAnswers:
-                Value(existingDaily.correctAnswers + totalCorrect),
+            wordsStudied: Value(existingDaily.wordsStudied + totalStudied),
+            correctAnswers: Value(existingDaily.correctAnswers + totalCorrect),
             isSynced: const Value(false),
           ),
         );
@@ -69,14 +70,11 @@ class LocalStudyRepository implements IStudyRepository {
       final totalCorrectAll =
           totalsRow.read(_localDb.dailyProgressTable.correctAnswers.sum()) ?? 0;
 
-        final accuracy = totalWords == 0
-          ? 0.0
-          : (totalCorrectAll / totalWords);
+      final accuracy = totalWords == 0 ? 0.0 : (totalCorrectAll / totalWords);
 
-      final currentProgress =
-          await (_localDb.select(_localDb.userProgressTable)
-                ..where((t) => t.userId.equals(userId)))
-              .getSingleOrNull();
+      final currentProgress = await (_localDb.select(
+        _localDb.userProgressTable,
+      )..where((t) => t.userId.equals(userId))).getSingleOrNull();
 
       final nextStreak = _calculateNextStreak(
         currentProgress?.lastStudyDate.toInt(),
@@ -87,7 +85,9 @@ class LocalStudyRepository implements IStudyRepository {
       final lastStudyMillis = now.millisecondsSinceEpoch;
 
       if (currentProgress == null) {
-        await _localDb.into(_localDb.userProgressTable).insert(
+        await _localDb
+            .into(_localDb.userProgressTable)
+            .insert(
               UserProgressTableCompanion.insert(
                 userId: userId,
                 totalWordsMastered: Value(totalWords),
@@ -99,9 +99,9 @@ class LocalStudyRepository implements IStudyRepository {
               mode: InsertMode.insertOrReplace,
             );
       } else {
-        await (_localDb.update(_localDb.userProgressTable)
-              ..where((t) => t.userId.equals(userId)))
-            .write(
+        await (_localDb.update(
+          _localDb.userProgressTable,
+        )..where((t) => t.userId.equals(userId))).write(
           UserProgressTableCompanion(
             totalWordsMastered: Value(totalWords),
             currentStreak: Value(nextStreak),
@@ -129,7 +129,9 @@ class LocalStudyRepository implements IStudyRepository {
       return currentStreak == 0 ? 1 : currentStreak;
     }
 
-    final yesterdayKey = _formatDateKey(today.subtract(const Duration(days: 1)));
+    final yesterdayKey = _formatDateKey(
+      today.subtract(const Duration(days: 1)),
+    );
     if (lastKey == yesterdayKey) {
       return currentStreak + 1;
     }

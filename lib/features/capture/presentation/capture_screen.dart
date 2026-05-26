@@ -72,16 +72,15 @@ class CaptureScreen extends ConsumerWidget {
                         if (!context.mounted || captureData == null) return;
 
                         if (launchTarget == CaptureLaunchTarget.addWord) {
-                          final selectedWord = await context.push<
-                            CapturedWordResult
-                          >(
-                            AppRoutes.captureResult,
-                            extra: CaptureReviewData(
-                              localPath: captureData.localPath,
-                              suggestions: captureData.suggestions,
-                              launchTarget: launchTarget,
-                            ),
-                          );
+                          final selectedWord = await context
+                              .push<CapturedWordResult>(
+                                AppRoutes.captureResult,
+                                extra: CaptureReviewData(
+                                  localPath: captureData.localPath,
+                                  suggestions: captureData.suggestions,
+                                  launchTarget: launchTarget,
+                                ),
+                              );
 
                           if (!context.mounted || selectedWord == null) {
                             return;
@@ -182,24 +181,23 @@ class CaptureScreen extends ConsumerWidget {
       );
     }
 
-   return ClipRect(
+    return ClipRect(
       child: Stack(
         fit: StackFit.expand,
         children: [
           // Força o preview da câmara a preencher todo o espaço disponível
           Transform.scale(
-            scale: 1 / (state.cameraController!.value.aspectRatio * MediaQuery.of(context).size.aspectRatio),
-            child: Center(
-              child: CameraPreview(state.cameraController!),
-            ),
+            scale:
+                1 /
+                (state.cameraController!.value.aspectRatio *
+                    MediaQuery.of(context).size.aspectRatio),
+            child: Center(child: CameraPreview(state.cameraController!)),
           ),
           // Camada de overlay por cima da câmara
           const _CameraOverlay(),
         ],
       ),
     );
-
-
   }
 }
 

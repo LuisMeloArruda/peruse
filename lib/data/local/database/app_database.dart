@@ -93,10 +93,14 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(dailyProgressTable);
       }
       if (from < 7) {
-        await m.database.customStatement('DROP TABLE IF EXISTS study_sessions;');
+        await m.database.customStatement(
+          'DROP TABLE IF EXISTS study_sessions;',
+        );
         await m.database.customStatement('DROP TABLE IF EXISTS study_results;');
         await m.database.customStatement('DROP TABLE IF EXISTS user_progress;');
-        await m.database.customStatement('DROP TABLE IF EXISTS daily_progress;');
+        await m.database.customStatement(
+          'DROP TABLE IF EXISTS daily_progress;',
+        );
         await m.createTable(studySessionsTable);
         await m.createTable(studyResultsTable);
         await m.createTable(userProgressTable);

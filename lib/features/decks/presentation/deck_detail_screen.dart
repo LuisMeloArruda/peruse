@@ -29,9 +29,7 @@ class DeckDetailScreen extends ConsumerWidget {
     double realAvgMastery = 0.0;
     if (userId != null) {
       final masteryState = ref.watch(
-        deckMasteryProvider(
-          DeckMasteryParams(userId: userId, deckId: deckId),
-        ),
+        deckMasteryProvider(DeckMasteryParams(userId: userId, deckId: deckId)),
       );
       realAvgMastery = masteryState.value?.accuracy ?? 0.0;
     }
@@ -49,7 +47,9 @@ class DeckDetailScreen extends ConsumerWidget {
                   AppSpacing.lg,
                 ),
                 child: _DeckHeader(
-                  title: state.deck?.name ?? context.translate('deck_fallback_title'),
+                  title:
+                      state.deck?.name ??
+                      context.translate('deck_fallback_title'),
                   onBack: () => context.pop(),
                 ),
               ),
@@ -78,16 +78,24 @@ class DeckDetailScreen extends ConsumerWidget {
                                   dialogContext.translate('delete_deck_title'),
                                 ),
                                 content: Text(
-                                  dialogContext.translate('delete_deck_message'),
+                                  dialogContext.translate(
+                                    'delete_deck_message',
+                                  ),
                                 ),
                                 actions: [
                                   TextButton(
-                                    onPressed: () => Navigator.of(dialogContext).pop(false),
-                                    child: Text(dialogContext.translate('cancel')),
+                                    onPressed: () =>
+                                        Navigator.of(dialogContext).pop(false),
+                                    child: Text(
+                                      dialogContext.translate('cancel'),
+                                    ),
                                   ),
                                   FilledButton(
-                                    onPressed: () => Navigator.of(dialogContext).pop(true),
-                                    child: Text(dialogContext.translate('delete')),
+                                    onPressed: () =>
+                                        Navigator.of(dialogContext).pop(true),
+                                    child: Text(
+                                      dialogContext.translate('delete'),
+                                    ),
                                   ),
                                 ],
                               );
@@ -98,7 +106,9 @@ class DeckDetailScreen extends ConsumerWidget {
                             return;
                           }
 
-                          await ref.read(deckRepositoryProvider).deleteDeck(deckId);
+                          await ref
+                              .read(deckRepositoryProvider)
+                              .deleteDeck(deckId);
                           if (context.mounted) {
                             context.go(AppRoutes.decks);
                           }
@@ -274,7 +284,9 @@ class _DeckSummary extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: onDeleteDeck == null ? null : () => onDeleteDeck!(),
+                  onPressed: onDeleteDeck == null
+                      ? null
+                      : () => onDeleteDeck!(),
                   icon: const Icon(Icons.delete_outline_rounded),
                   label: Text(context.translate('delete')),
                 ),
@@ -375,22 +387,22 @@ class _WordImageHeader extends StatelessWidget {
         ),
         child: imageUrl != null && imageUrl!.isNotEmpty
             ? (_isRemoteImage(imageUrl!)
-                ? Image.network(
-                    imageUrl!,
-                    width: double.infinity,
-                    height: double.infinity,
-                    fit: BoxFit.contain,
-                    alignment: Alignment.center,
-                    errorBuilder: (_, _, _) => _placeholder(),
-                  )
-                : Image.file(
-                    File(imageUrl!),
-                    width: double.infinity,
-                    height: double.infinity,
-                    fit: BoxFit.contain,
-                    alignment: Alignment.center,
-                    errorBuilder: (_, _, _) => _placeholder(),
-                  ))
+                  ? Image.network(
+                      imageUrl!,
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.contain,
+                      alignment: Alignment.center,
+                      errorBuilder: (_, _, _) => _placeholder(),
+                    )
+                  : Image.file(
+                      File(imageUrl!),
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.contain,
+                      alignment: Alignment.center,
+                      errorBuilder: (_, _, _) => _placeholder(),
+                    ))
             : _placeholder(),
       ),
     );

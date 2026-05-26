@@ -47,7 +47,9 @@ class _PeruseApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final goRouter = ref.watch(routerProvider);
-    final translationService = ref.watch(translationServiceProvider).requireValue;
+    final translationService = ref
+        .watch(translationServiceProvider)
+        .requireValue;
 
     ref.watch(profileProvider).whenData((profile) {
       if (profile == null) return;

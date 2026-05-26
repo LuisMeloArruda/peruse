@@ -19,10 +19,7 @@ final captureScreenProvider =
       CaptureScreenNotifier.new,
     );
 
-enum CaptureLaunchTarget {
-  captureLibrary,
-  addWord,
-}
+enum CaptureLaunchTarget { captureLibrary, addWord }
 
 class CapturedWordResult {
   const CapturedWordResult({required this.text, required this.imagePath});
@@ -209,10 +206,7 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
             ),
         ],
       );
-      return CaptureReviewData(
-        localPath: xFile.path,
-        suggestions: suggestions,
-      );
+      return CaptureReviewData(localPath: xFile.path, suggestions: suggestions);
     } catch (error) {
       state = state.copyWith(cameraError: error.toString());
       return null;
@@ -242,7 +236,9 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
     } catch (_) {
       preferredLanguageCode = 'en';
     }
-    final targetLanguage = profileLanguageLabel(preferredLanguageCode).toLowerCase();
+    final targetLanguage = profileLanguageLabel(
+      preferredLanguageCode,
+    ).toLowerCase();
 
     final fallbackSuggestions = [
       for (final entry in input.entries)
@@ -259,7 +255,8 @@ class CaptureScreenNotifier extends Notifier<CaptureScreenState> {
 
     try {
       final connectivity = await Connectivity().checkConnectivity();
-      final isOnline = connectivity.isNotEmpty &&
+      final isOnline =
+          connectivity.isNotEmpty &&
           !connectivity.contains(ConnectivityResult.none);
       if (!isOnline) {
         return fallbackSuggestions;

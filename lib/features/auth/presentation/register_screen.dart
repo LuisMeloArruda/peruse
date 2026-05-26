@@ -98,20 +98,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-              context.translate('join_peruse'),
+                      context.translate('join_peruse'),
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-              context.translate('register_subtitle'),
+                      context.translate('register_subtitle'),
                       style: Theme.of(context).textTheme.bodyMedium,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     PeruseTextField(
                       controller: _emailController,
-                        labelText: context.translate('email_address_label'),
-              hintText: context.translate('email_hint'),
+                      labelText: context.translate('email_address_label'),
+                      hintText: context.translate('email_hint'),
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       autofillHints: const [AutofillHints.email],
@@ -124,8 +124,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     const SizedBox(height: AppSpacing.formFieldGap),
                     PeruseTextField(
                       controller: _passwordController,
-               labelText: context.translate('password_label'),
-              hintText: context.translate('password_hint'),
+                      labelText: context.translate('password_label'),
+                      hintText: context.translate('password_hint'),
                       obscureText: true,
                       textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.newPassword],
@@ -149,7 +149,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                       _passwordController.text.trim(),
                                     );
                               },
-                        child: Text(context.translate('register'),
+                        child: Text(context.translate('register')),
                       ),
                     ),
                   ],

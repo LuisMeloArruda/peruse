@@ -92,7 +92,12 @@ class PeruseStatBentoCard extends StatelessWidget {
                         child: Text(value, style: valueStyle),
                       ),
                       const SizedBox(height: AppSpacing.xxs),
-                      Text(label.toUpperCase(), style: labelStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(
+                        label.toUpperCase(),
+                        style: labelStyle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
                 ),

@@ -43,8 +43,7 @@ const Map<String, String> appBaseTranslations = {
   'language_preference_sync_note':
       'This preference is stored locally and synced to your account.',
   'account_title': 'Account',
-  'account_signed_out_subtitle':
-      'Signed in account details will appear here.',
+  'account_signed_out_subtitle': 'Signed in account details will appear here.',
   'account_signed_in_subtitle':
       'Manage your session and leave the account when you are done.',
   'logout': 'Logout',
@@ -124,8 +123,7 @@ const Map<String, String> appBaseTranslations = {
   'search_in_deck_hint': 'Search in deck...',
 
   // Add / edit word
-  'word_loading_wait':
-      'Please wait for the word to finish loading.',
+  'word_loading_wait': 'Please wait for the word to finish loading.',
   'word_required': 'Please enter a word.',
   'add_word_title': 'Add Word',
   'edit_word_title': 'Edit Word',

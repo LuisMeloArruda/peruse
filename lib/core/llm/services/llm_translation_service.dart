@@ -17,7 +17,10 @@ class LlmTranslationService {
 
   Future<TranslationOutput> translate(LlmRequest request) async {
     try {
-      log("LOG::${request.input.toString()}\n${request.sourceLanguage}\n${request.targetLanguage}",name: "request data");
+      log(
+        "LOG::${request.input.toString()}\n${request.sourceLanguage}\n${request.targetLanguage}",
+        name: "request data",
+      );
       final response = await _ai.generate(
         model: googleAI.gemini('gemini-3.5-flash'),
         messages: [

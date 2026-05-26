@@ -4,11 +4,7 @@ import 'package:peruse/core/theme/theme.dart';
 import 'package:peruse/core/utils/assets.dart';
 
 class SplashScreen extends StatelessWidget {
-  const SplashScreen({
-    super.key,
-    this.error,
-    this.onRetry,
-  });
+  const SplashScreen({super.key, this.error, this.onRetry});
 
   final Object? error;
   final VoidCallback? onRetry;
@@ -46,13 +42,13 @@ class SplashScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                 Text(
-                    'Initialising transalation service ...',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.brandTitle,
-                    ),
-                    textAlign: TextAlign.center,
+                Text(
+                  'Initialising transalation service ...',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.brandTitle,
                   ),
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: AppSpacing.xxl),
                 if (_hasError) ...[
                   Text(

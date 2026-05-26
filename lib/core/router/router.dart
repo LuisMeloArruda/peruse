@@ -24,7 +24,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'router.g.dart';
 
 final RouteObserver<PageRoute<dynamic>> appRouteObserver =
-  RouteObserver<PageRoute<dynamic>>();
+    RouteObserver<PageRoute<dynamic>>();
 
 @riverpod
 GoRouter router(Ref ref) {
@@ -130,10 +130,16 @@ GoRouter router(Ref ref) {
                             builder: (context, state) {
                               final deckId = state.pathParameters['deckId'];
                               final wordId = state.pathParameters['wordId'];
-                              if (deckId == null || deckId.isEmpty || wordId == null || wordId.isEmpty) {
+                              if (deckId == null ||
+                                  deckId.isEmpty ||
+                                  wordId == null ||
+                                  wordId.isEmpty) {
                                 return const DecksScreen();
                               }
-                              return AddWordScreen(deckId: deckId, wordId: wordId);
+                              return AddWordScreen(
+                                deckId: deckId,
+                                wordId: wordId,
+                              );
                             },
                           ),
                         ],
@@ -191,9 +197,7 @@ GoRouter router(Ref ref) {
           }
 
           return Scaffold(
-            body: Center(
-              child: Text(context.translate('no_capture_data')),
-            ),
+            body: Center(child: Text(context.translate('no_capture_data'))),
           );
         },
       ),

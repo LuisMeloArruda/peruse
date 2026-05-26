@@ -28,7 +28,8 @@ class DailyGoalParams {
   }
 
   @override
-  int get hashCode => Object.hash(userId, date.year, date.month, date.day, dailyGoalTarget);
+  int get hashCode =>
+      Object.hash(userId, date.year, date.month, date.day, dailyGoalTarget);
 }
 
 class DeckMasteryParams {
@@ -57,67 +58,62 @@ class DeckMasteryParams {
   int get hashCode => Object.hash(userId, deckId, lookbackDays, limit);
 }
 
-final dailyGoalProgressProvider = StreamProvider.family<double, DailyGoalParams>(
-  (ref, params) {
-    final db = ref.watch(appDatabaseProvider);
-    return db.studyDao.watchDailyGoalProgress(
-      params.userId,
-      params.date,
-      params.dailyGoalTarget,
-    );
-  },
-);
+final dailyGoalProgressProvider =
+    StreamProvider.family<double, DailyGoalParams>((ref, params) {
+      final db = ref.watch(appDatabaseProvider);
+      return db.studyDao.watchDailyGoalProgress(
+        params.userId,
+        params.date,
+        params.dailyGoalTarget,
+      );
+    });
 
-final weeklyVelocityProvider = StreamProvider.family<List<LocalDailyProgress>, String>(
-  (ref, userId) {
-    final db = ref.watch(appDatabaseProvider);
-    return db.studyDao.watchWeeklyVelocity(userId);
-  },
-);
+final weeklyVelocityProvider =
+    StreamProvider.family<List<LocalDailyProgress>, String>((ref, userId) {
+      final db = ref.watch(appDatabaseProvider);
+      return db.studyDao.watchWeeklyVelocity(userId);
+    });
 
-final monthlyVelocityProvider = StreamProvider.family<List<LocalDailyProgress>, String>(
-  (ref, userId) {
-    final db = ref.watch(appDatabaseProvider);
-    return db.studyDao.watchMonthlyVelocity(userId);
-  },
-);
+final monthlyVelocityProvider =
+    StreamProvider.family<List<LocalDailyProgress>, String>((ref, userId) {
+      final db = ref.watch(appDatabaseProvider);
+      return db.studyDao.watchMonthlyVelocity(userId);
+    });
 
-final deckWordsProvider = StreamProvider.family<List<AppWord>, String>(
-  (ref, deckId) {
-    final repository = ref.watch(deckRepositoryProvider);
-    return repository.watchDeckWords(deckId);
-  },
-);
+final deckWordsProvider = StreamProvider.family<List<AppWord>, String>((
+  ref,
+  deckId,
+) {
+  final repository = ref.watch(deckRepositoryProvider);
+  return repository.watchDeckWords(deckId);
+});
 
-final deckWordCountProvider = StreamProvider.family<int, String>(
-  (ref, deckId) {
-    final repository = ref.watch(deckRepositoryProvider);
-    return repository.watchDeckWords(deckId).map((words) => words.length);
-  },
-);
+final deckWordCountProvider = StreamProvider.family<int, String>((ref, deckId) {
+  final repository = ref.watch(deckRepositoryProvider);
+  return repository.watchDeckWords(deckId).map((words) => words.length);
+});
 
-final contributionGridProvider = StreamProvider.family<Map<DateTime, int>, String>(
-  (ref, userId) {
-    final db = ref.watch(appDatabaseProvider);
-    return db.studyDao.watchContributionGrid(userId);
-  },
-);
+final contributionGridProvider =
+    StreamProvider.family<Map<DateTime, int>, String>((ref, userId) {
+      final db = ref.watch(appDatabaseProvider);
+      return db.studyDao.watchContributionGrid(userId);
+    });
 
-final userGlobalStatsProvider = StreamProvider.family<UserGlobalStats, String>(
-  (ref, userId) {
-    final db = ref.watch(appDatabaseProvider);
-    return db.studyDao.watchUserGlobalStats(userId);
-  },
-);
+final userGlobalStatsProvider = StreamProvider.family<UserGlobalStats, String>((
+  ref,
+  userId,
+) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.studyDao.watchUserGlobalStats(userId);
+});
 
-final deckMasteryProvider = StreamProvider.family<DeckMasteryStats, DeckMasteryParams>(
-  (ref, params) {
-    final db = ref.watch(appDatabaseProvider);
-    return db.studyDao.watchDeckMastery(
-      userId: params.userId,
-      deckId: params.deckId,
-      lookbackDays: params.lookbackDays,
-      limit: params.limit,
-    );
-  },
-);
+final deckMasteryProvider =
+    StreamProvider.family<DeckMasteryStats, DeckMasteryParams>((ref, params) {
+      final db = ref.watch(appDatabaseProvider);
+      return db.studyDao.watchDeckMastery(
+        userId: params.userId,
+        deckId: params.deckId,
+        lookbackDays: params.lookbackDays,
+        limit: params.limit,
+      );
+    });

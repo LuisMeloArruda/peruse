@@ -322,7 +322,8 @@ class DeckRepositoryImpl implements IDeckRepository {
         );
 
         await _supabase.from('decks').upsert(remoteModel.toJson());
-        if (coverImageUrl != null && coverImageUrl != deckEntity.coverImageUrl) {
+        if (coverImageUrl != null &&
+            coverImageUrl != deckEntity.coverImageUrl) {
           await _localDb.decksDao.updateCoverImageUrl(model.id, coverImageUrl);
         }
         await _localDb.decksDao.updateSyncStatus(model.id, true);
@@ -363,7 +364,8 @@ class DeckRepositoryImpl implements IDeckRepository {
         );
 
         await _supabase.from('decks').upsert(remoteModel.toJson());
-        if (coverImageUrl != null && coverImageUrl != deckEntity.coverImageUrl) {
+        if (coverImageUrl != null &&
+            coverImageUrl != deckEntity.coverImageUrl) {
           await _localDb.decksDao.updateCoverImageUrl(model.id, coverImageUrl);
         }
         await _localDb.decksDao.updateSyncStatus(model.id, true);
@@ -415,7 +417,9 @@ class DeckRepositoryImpl implements IDeckRepository {
       });
       await _localDb.wordsDao.deleteDeckWord(deckId, wordId);
     } catch (e) {
-      debugPrint('Remote deck word delete failed. Will retry on next sync. Error: $e');
+      debugPrint(
+        'Remote deck word delete failed. Will retry on next sync. Error: $e',
+      );
     }
   }
 
@@ -512,7 +516,9 @@ class DeckRepositoryImpl implements IDeckRepository {
               isSynced: true,
             ),
           )
-          .where((model) => !model.isDeleted && !pendingDeckIds.contains(model.id))
+          .where(
+            (model) => !model.isDeleted && !pendingDeckIds.contains(model.id),
+          )
           .toList();
       final wordJson = (wordsResponse as List).cast<Map<String, dynamic>>();
       final wordCompanions = wordJson
@@ -591,11 +597,15 @@ class DeckRepositoryImpl implements IDeckRepository {
 
     final file = File(coverImageUrl);
     if (!await file.exists()) {
-      debugPrint('Deck cover upload skipped: local file not found: $coverImageUrl');
+      debugPrint(
+        'Deck cover upload skipped: local file not found: $coverImageUrl',
+      );
       return null;
     }
 
-    final extension = p.extension(coverImageUrl).isEmpty ? '.jpg' : p.extension(coverImageUrl);
+    final extension = p.extension(coverImageUrl).isEmpty
+        ? '.jpg'
+        : p.extension(coverImageUrl);
     final storagePath = 'decks/$userId/${deck.id}$extension';
     await _supabase.storage.from('deck-covers').upload(storagePath, file);
     return _supabase.storage.from('deck-covers').getPublicUrl(storagePath);
@@ -716,11 +726,11 @@ class DeckRepositoryImpl implements IDeckRepository {
       await _supabase.from('words').upsert({
         'id': word.id,
         'word_text': normalizedText,
-        'image_url': remoteImageUrl ?? (
-          word.imageUrl != null && !_isLocalImagePath(word.imageUrl!)
-              ? word.imageUrl
-              : null
-        ),
+        'image_url':
+            remoteImageUrl ??
+            (word.imageUrl != null && !_isLocalImagePath(word.imageUrl!)
+                ? word.imageUrl
+                : null),
         'confidence': word.confidence,
         'source_scan_id': word.sourceScanId,
         'user_id': userId,
@@ -756,7 +766,9 @@ class DeckRepositoryImpl implements IDeckRepository {
       return null;
     }
 
-    final extension = p.extension(imageUrl).isEmpty ? '.jpg' : p.extension(imageUrl);
+    final extension = p.extension(imageUrl).isEmpty
+        ? '.jpg'
+        : p.extension(imageUrl);
     final storagePath = 'words/$userId/${word.id}$extension';
     await _supabase.storage.from('words').upload(storagePath, file);
     return _supabase.storage.from('words').getPublicUrl(storagePath);
@@ -817,7 +829,9 @@ class DeckRepositoryImpl implements IDeckRepository {
     required String frontText,
     required String? mediaUrl,
   }) async {
-    final flashcards = await _localDb.flashcardsDao.getFlashcardsByWordId(wordId);
+    final flashcards = await _localDb.flashcardsDao.getFlashcardsByWordId(
+      wordId,
+    );
     if (flashcards.isEmpty) {
       return null;
     }
@@ -836,7 +850,9 @@ class DeckRepositoryImpl implements IDeckRepository {
         frontText: frontText,
         backText: model.backText,
         mediaUrl: updatedMediaUrl,
-        mediaType: updatedMediaUrl == null || updatedMediaUrl.isEmpty ? null : 'image',
+        mediaType: updatedMediaUrl == null || updatedMediaUrl.isEmpty
+            ? null
+            : 'image',
         position: model.position,
         isDeleted: model.isDeleted,
         revision: model.revision + 1,

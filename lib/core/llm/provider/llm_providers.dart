@@ -13,9 +13,9 @@ final llmTranslationServiceProvider = Provider<LlmTranslationService>((ref) {
 
 final llmTranslateProvider =
     FutureProvider.family<TranslationOutput, LlmRequest>((ref, request) {
-  final service = ref.watch(llmTranslationServiceProvider);
-  return service.translate(request);
-});
+      final service = ref.watch(llmTranslationServiceProvider);
+      return service.translate(request);
+    });
 
 class TranslationCacheNotifier extends Notifier<Map<String, String>> {
   @override
@@ -31,10 +31,12 @@ class TranslationCacheNotifier extends Notifier<Map<String, String>> {
 
 final llmTranslationCacheProvider =
     NotifierProvider<TranslationCacheNotifier, Map<String, String>>(
-  TranslationCacheNotifier.new,
-);
+      TranslationCacheNotifier.new,
+    );
 
-String _llmCacheKey(String targetLanguage, String source) => '\u0000$targetLanguage\u0000$source';
+String _llmCacheKey(String targetLanguage, String source) =>
+    '\u0000$targetLanguage\u0000$source';
 
 /// Public cache key helper for translations.
-String llmCacheKey(String targetLanguage, String source) => _llmCacheKey(targetLanguage, source);
+String llmCacheKey(String targetLanguage, String source) =>
+    _llmCacheKey(targetLanguage, source);

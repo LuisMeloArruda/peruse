@@ -101,9 +101,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
     if (widget.wordId != null && _existingWord == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.translate('word_loading_wait')),
-          ),
+          SnackBar(content: Text(context.translate('word_loading_wait'))),
         );
       }
       return;
@@ -113,9 +111,7 @@ class _AddWordScreenState extends ConsumerState<AddWordScreen> {
     if (word.isEmpty) {
       debugPrint('Word text is required.');
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(context.translate('word_required'))),
         );
       }

@@ -15,32 +15,33 @@ class LocalFlashcardRepository implements IFlashcardRepository {
   final SupabaseClient _supabase;
   final Uuid _uuid;
 
-  LocalFlashcardRepository(
-    this._localDb,
-    this._supabase, {
-    Uuid? uuid,
-  }) : _uuid = uuid ?? const Uuid();
+  LocalFlashcardRepository(this._localDb, this._supabase, {Uuid? uuid})
+    : _uuid = uuid ?? const Uuid();
 
   @override
   Stream<List<AppFlashcard>> watchDeckFlashcards(String deckId) {
-    final cardsStream = _localDb.flashcardsDao.watchFlashcardsForDeck(deckId).map(
-      (rows) => rows
-          .map((local) => FlashcardModel.fromDrift(local).toEntity())
-          .toList(),
-    );
+    final cardsStream = _localDb.flashcardsDao
+        .watchFlashcardsForDeck(deckId)
+        .map(
+          (rows) => rows
+              .map((local) => FlashcardModel.fromDrift(local).toEntity())
+              .toList(),
+        );
 
     unawaited(syncAll());
 
-    return Stream.fromFuture(_seedFlashcardsFromDeckWords(deckId)).asyncExpand(
-      (_) => cardsStream,
-    );
+    return Stream.fromFuture(
+      _seedFlashcardsFromDeckWords(deckId),
+    ).asyncExpand((_) => cardsStream);
   }
 
   @override
   Future<List<AppFlashcard>> getDeckFlashcards(String deckId) async {
     await _seedFlashcardsFromDeckWords(deckId);
     final rows = await _localDb.flashcardsDao.getFlashcardsForDeck(deckId);
-    return rows.map((local) => FlashcardModel.fromDrift(local).toEntity()).toList();
+    return rows
+        .map((local) => FlashcardModel.fromDrift(local).toEntity())
+        .toList();
   }
 
   @override
@@ -104,9 +105,10 @@ class LocalFlashcardRepository implements IFlashcardRepository {
     }
 
     try {
-      final pendingFlashcardIds = (await _localDb.flashcardsDao.getUnsyncedFlashcards())
-          .map((flashcard) => flashcard.id)
-          .toSet();
+      final pendingFlashcardIds =
+          (await _localDb.flashcardsDao.getUnsyncedFlashcards())
+              .map((flashcard) => flashcard.id)
+              .toSet();
 
       final deckIdsResponse = await _supabase
           .from('decks')
@@ -157,7 +159,9 @@ class LocalFlashcardRepository implements IFlashcardRepository {
 
   Future<void> _seedFlashcardsFromDeckWords(String deckId) async {
     try {
-      final existingRows = await _localDb.flashcardsDao.getFlashcardsForDeck(deckId);
+      final existingRows = await _localDb.flashcardsDao.getFlashcardsForDeck(
+        deckId,
+      );
       final existingWordIds = existingRows.map((row) => row.wordId).toSet();
       final currentUserId = _supabase.auth.currentUser?.id;
       if (currentUserId == null) {
@@ -190,7 +194,9 @@ class LocalFlashcardRepository implements IFlashcardRepository {
             frontText: Value(word.wordText),
             backText: Value(_buildDefaultBackText(word.wordText, details)),
             mediaUrl: Value(word.imageUrl),
-            mediaType: Value(word.imageUrl == null || word.imageUrl!.isEmpty ? null : 'image'),
+            mediaType: Value(
+              word.imageUrl == null || word.imageUrl!.isEmpty ? null : 'image',
+            ),
             position: Value(index),
             isDeleted: const Value(false),
             revision: Value(BigInt.from(0)),

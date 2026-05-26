@@ -77,14 +77,16 @@ class _DecksLoadedViewState extends State<_DecksLoadedView> {
   Widget build(BuildContext context) {
     final sortedDecks = _sortByRecent
         ? ([...widget.decks]
-          ..sort((left, right) => right.createdAt.compareTo(left.createdAt)))
+            ..sort((left, right) => right.createdAt.compareTo(left.createdAt)))
         : widget.decks;
     final normalizedQuery = _searchQuery.trim().toLowerCase();
     final decks = normalizedQuery.isEmpty
         ? sortedDecks
         : sortedDecks
-            .where((deck) => deck.name.toLowerCase().contains(normalizedQuery))
-            .toList();
+              .where(
+                (deck) => deck.name.toLowerCase().contains(normalizedQuery),
+              )
+              .toList();
 
     return CustomScrollView(
       slivers: [
@@ -143,20 +145,29 @@ class _DecksLoadedViewState extends State<_DecksLoadedView> {
                     final deck = decks[index];
                     final progressColor = _colorFromString(deck.color);
                     final icon = _iconFor(deck.icon);
-                    final createdLabel =
-                        _formatCreatedDate(context, deck.createdAt);
+                    final createdLabel = _formatCreatedDate(
+                      context,
+                      deck.createdAt,
+                    );
 
                     return Consumer(
                       builder: (context, ref, child) {
                         final wordCount =
-                            ref.watch(deckWordCountProvider(deck.id)).value ?? 0;
-                        final userId = ref.watch(authRepositoryProvider).currentUser?.id;
+                            ref.watch(deckWordCountProvider(deck.id)).value ??
+                            0;
+                        final userId = ref
+                            .watch(authRepositoryProvider)
+                            .currentUser
+                            ?.id;
 
                         double realAvgMastery = 0.0;
                         if (userId != null) {
                           final masteryState = ref.watch(
                             deckMasteryProvider(
-                              DeckMasteryParams(userId: userId, deckId: deck.id),
+                              DeckMasteryParams(
+                                userId: userId,
+                                deckId: deck.id,
+                              ),
                             ),
                           );
                           realAvgMastery = masteryState.value?.accuracy ?? 0.0;
@@ -170,7 +181,8 @@ class _DecksLoadedViewState extends State<_DecksLoadedView> {
                           accentColor: progressColor,
                           icon: icon,
                           coverImageUrl: deck.coverImageUrl,
-                          onTap: () => context.push(AppRoutes.deckDetail(deck.id)),
+                          onTap: () =>
+                              context.push(AppRoutes.deckDetail(deck.id)),
                         );
                       },
                     );
@@ -274,7 +286,9 @@ class _SortChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isActive ? AppColors.primary.withValues(alpha: 0.12) : AppColors.surfaceMuted,
+      color: isActive
+          ? AppColors.primary.withValues(alpha: 0.12)
+          : AppColors.surfaceMuted,
       borderRadius: BorderRadius.circular(AppRadius.pill),
       child: InkWell(
         onTap: onTap,
@@ -290,7 +304,9 @@ class _SortChip extends StatelessWidget {
               Icon(
                 Icons.sort_rounded,
                 size: 16,
-                color: isActive ? AppColors.primary : AppColors.onSurfaceVariant,
+                color: isActive
+                    ? AppColors.primary
+                    : AppColors.onSurfaceVariant,
               ),
               const SizedBox(width: AppSpacing.xs),
               Text(
@@ -638,7 +654,10 @@ class _EmptyDeckSearchState extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            context.translate('no_matching_decks_message', args: {'query': query}),
+            context.translate(
+              'no_matching_decks_message',
+              args: {'query': query},
+            ),
             style: context.textTheme.bodyMedium,
           ),
           const SizedBox(height: AppSpacing.md),
@@ -736,10 +755,6 @@ String _formatCreatedDate(BuildContext context, int timestamp) {
   final month = context.translate(monthKeys[date.month - 1]);
   return context.translate(
     'deck_created_date',
-    args: {
-      'month': month,
-      'day': '${date.day}',
-      'year': '${date.year}',
-    },
+    args: {'month': month, 'day': '${date.day}', 'year': '${date.year}'},
   );
 }

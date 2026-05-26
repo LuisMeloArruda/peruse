@@ -63,7 +63,9 @@ class ProfileRepositoryImpl implements IProfileRepository {
   }
 
   @override
-  Future<AppUserProfile> updatePreferredLanguage(String preferredLanguage) async {
+  Future<AppUserProfile> updatePreferredLanguage(
+    String preferredLanguage,
+  ) async {
     final userId = _currentUserId();
     if (userId == null) {
       throw StateError('Cannot update profile without an authenticated user.');
@@ -111,7 +113,9 @@ class ProfileRepositoryImpl implements IProfileRepository {
           .maybeSingle();
 
       if (remoteResponse == null) {
-        final localProfile = await _localDb.profilesDao.getProfileByUserId(userId);
+        final localProfile = await _localDb.profilesDao.getProfileByUserId(
+          userId,
+        );
         final fallback = localProfile == null
             ? UserProfileModel(
                 userId: userId,

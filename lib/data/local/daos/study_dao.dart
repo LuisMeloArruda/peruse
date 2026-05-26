@@ -38,14 +38,18 @@ class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
 
   Stream<List<LocalDailyProgress>> watchWeeklyVelocity(String userId) {
     final now = DateTime.now();
-    final start = DateTime(now.year, now.month, now.day)
-        .subtract(const Duration(days: 6));
+    final start = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(const Duration(days: 6));
     final startKey = _formatDateKey(start);
     final endKey = _formatDateKey(now);
 
     final query = select(dailyProgressTable)
       ..where(
-        (t) => t.userId.equals(userId) & t.date.isBetweenValues(startKey, endKey),
+        (t) =>
+            t.userId.equals(userId) & t.date.isBetweenValues(startKey, endKey),
       )
       ..orderBy([(t) => OrderingTerm.asc(t.date)]);
 
@@ -54,14 +58,18 @@ class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
 
   Stream<List<LocalDailyProgress>> watchMonthlyVelocity(String userId) {
     final now = DateTime.now();
-    final start = DateTime(now.year, now.month, now.day)
-        .subtract(const Duration(days: 29));
+    final start = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(const Duration(days: 29));
     final startKey = _formatDateKey(start);
     final endKey = _formatDateKey(now);
 
     final query = select(dailyProgressTable)
       ..where(
-        (t) => t.userId.equals(userId) & t.date.isBetweenValues(startKey, endKey),
+        (t) =>
+            t.userId.equals(userId) & t.date.isBetweenValues(startKey, endKey),
       )
       ..orderBy([(t) => OrderingTerm.asc(t.date)]);
 
@@ -70,12 +78,17 @@ class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
 
   Stream<Map<DateTime, int>> watchContributionGrid(String userId) {
     final now = DateTime.now();
-    final start = DateTime(now.year, now.month, now.day)
-        .subtract(const Duration(days: 83));
+    final start = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(const Duration(days: 83));
     final startKey = _formatDateKey(start);
 
     final query = select(dailyProgressTable)
-      ..where((t) => t.userId.equals(userId) & t.date.isBiggerOrEqualValue(startKey))
+      ..where(
+        (t) => t.userId.equals(userId) & t.date.isBiggerOrEqualValue(startKey),
+      )
       ..orderBy([(t) => OrderingTerm.asc(t.date)]);
 
     return query.watch().map((rows) {
@@ -96,8 +109,7 @@ class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
         dailyProgressTable.userId.equalsExp(userProgressTable.userId) &
             dailyProgressTable.date.equals(dateKey),
       ),
-    ])
-      ..where(userProgressTable.userId.equals(userId));
+    ])..where(userProgressTable.userId.equals(userId));
 
     return query.watchSingleOrNull().map((row) {
       if (row == null) {
@@ -125,22 +137,21 @@ class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
     final cutoff = DateTime.now().subtract(Duration(days: lookbackDays));
     final cutoffMillis = BigInt.from(cutoff.millisecondsSinceEpoch);
 
-    final query = select(studyResultsTable).join([
-      innerJoin(
-        studySessionsTable,
-        studySessionsTable.id.equalsExp(studyResultsTable.sessionId),
-      ),
-    ])
-      ..where(
-        studySessionsTable.userId.equals(userId) &
-            studySessionsTable.deckId.equals(deckId) &
-            studySessionsTable.endedAt.isNotNull() &
-            studySessionsTable.startedAt.isBiggerOrEqualValue(cutoffMillis),
-      )
-      ..orderBy([
-        OrderingTerm.desc(studySessionsTable.startedAt),
-      ])
-      ..limit(limit);
+    final query =
+        select(studyResultsTable).join([
+            innerJoin(
+              studySessionsTable,
+              studySessionsTable.id.equalsExp(studyResultsTable.sessionId),
+            ),
+          ])
+          ..where(
+            studySessionsTable.userId.equals(userId) &
+                studySessionsTable.deckId.equals(deckId) &
+                studySessionsTable.endedAt.isNotNull() &
+                studySessionsTable.startedAt.isBiggerOrEqualValue(cutoffMillis),
+          )
+          ..orderBy([OrderingTerm.desc(studySessionsTable.startedAt)])
+          ..limit(limit);
 
     return query.watch().map((rows) {
       if (rows.isEmpty) return DeckMasteryStats.empty;
@@ -159,15 +170,15 @@ class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
   }
 
   Future<void> upsertStudySession(StudySessionsTableCompanion companion) async {
-    await into(studySessionsTable).insert(
-      companion,
-      mode: InsertMode.insertOrReplace,
-    );
+    await into(
+      studySessionsTable,
+    ).insert(companion, mode: InsertMode.insertOrReplace);
   }
 
   Future<void> endStudySession(String sessionId, int endedAt) async {
-    await (update(studySessionsTable)..where((t) => t.id.equals(sessionId)))
-        .write(
+    await (update(
+      studySessionsTable,
+    )..where((t) => t.id.equals(sessionId))).write(
       StudySessionsTableCompanion(
         endedAt: Value(BigInt.from(endedAt)),
         isSynced: const Value(false),
@@ -176,10 +187,9 @@ class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
   }
 
   Future<void> insertStudyResult(StudyResultsTableCompanion companion) async {
-    await into(studyResultsTable).insert(
-      companion,
-      mode: InsertMode.insertOrReplace,
-    );
+    await into(
+      studyResultsTable,
+    ).insert(companion, mode: InsertMode.insertOrReplace);
   }
 
   Future<void> insertStudyResults(
@@ -197,51 +207,53 @@ class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
   }
 
   Future<void> upsertUserProgress(UserProgressTableCompanion companion) async {
-    await into(userProgressTable).insert(
-      companion,
-      mode: InsertMode.insertOrReplace,
-    );
+    await into(
+      userProgressTable,
+    ).insert(companion, mode: InsertMode.insertOrReplace);
   }
 
   Future<LocalUserProgress?> getUserProgress(String userId) {
-    return (select(userProgressTable)..where((t) => t.userId.equals(userId)))
-        .getSingleOrNull();
+    return (select(
+      userProgressTable,
+    )..where((t) => t.userId.equals(userId))).getSingleOrNull();
   }
 
-  Future<void> upsertDailyProgress(DailyProgressTableCompanion companion) async {
-    await into(dailyProgressTable).insert(
-      companion,
-      mode: InsertMode.insertOrReplace,
-    );
+  Future<void> upsertDailyProgress(
+    DailyProgressTableCompanion companion,
+  ) async {
+    await into(
+      dailyProgressTable,
+    ).insert(companion, mode: InsertMode.insertOrReplace);
   }
 
-  Future<LocalDailyProgress?> getDailyProgress(
-    String userId,
-    String date,
-  ) {
+  Future<LocalDailyProgress?> getDailyProgress(String userId, String date) {
     return (select(dailyProgressTable)
           ..where((t) => t.userId.equals(userId) & t.date.equals(date)))
         .getSingleOrNull();
   }
 
   Future<List<LocalStudySession>> getUnsyncedSessions() {
-    return (select(studySessionsTable)..where((t) => t.isSynced.equals(false)))
-        .get();
+    return (select(
+      studySessionsTable,
+    )..where((t) => t.isSynced.equals(false))).get();
   }
 
   Future<List<LocalStudyResult>> getUnsyncedResults() {
-    return (select(studyResultsTable)..where((t) => t.isSynced.equals(false)))
-        .get();
+    return (select(
+      studyResultsTable,
+    )..where((t) => t.isSynced.equals(false))).get();
   }
 
   Future<List<LocalUserProgress>> getUnsyncedUserProgress() {
-    return (select(userProgressTable)..where((t) => t.isSynced.equals(false)))
-        .get();
+    return (select(
+      userProgressTable,
+    )..where((t) => t.isSynced.equals(false))).get();
   }
 
   Future<List<LocalDailyProgress>> getUnsyncedDailyProgress() {
-    return (select(dailyProgressTable)..where((t) => t.isSynced.equals(false)))
-        .get();
+    return (select(
+      dailyProgressTable,
+    )..where((t) => t.isSynced.equals(false))).get();
   }
 
   Future<void> updateSessionSyncStatus(String id, bool isSynced) async {
@@ -256,11 +268,12 @@ class StudyDao extends DatabaseAccessor<AppDatabase> with _$StudyDaoMixin {
     );
   }
 
-  Future<void> updateUserProgressSyncStatus(String userId, bool isSynced) async {
+  Future<void> updateUserProgressSyncStatus(
+    String userId,
+    bool isSynced,
+  ) async {
     await (update(userProgressTable)..where((t) => t.userId.equals(userId)))
-        .write(
-      UserProgressTableCompanion(isSynced: Value(isSynced)),
-    );
+        .write(UserProgressTableCompanion(isSynced: Value(isSynced)));
   }
 
   Future<void> updateDailyProgressSyncStatus(String id, bool isSynced) async {

@@ -77,8 +77,7 @@ class _ProfileHeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final displayName = user?.displayName ?? context.translate('user_fallback');
-    final email =
-        user?.email ?? context.translate('no_email_available');
+    final email = user?.email ?? context.translate('no_email_available');
     final languageLabel = profile == null
         ? context.translate('loading_language_preference')
         : context.translate(

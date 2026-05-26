@@ -26,9 +26,6 @@ class LlmRequest {
   }
 
   @override
-  int get hashCode => Object.hash(
-    sourceLanguage,
-    targetLanguage,
-    _normalizedInputKey,
-  );
+  int get hashCode =>
+      Object.hash(sourceLanguage, targetLanguage, _normalizedInputKey);
 }

@@ -13,7 +13,9 @@ class MainShellScreen extends ConsumerWidget {
   void _onDestinationSelected(BuildContext context, WidgetRef ref, int index) {
     final location = GoRouterState.of(context).uri.toString();
     final leavingDeckStudy =
-        navigationShell.currentIndex == 0 && index != 0 && location.contains('/study');
+        navigationShell.currentIndex == 0 &&
+        index != 0 &&
+        location.contains('/study');
 
     if (leavingDeckStudy) {
       ref.read(studySessionProvider.notifier).endSession();

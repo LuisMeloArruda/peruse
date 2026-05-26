@@ -62,7 +62,9 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
                       subtitle: context.translate('growth_subtitle'),
                     ),
                     const SizedBox(height: AppSpacing.lg),
-                    ref.watch(userGlobalStatsProvider(userId)).when(
+                    ref
+                        .watch(userGlobalStatsProvider(userId))
+                        .when(
                           data: (stats) => Column(
                             children: [
                               PeruseStatBentoCard(
@@ -80,9 +82,7 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
                               ),
                               const SizedBox(height: AppSpacing.md),
                               PeruseStatBentoCard(
-                                value: _formatAccuracy(
-                                  stats.lifetimeAccuracy,
-                                ),
+                                value: _formatAccuracy(stats.lifetimeAccuracy),
                                 label: context.translate('avg_accuracy'),
                                 variant: PeruseStatBentoVariant.elevated,
                                 leading: const Icon(
@@ -131,11 +131,11 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
                       title: context.translate('curated_decks'),
                     ),
                     const SizedBox(height: AppSpacing.md),
-                      ref.watch(studyDecksProvider).when(
-                        data: (decks) => _DeckProgressList(
-                          decks: decks,
-                          userId: userId,
-                        ),
+                    ref
+                        .watch(studyDecksProvider)
+                        .when(
+                          data: (decks) =>
+                              _DeckProgressList(decks: decks, userId: userId),
                           loading: () => const _DecksSkeleton(),
                           error: (error, stackTrace) => Text(
                             context.translate(
@@ -161,7 +161,9 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
                     PeruseSheetCard(
                       padding: const EdgeInsets.all(AppSpacing.lg),
                       radius: AppRadius.xxl,
-                      child: ref.watch(contributionGridProvider(userId)).when(
+                      child: ref
+                          .watch(contributionGridProvider(userId))
+                          .when(
                             data: (grid) => Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -281,9 +283,7 @@ class _VelocityChart extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Padding(
-              padding: const EdgeInsets.only(
-                left: _yAxisWidth + AppSpacing.sm,
-              ),
+              padding: const EdgeInsets.only(left: _yAxisWidth + AppSpacing.sm),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: _labelsForRange(context, isWeekly)
@@ -303,10 +303,7 @@ class _VelocityChart extends StatelessWidget {
       },
       loading: () => const _ChartSkeleton(),
       error: (error, stackTrace) => Text(
-        context.translate(
-          'velocity_unavailable',
-          args: {'error': '$error'},
-        ),
+        context.translate('velocity_unavailable', args: {'error': '$error'}),
         style: context.textTheme.bodyMedium,
       ),
     );
@@ -318,9 +315,11 @@ class _VelocityChart extends StatelessWidget {
     }
 
     final now = DateTime.now();
-    final start = DateTime(now.year, now.month, now.day).subtract(
-      const Duration(days: 29),
-    );
+    final start = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(const Duration(days: 29));
     const ticks = [0, 6, 12, 18, 24, 29];
     return ticks.map((offset) {
       final date = start.add(Duration(days: offset));
@@ -330,8 +329,11 @@ class _VelocityChart extends StatelessWidget {
 
   List<double> _buildWeekSeries(List<LocalDailyProgress> rows) {
     final now = DateTime.now();
-    final start = DateTime(now.year, now.month, now.day)
-        .subtract(Duration(days: now.weekday - 1));
+    final start = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(Duration(days: now.weekday - 1));
     final lookup = _toDateMap(rows);
 
     return List<double>.generate(7, (index) {
@@ -343,8 +345,11 @@ class _VelocityChart extends StatelessWidget {
 
   List<double> _buildMonthSeries(List<LocalDailyProgress> rows) {
     final now = DateTime.now();
-    final start = DateTime(now.year, now.month, now.day)
-        .subtract(const Duration(days: 29));
+    final start = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(const Duration(days: 29));
     final lookup = _toDateMap(rows);
 
     return List<double>.generate(30, (index) {
@@ -409,7 +414,9 @@ class _VelocityPainter extends CustomPainter {
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    final step = values.length == 1 ? size.width : size.width / (values.length - 1);
+    final step = values.length == 1
+        ? size.width
+        : size.width / (values.length - 1);
     final path = Path();
     final fillPath = Path();
 
@@ -472,9 +479,9 @@ class _VelocityYAxis extends StatelessWidget {
   List<double> _buildTicks(double max) {
     final roundedMax = max <= 1 ? 1 : max.ceilToDouble();
     return <double>[
-      roundedMax.toDouble(), 
-      (roundedMax * 0.66), 
-      (roundedMax * 0.33), 
+      roundedMax.toDouble(),
+      (roundedMax * 0.66),
+      (roundedMax * 0.33),
       0.0,
     ];
   }
@@ -516,9 +523,7 @@ class _DeckProgressTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final wordsState = ref.watch(deckWordsProvider(deck.id));
     final masteryState = ref.watch(
-      deckMasteryProvider(
-        DeckMasteryParams(userId: userId, deckId: deck.id),
-      ),
+      deckMasteryProvider(DeckMasteryParams(userId: userId, deckId: deck.id)),
     );
 
     return wordsState.when(
@@ -539,19 +544,13 @@ class _DeckProgressTile extends ConsumerWidget {
         },
         loading: () => const _SkeletonBlock(height: 90),
         error: (error, stackTrace) => Text(
-          context.translate(
-            'deck_unavailable',
-            args: {'error': '$error'},
-          ),
+          context.translate('deck_unavailable', args: {'error': '$error'}),
           style: context.textTheme.bodyMedium,
         ),
       ),
       loading: () => const _SkeletonBlock(height: 90),
       error: (error, stackTrace) => Text(
-        context.translate(
-          'deck_unavailable',
-          args: {'error': '$error'},
-        ),
+        context.translate('deck_unavailable', args: {'error': '$error'}),
         style: context.textTheme.bodyMedium,
       ),
     );

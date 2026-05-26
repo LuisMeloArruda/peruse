@@ -10,30 +10,24 @@ class DecksDao extends DatabaseAccessor<AppDatabase> with _$DecksDaoMixin {
 
   Stream<List<LocalDeck>> watchDecks(String userId) {
     return (select(decksTable)
-          ..where(
-            (t) => t.userId.equals(userId) & t.isDeleted.equals(false),
-          ))
+          ..where((t) => t.userId.equals(userId) & t.isDeleted.equals(false)))
         .watch();
   }
 
   Stream<LocalDeck?> watchDeckById(String deckId, String userId) {
-    return (select(
-      decksTable,
-    )..where(
-            (t) =>
-                t.id.equals(deckId) &
-                t.userId.equals(userId) &
-                t.isDeleted.equals(false),
-          ))
+    return (select(decksTable)..where(
+          (t) =>
+              t.id.equals(deckId) &
+              t.userId.equals(userId) &
+              t.isDeleted.equals(false),
+        ))
         .watchSingleOrNull();
   }
 
   Future<List<LocalDeck>> getDecks(String userId) {
-    return (select(decksTable)
-          ..where(
-            (t) => t.userId.equals(userId) & t.isDeleted.equals(false),
-          ))
-        .get();
+    return (select(
+      decksTable,
+    )..where((t) => t.userId.equals(userId) & t.isDeleted.equals(false))).get();
   }
 
   Future<void> upsertDeck(DecksTableCompanion companion) async {

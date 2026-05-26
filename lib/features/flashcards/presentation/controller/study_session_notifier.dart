@@ -54,8 +54,8 @@ class StudySessionState {
 
   String? get currentWordId =>
       currentIndex >= 0 && currentIndex < wordIds.length
-          ? wordIds[currentIndex]
-          : null;
+      ? wordIds[currentIndex]
+      : null;
 
   int get totalCount => wordIds.length;
 
@@ -117,7 +117,10 @@ class StudySessionNotifier extends _$StudySessionNotifier {
     state = StudySessionState.initial;
   }
 
-  Future<void> startSession({required String deckId, required String mode}) async {
+  Future<void> startSession({
+    required String deckId,
+    required String mode,
+  }) async {
     if (_startInProgress) return;
     if (state.sessionId != null &&
         state.deckId == deckId &&
@@ -172,10 +175,7 @@ class StudySessionNotifier extends _$StudySessionNotifier {
         await endSession();
       }
     } catch (error) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      state = state.copyWith(isLoading: false, errorMessage: error.toString());
     } finally {
       _startInProgress = false;
     }
@@ -264,18 +264,21 @@ class StudySessionNotifier extends _$StudySessionNotifier {
 
     try {
       final db = ref.read(appDatabaseProvider);
-      
+
       state = state.copyWith(isCompleted: true, wordStartedAt: null);
-      
+
       await db.studyDao.endStudySession(sessionId, endedAt);
       await ref
           .read(studyRepositoryProvider)
           .completeSession(sessionId: sessionId, userId: user.id);
-          
+
       await ref.read(studySyncCoordinatorProvider).syncNow();
     } catch (error) {
       debugPrint('Study session end failed: $error');
-      state = state.copyWith(errorMessage: error.toString(), isCompleted: false);
+      state = state.copyWith(
+        errorMessage: error.toString(),
+        isCompleted: false,
+      );
     } finally {
       _endInProgress = false;
     }

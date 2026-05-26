@@ -128,14 +128,19 @@ class FlashcardModel {
       'is_deleted': isDeleted,
       'revision': revision,
       'modified_by': modifiedBy,
-      'created_at': DateTime.fromMillisecondsSinceEpoch(createdAt)
-          .toIso8601String(),
-      'updated_at': DateTime.fromMillisecondsSinceEpoch(updatedAt)
-          .toIso8601String(),
+      'created_at': DateTime.fromMillisecondsSinceEpoch(
+        createdAt,
+      ).toIso8601String(),
+      'updated_at': DateTime.fromMillisecondsSinceEpoch(
+        updatedAt,
+      ).toIso8601String(),
     };
   }
 
-  factory FlashcardModel.fromEntity(AppFlashcard entity, {bool isSynced = true}) {
+  factory FlashcardModel.fromEntity(
+    AppFlashcard entity, {
+    bool isSynced = true,
+  }) {
     return FlashcardModel(
       id: entity.id,
       deckId: entity.deckId,

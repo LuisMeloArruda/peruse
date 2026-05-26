@@ -11,18 +11,19 @@ class WordsDao extends DatabaseAccessor<AppDatabase> with _$WordsDaoMixin {
   WordsDao(super.db);
 
   Stream<List<LocalWord>> watchWordsForDeck(String deckId, String userId) {
-    final query = select(wordsTable).join([
-      innerJoin(
-        deckWordsTable,
-        deckWordsTable.wordId.equalsExp(wordsTable.id),
-      ),
-      innerJoin(decksTable, decksTable.id.equalsExp(deckWordsTable.deckId)),
-    ])..where(
-        deckWordsTable.deckId.equals(deckId) &
-            deckWordsTable.isDeleted.equals(false) &
-            decksTable.userId.equals(userId) &
-            decksTable.isDeleted.equals(false),
-      );
+    final query =
+        select(wordsTable).join([
+          innerJoin(
+            deckWordsTable,
+            deckWordsTable.wordId.equalsExp(wordsTable.id),
+          ),
+          innerJoin(decksTable, decksTable.id.equalsExp(deckWordsTable.deckId)),
+        ])..where(
+          deckWordsTable.deckId.equals(deckId) &
+              deckWordsTable.isDeleted.equals(false) &
+              decksTable.userId.equals(userId) &
+              decksTable.isDeleted.equals(false),
+        );
 
     return query.watch().map(
       (rows) => rows.map((row) => row.readTable(wordsTable)).toList(),
@@ -104,11 +105,9 @@ class WordsDao extends DatabaseAccessor<AppDatabase> with _$WordsDaoMixin {
   }
 
   Future<void> markDeckWordDeleted(String deckId, String wordId) async {
-    await (
-      update(deckWordsTable)..where(
-        (t) => t.deckId.equals(deckId) & t.wordId.equals(wordId),
-      )
-    ).write(
+    await (update(
+      deckWordsTable,
+    )..where((t) => t.deckId.equals(deckId) & t.wordId.equals(wordId))).write(
       DeckWordsTableCompanion(
         isDeleted: const Value(true),
         synced: const Value(false),
@@ -117,11 +116,9 @@ class WordsDao extends DatabaseAccessor<AppDatabase> with _$WordsDaoMixin {
   }
 
   Future<void> deleteDeckWord(String deckId, String wordId) async {
-    await (
-      delete(deckWordsTable)..where(
-        (t) => t.deckId.equals(deckId) & t.wordId.equals(wordId),
-      )
-    ).go();
+    await (delete(
+      deckWordsTable,
+    )..where((t) => t.deckId.equals(deckId) & t.wordId.equals(wordId))).go();
   }
 
   Future<void> upsertWordDetailsList(

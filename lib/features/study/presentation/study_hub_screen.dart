@@ -94,41 +94,35 @@ class StudyHubScreen extends ConsumerWidget {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               sliver: SliverList(
-                delegate: SliverChildListDelegate(
-                  [
-                    _ModeCard(
-                      title: context.translate('flashcards_title'),
-                      subtitle: context.translate('flashcards_subtitle'),
-                      icon: Icons.auto_awesome,
-                      onTap: () => _startFlashcards(
-                        context,
-                        ref,
-                        activeDeckId,
-                      ),
-                      accent: Color(0xFF006A28),
-                      gradient: [Color(0xFF1C1C1B), Color(0xFF0E0E0E)],
-                    ),
-                    SizedBox(height: AppSpacing.md),
-                    _ModeCard(
-                      title: context.translate('quiz_title'),
-                      subtitle: context.translate('quiz_subtitle'),
-                      icon: Icons.quiz_outlined,
-                      onTap: () => _showModeComingSoon(context),
-                      accent: Color(0xFF1E5EFF),
-                      gradient: [Color(0xFFE9F0FF), Color(0xFFFFFFFF)],
-                    ),
-                    SizedBox(height: AppSpacing.md),
-                    _ModeCard(
-                      title: context.translate('write_it_title'),
-                      subtitle: context.translate('write_it_subtitle'),
-                      icon: Icons.edit_note,
-                      badge: context.translate('expert_mode_badge'),
-                      onTap: () => _showModeComingSoon(context),
-                      accent: Color(0xFFF9B233),
-                      gradient: [Color(0xFFFFF3D6), Color(0xFFFFFFFF)],
-                    ),
-                  ],
-                ),
+                delegate: SliverChildListDelegate([
+                  _ModeCard(
+                    title: context.translate('flashcards_title'),
+                    subtitle: context.translate('flashcards_subtitle'),
+                    icon: Icons.auto_awesome,
+                    onTap: () => _startFlashcards(context, ref, activeDeckId),
+                    accent: Color(0xFF006A28),
+                    gradient: [Color(0xFF1C1C1B), Color(0xFF0E0E0E)],
+                  ),
+                  SizedBox(height: AppSpacing.md),
+                  _ModeCard(
+                    title: context.translate('quiz_title'),
+                    subtitle: context.translate('quiz_subtitle'),
+                    icon: Icons.quiz_outlined,
+                    onTap: () => _showModeComingSoon(context),
+                    accent: Color(0xFF1E5EFF),
+                    gradient: [Color(0xFFE9F0FF), Color(0xFFFFFFFF)],
+                  ),
+                  SizedBox(height: AppSpacing.md),
+                  _ModeCard(
+                    title: context.translate('write_it_title'),
+                    subtitle: context.translate('write_it_subtitle'),
+                    icon: Icons.edit_note,
+                    badge: context.translate('expert_mode_badge'),
+                    onTap: () => _showModeComingSoon(context),
+                    accent: Color(0xFFF9B233),
+                    gradient: [Color(0xFFFFF3D6), Color(0xFFFFFFFF)],
+                  ),
+                ]),
               ),
             ),
           ],
@@ -149,9 +143,9 @@ class StudyHubScreen extends ConsumerWidget {
 }
 
 void _showModeComingSoon(BuildContext context) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(context.translate('coming_soon'))),
-  );
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(context.translate('coming_soon'))));
 }
 
 Future<void> _startFlashcards(
@@ -384,10 +378,7 @@ class _ModeCard extends StatelessWidget {
                     child: CircleAvatar(
                       radius: 20,
                       backgroundColor: accent.withValues(alpha: 0.14),
-                      child: Icon(
-                        Icons.arrow_forward_rounded,
-                        color: accent,
-                      ),
+                      child: Icon(Icons.arrow_forward_rounded, color: accent),
                     ),
                   ),
                 ],

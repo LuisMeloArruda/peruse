@@ -9,7 +9,9 @@ final connectivityProvider = StreamProvider<List<ConnectivityResult>>((ref) {
   return Connectivity().onConnectivityChanged;
 });
 
-final flashcardSyncCoordinatorProvider = Provider<FlashcardSyncCoordinator>((ref) {
+final flashcardSyncCoordinatorProvider = Provider<FlashcardSyncCoordinator>((
+  ref,
+) {
   return FlashcardSyncCoordinator(ref);
 });
 

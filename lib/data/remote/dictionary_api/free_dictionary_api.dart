@@ -100,15 +100,17 @@ class FreeDictionaryApi {
             for (final definitionEntry in definitions) {
               if (definitionEntry is Map<String, dynamic>) {
                 final definition = definitionEntry['definition'];
-                final definitionText =
-                    definition is String ? definition.trim() : '';
+                final definitionText = definition is String
+                    ? definition.trim()
+                    : '';
                 if (definitionText.isNotEmpty) {
                   definitionParts.add(definitionText);
                 }
 
                 final exampleValue = definitionEntry['example'];
-                final exampleText =
-                    exampleValue is String ? exampleValue.trim() : '';
+                final exampleText = exampleValue is String
+                    ? exampleValue.trim()
+                    : '';
                 if (exampleText.isNotEmpty) {
                   exampleParts.add(exampleText);
                 }

@@ -127,7 +127,9 @@ class WordDetailNotifier extends _$WordDetailNotifier {
     if (preferredLanguageCode == 'en') {
       return details.definition;
     }
-    final targetLanguage = profileLanguageLabel(preferredLanguageCode).toLowerCase();
+    final targetLanguage = profileLanguageLabel(
+      preferredLanguageCode,
+    ).toLowerCase();
     final cacheKey = llmCacheKey(targetLanguage, details.definition);
 
     final cache = ref.read(llmTranslationCacheProvider);
@@ -153,7 +155,9 @@ class WordDetailNotifier extends _$WordDetailNotifier {
       ref.read(llmTranslationCacheProvider.notifier).put(cacheKey, translated);
       return translated;
     } catch (error) {
-      debugPrint('Definition translation failed, using English definition: $error');
+      debugPrint(
+        'Definition translation failed, using English definition: $error',
+      );
       return details.definition;
     }
   }
@@ -171,7 +175,9 @@ class WordDetailNotifier extends _$WordDetailNotifier {
       return example;
     }
 
-    final targetLanguage = profileLanguageLabel(preferredLanguageCode).toLowerCase();
+    final targetLanguage = profileLanguageLabel(
+      preferredLanguageCode,
+    ).toLowerCase();
     final cacheKey = llmCacheKey(targetLanguage, example);
 
     final cache = ref.read(llmTranslationCacheProvider);

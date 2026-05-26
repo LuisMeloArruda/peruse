@@ -87,8 +87,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
                     PeruseTextField(
                       controller: _emailController,
-           labelText: context.translate('email_address_label'),
-              hintText: context.translate('email_hint'),
+                      labelText: context.translate('email_address_label'),
+                      hintText: context.translate('email_hint'),
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       autofillHints: const [AutofillHints.email],
@@ -102,7 +102,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     PeruseTextField(
                       controller: _passwordController,
                       labelText: context.translate('password_label'),
-              hintText: context.translate('password_hint'),
+                      hintText: context.translate('password_hint'),
                       obscureText: true,
                       textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.password],
@@ -126,7 +126,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         _passwordController.text.trim(),
                                       );
                                 },
-                  child: Text(context.translate('sign_in')),
+                          child: Text(context.translate('sign_in')),
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         ElevatedButton.icon(
@@ -136,14 +136,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     .read(authControllerProvider.notifier)
                                     .loginWithGoogle(),
                           icon: const Icon(Icons.login),
-                  label: Text(context.translate('continue_with_google')),
+                          label: Text(
+                            context.translate('continue_with_google'),
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         TextButton(
                           onPressed: authAction.isLoading
                               ? null
                               : () => context.push(AppRoutes.register),
-                  child: Text(context.translate('sign_up')),
+                          child: Text(context.translate('sign_up')),
                         ),
                       ],
                     ),

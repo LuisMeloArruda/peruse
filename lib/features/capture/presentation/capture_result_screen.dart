@@ -235,7 +235,9 @@ class _CaptureResultScreenState extends ConsumerState<CaptureResultScreen> {
                                           ),
                                           borderSide: BorderSide.none,
                                         ),
-                                          suffixIcon: const Icon(Icons.edit_outlined),
+                                        suffixIcon: const Icon(
+                                          Icons.edit_outlined,
+                                        ),
                                       ),
                                       style: Theme.of(context)
                                           .textTheme
@@ -424,7 +426,8 @@ class _SuggestionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      showOnlyWord || option.translatedText == option.englishText
+                      showOnlyWord ||
+                              option.translatedText == option.englishText
                           ? option.englishText
                           : context.translate(
                               'suggestion_translation_pair',

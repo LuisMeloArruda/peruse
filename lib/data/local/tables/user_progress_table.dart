@@ -8,9 +8,7 @@ class UserProgressTable extends Table {
   IntColumn get currentStreak =>
       integer().named('current_streak').withDefault(const Constant(0))();
   Int64Column get lastStudyDate =>
-      int64()
-          .named('last_study_date')
-          .withDefault(Constant(BigInt.from(0)))();
+      int64().named('last_study_date').withDefault(Constant(BigInt.from(0)))();
   RealColumn get lifetimeAccuracy =>
       real().named('lifetime_accuracy').withDefault(const Constant(0))();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();

@@ -64,20 +64,25 @@ class FlashcardStudyNotifier extends _$FlashcardStudyNotifier {
   FlashcardStudyState build(String deckId) {
     final repository = ref.watch(flashcardRepositoryProvider);
 
-    _subscription = repository.watchDeckFlashcards(deckId).listen(
-      (cards) {
-        final mergedQueue = _mergeQueue(state.flashcards, cards);
-        state = state.copyWith(
-          flashcards: mergedQueue,
-          isFlipped: false,
-          isLoading: false,
-          errorMessage: null,
+    _subscription = repository
+        .watchDeckFlashcards(deckId)
+        .listen(
+          (cards) {
+            final mergedQueue = _mergeQueue(state.flashcards, cards);
+            state = state.copyWith(
+              flashcards: mergedQueue,
+              isFlipped: false,
+              isLoading: false,
+              errorMessage: null,
+            );
+          },
+          onError: (error, stackTrace) {
+            state = state.copyWith(
+              isLoading: false,
+              errorMessage: error.toString(),
+            );
+          },
         );
-      },
-      onError: (error, stackTrace) {
-        state = state.copyWith(isLoading: false, errorMessage: error.toString());
-      },
-    );
 
     ref.onDispose(() {
       _subscription?.cancel();
@@ -96,7 +101,11 @@ class FlashcardStudyNotifier extends _$FlashcardStudyNotifier {
     if (currentCard == null) return;
 
     final nextQueue = [...state.flashcards]..removeAt(0);
-    state = state.copyWith(flashcards: nextQueue, completedCount: state.completedCount + 1, isFlipped: false);
+    state = state.copyWith(
+      flashcards: nextQueue,
+      completedCount: state.completedCount + 1,
+      isFlipped: false,
+    );
 
     await _persistCard(currentCard);
   }
@@ -105,16 +114,15 @@ class FlashcardStudyNotifier extends _$FlashcardStudyNotifier {
     final currentCard = state.currentCard;
     if (currentCard == null) return;
 
-    final nextQueue = [...state.flashcards]..removeAt(0)..add(currentCard);
+    final nextQueue = [...state.flashcards]
+      ..removeAt(0)
+      ..add(currentCard);
     state = state.copyWith(flashcards: nextQueue, isFlipped: false);
 
     await _persistCard(currentCard);
   }
 
-  Future<void> updateCurrentCard({
-    String? frontText,
-    String? backText,
-  }) async {
+  Future<void> updateCurrentCard({String? frontText, String? backText}) async {
     final currentCard = state.currentCard;
     if (currentCard == null) return;
 
@@ -191,9 +199,7 @@ class FlashcardStudyNotifier extends _$FlashcardStudyNotifier {
       return latestQueue;
     }
 
-    final latestById = {
-      for (final card in latestQueue) card.id: card,
-    };
+    final latestById = {for (final card in latestQueue) card.id: card};
     final merged = <AppFlashcard>[];
 
     for (final card in currentQueue) {

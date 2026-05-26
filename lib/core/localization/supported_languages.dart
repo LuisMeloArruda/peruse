@@ -7,10 +7,7 @@ const appBaseLanguageCode = 'en';
 
 final List<Language> appSupportedLanguages = [
   for (final entry in profileLanguageTranslationKeys.entries)
-    Language(
-      code: entry.key,
-      name: appBaseTranslations[entry.value]!,
-    ),
+    Language(code: entry.key, name: appBaseTranslations[entry.value]!),
 ];
 
 final Language appInitialLanguage = appSupportedLanguages.firstWhere(
