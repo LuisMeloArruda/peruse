@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -784,13 +785,20 @@ class _CardImage extends StatelessWidget {
                   size: 64,
                 ),
               )
-            : Image.network(
-                resolvedUrl,
-                width: double.infinity,
-                height: double.infinity,
-                fit: BoxFit.contain,
-                alignment: Alignment.center,
-                errorBuilder: (_, _, _) => _placeholder(),
+            : CachedNetworkImage(
+                imageUrl: resolvedUrl,
+                imageBuilder: (context, imageProvider) => Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: imageProvider,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.center,
+                    ),
+                  ),
+                ),
+                placeholder: (context, url) =>
+                    Center(child: CircularProgressIndicator()),
+                errorBuilder: (context, url, error) => _placeholder(),
               ),
       ),
     );

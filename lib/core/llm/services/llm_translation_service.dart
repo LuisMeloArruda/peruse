@@ -30,6 +30,7 @@ class LlmTranslationService {
               TextPart(
                 text:
                     'You are a professional translator for a language-learning app.\n\n'
+                    'Using user provided data'
                     'Translate each term in the user message from ${request.sourceLanguage} '
                     'into ${request.targetLanguage}.\n\n'
                     'Output rules:\n'
@@ -42,14 +43,15 @@ class LlmTranslationService {
                     'Quality:\n'
                     '- Use natural, concise wording suitable for vocabulary flashcards.\n'
                     '- For ambiguous labels (e.g. image tags), prefer the most common everyday meaning.\n'
-                    '- Preserve proper nouns and untranslatable terms when appropriate.',
+                    '- Preserve proper nouns and untranslatable terms when appropriate.'
+                    '- if provided word is a text of sentence, translate the entire sentence to ${request.targetLanguage} as natural as posible',
               ),
             ],
           ),
           Message(
             role: Role.user,
             content: [
-              TextPart(text: request.input.entries.map((e) => e.key).join(' ')),
+              TextPart(text: request.input.toString(), metadata: request.input, data:  request.input),
             ],
           ),
         ],

@@ -1,10 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:path/path.dart' as p;
+import 'package:peruse/core/llm/models/llm_request.dart';
+import 'package:peruse/core/llm/provider/llm_providers.dart';
+import 'package:peruse/core/llm/services/llm_translation_service.dart';
+import 'package:peruse/features/profile/domain/repositories/profile_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -25,8 +30,16 @@ class DeckRepositoryImpl implements IDeckRepository {
   final SupabaseClient _supabase;
   final AppDatabase _localDb;
   final FreeDictionaryApi _dictionaryApi;
+  final LlmTranslationService _llmTranslationService;
+  final IProfileRepository _iProfileRepository;
 
-  DeckRepositoryImpl(this._supabase, this._localDb, this._dictionaryApi);
+  DeckRepositoryImpl(
+    this._supabase,
+    this._localDb,
+    this._dictionaryApi,
+    this._llmTranslationService,
+    this._iProfileRepository,
+  );
 
   @override
   Stream<List<AppDeck>> watchDecks() {
@@ -98,11 +111,27 @@ class DeckRepositoryImpl implements IDeckRepository {
     if (entry == null) {
       return cached == null ? null : _mapWordDetails(cached);
     }
+    final user = await _iProfileRepository.ensureCurrentProfile();
+    final textToTranslate = <String, double>{};
+    bool hasExample = false;
+    if (entry.example.trim().isNotEmpty) {
+      textToTranslate[entry.example] = 1.0;
+      hasExample = true;
+    }
+
+    textToTranslate.addAll({entry.definition: 1.0});
+
+    final request = LlmRequest(
+      input: textToTranslate,
+      sourceLanguage: 'english',
+      targetLanguage: user.preferredLanguage,
+    );
+    final output = await _llmTranslationService.translate(request);
 
     final companion = WordDetailsTableCompanion.insert(
       wordId: word.id,
-      definition: entry.definition,
-      example: entry.example,
+      definition: output.translatedTexts.entries.toList().lastOrNull?.value??'',
+      example:  hasExample? output.translatedTexts.entries.toList().firstOrNull?.value ??'':'',
       partOfSpeech: entry.partOfSpeech,
       phonetic: entry.phonetic,
       audioUrl: entry.audioUrl,
@@ -112,10 +141,12 @@ class DeckRepositoryImpl implements IDeckRepository {
     await _localDb.wordsDao.upsertWordDetails(companion);
     await _uploadWordDetails(word.id, entry);
 
+    log(output.translatedTexts.toString(), name: 'getWordDetails');
+
     return AppWordDetails(
       wordId: word.id,
-      definition: entry.definition,
-      example: entry.example,
+      definition: output.translatedTexts.entries.toList().lastOrNull?.value??'',
+      example:  hasExample? output.translatedTexts.entries.toList().firstOrNull?.value ??'':'',
       partOfSpeech: entry.partOfSpeech,
       phonetic: entry.phonetic,
       audioUrl: entry.audioUrl,
@@ -940,5 +971,12 @@ IDeckRepository deckRepository(Ref ref) {
   final supabaseClient = ref.watch(supabaseClientProvider);
   final database = ref.watch(appDatabaseProvider);
   final dictionaryApi = ref.watch(freeDictionaryApiProvider);
-  return DeckRepositoryImpl(supabaseClient, database, dictionaryApi);
+  final translationService = ref.watch(llmTranslationServiceProvider);
+  return DeckRepositoryImpl(
+    supabaseClient,
+    database,
+    dictionaryApi,
+    translationService,
+    ref.watch(profileRepositoryProvider),
+  );
 }
