@@ -12,6 +12,7 @@ Follow these steps to run the project on your local machine using your own Supab
 Make sure you have the following installed on your machine:
 * Flutter SDK (Latest stable version)
 * A Supabase account
+* A Google Cloud Console account with a Gemini API key
 
 ### 2. Clone the Repository
 ```bash
@@ -36,11 +37,12 @@ The application requires credentials to know which server to connect to.
 
 1. In the root of the project, locate the `.env.example` file.
 2. Duplicate the file and rename the copy to **`.env`** (this file is protected by `.gitignore` and will never be committed publicly).
-3. Open your `.env` file and replace the placeholder values with your project's Supabase URL and Anon Key (found under *Project Settings -> API* in your Supabase dashboard).
+3. Open your `.env` file and replace the placeholder values with your project's Supabase URL and Anon Key (found under *Project Settings -> API* in your Supabase dashboard), plus your Gemini API key from Google Cloud Console.
 
 ```env
 SUPABASE_URL=[https://your-project-id.supabase.co](https://your-project-id.supabase.co)
 SUPABASE_ANON_KEY=your_public_anon_key_here
+GEMINI_API_KEY=your_google_cloud_gemini_api_key
 
 ```
 
