@@ -434,6 +434,23 @@ class DeckRepositoryImpl implements IDeckRepository {
           ),
           mode: InsertMode.insertOrReplace,
         );
+
+    try {
+      final ok = await _uploadDeckWord(
+        deckId: deckWord.deckId,
+        wordId: deckWord.wordId,
+        addedAt: deckWord.addedAt,
+      );
+      if (ok) {
+        await _localDb.wordsDao.updateDeckWordSyncStatus(
+          deckWord.deckId,
+          deckWord.wordId,
+          true,
+        );
+      }
+    } catch (e) {
+      debugPrint('Deck word upload failed (addWordToDeck): $e');
+    }
   }
 
   @override
@@ -823,7 +840,6 @@ class DeckRepositoryImpl implements IDeckRepository {
         'added_at': DateTime.fromMillisecondsSinceEpoch(
           addedAt,
         ).toIso8601String(),
-        'is_deleted': false,
       });
       return true;
     } catch (e) {
